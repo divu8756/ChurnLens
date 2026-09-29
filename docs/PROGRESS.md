@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T2.5
+Phase 2 gate
 
 ## Next step
-T2.5: cleaning_node + data health (stats/cleaning.py).
+Phase 2 gate: review, end-to-end API check, PR, CI, merge. Then T3.1.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -62,6 +62,13 @@ T2.5: cleaning_node + data health (stats/cleaning.py).
   awaiting_confirmation, resumed, done, 15 s heartbeat, Last-Event-ID
   reconnect). Checkpoint serializer registers state types; tests run with
   LANGGRAPH_STRICT_MSGPACK. pytest-timeout added (60 s). Backend 87 tests.
+- T2.5: stats/cleaning.py + cleaning_node: numeric coercion (blank ->
+  missing), trim/collapse spaces, unify case to the most common spelling,
+  exact duplicates, target -> 0/1, missing target rows dropped, categorical
+  blanks -> "Unknown", rare invalid negatives -> missing, IQR/z outlier
+  flags (never changed), data_health with documented 0-100 score, fatal on
+  one class or < MIN_ROWS. Telco: 11 TotalCharges blanks, 14 duplicates,
+  7,000 rows, InternetService case fixed, 5 negative call minutes. 103 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -86,6 +93,10 @@ T2.5: cleaning_node + data health (stats/cleaning.py).
   ErrorEntry(fatal=True) in the shared errors list rather than a separate key.
 - Runs live in memory in one API process (RunManager). A restart loses them
   and /stream answers 410 "Session expired"; fine for one Render instance.
+- Cleaning does NOT median-impute numeric blanks (SPEC says median/mode/
+  "Unknown"): imputing before the train/test split leaks test data, and some
+  blanks are meaningful (NPS, AvgResolutionDays). The model pipeline imputes
+  medians on the training split; stats tests drop missing values per test.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).
