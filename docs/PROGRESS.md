@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T2.3
+T2.4
 
 ## Next step
-T2.3: schema agent prompt file + schema_agent node with heuristics fallback.
+T2.4: human_review interrupt, POST /confirm-schema, background run, SSE /stream.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -46,6 +46,13 @@ T2.3: schema agent prompt file + schema_agent node with heuristics fallback.
   /upload/{id}/sheet), POST /sample, parquet under DATA_DIR/sessions/{id},
   2-hour cleanup loop, session ids validated against path traversal,
   ingest_node. Backend 61 tests.
+- T2.3: prompts/schema_agent.v1.md (+ minimal prompt loader, full T5.2
+  version later), stats/profiling.py (profile with <= 5 samples, id/target/
+  time/type heuristics; floats and numbers-as-text never flagged as ids),
+  schema_agent node (fast tier, temp 0, 30 s; rules win on ids; AI target
+  and positive label only accepted if valid for the data; falls back to rules
+  on LLM failure). Heuristics alone get Telco fully right (customerID id,
+  Churn/Yes target, tenure time column, TotalCharges numeric). Backend 73 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -144,6 +151,9 @@ flowchart TD
   Pro when one exists) in backend/.env.
 
 ## Known issues
+- Gemini Flash models often return 503 "high demand" (both 3.8 and 3.5 at
+  the same time during T2.3). The schema agent then uses rules only, which
+  are correct on Telco. Consider billing / another model if this persists.
 - Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
   yet; planned for Phase 8 hardening.
 
