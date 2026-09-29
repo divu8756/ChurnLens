@@ -131,7 +131,7 @@ export function AnalysisView({ sessionId }: { sessionId: string }) {
 
       {progress.done?.ok ? (
         results && finishedResults ? (
-          <Dashboard results={results.results} />
+          <Dashboard results={results.results} sessionId={sessionId} />
         ) : resultsError ? (
           <Alert tone="error" title={resultsError} />
         ) : (
@@ -139,27 +139,29 @@ export function AnalysisView({ sessionId }: { sessionId: string }) {
         )
       ) : null}
 
-      <div className={progress.done?.ok ? "hidden" : "grid gap-6 lg:grid-cols-[18rem_1fr]"}>
-        <Card title="Progress">
-          {start.state === "started" && progress.connection === "connecting" && progress.order.length === 0 ? (
-            <Spinner label="Connecting..." />
-          ) : (
-            <ProgressStepper stages={stepperStages(progress)} />
-          )}
-        </Card>
-        <div className="flex min-w-0 flex-col gap-6">
-          {showHealth && !results && !resultsError ? <Spinner label="Loading data health..." /> : null}
-          {resultsError ? <Alert tone="error" title={resultsError} /> : null}
-          {health ? <DataHealthView health={health} log={results?.results.cleaning_log ?? []} /> : null}
-          {!showHealth && !progress.awaitingConfirmation && start.state === "started" ? (
-            <Card>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Data health appears here once the data is cleaned.
-              </p>
-            </Card>
-          ) : null}
+      {progress.done?.ok ? null : (
+        <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
+          <Card title="Progress">
+            {start.state === "started" && progress.connection === "connecting" && progress.order.length === 0 ? (
+              <Spinner label="Connecting..." />
+            ) : (
+              <ProgressStepper stages={stepperStages(progress)} />
+            )}
+          </Card>
+          <div className="flex min-w-0 flex-col gap-6">
+            {showHealth && !results && !resultsError ? <Spinner label="Loading data health..." /> : null}
+            {resultsError ? <Alert tone="error" title={resultsError} /> : null}
+            {health ? <DataHealthView health={health} log={results?.results.cleaning_log ?? []} /> : null}
+            {!showHealth && !progress.awaitingConfirmation && start.state === "started" ? (
+              <Card>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Data health appears here once the data is cleaned.
+                </p>
+              </Card>
+            ) : null}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

@@ -3,14 +3,13 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T6.3d (Risk Predictions tab)
+T6.3e (Recommendations tab)
 
 ## Next step
-T6.3d on branch phase-6 (T6.1-T6.3c committed and pushed): paginated
-server-side predictions table (GET /results already pages and filters by
-band; add id search and a CSV export endpoint for the current filter),
-reasons as chips, register the tab in components/dashboard/dashboard.tsx.
-Live-check helper: scratchpad drive_run.py pattern (sample -> confirm -> wait).
+T6.3e on branch phase-6 (T6.1-T6.3d committed and pushed): build
+components/recommendations/ from results.final_recommendations (already
+typed), grouped Quick wins / Medium-term / Strategic, sorted by priority,
+and register the tab in components/dashboard/dashboard.tsx.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -247,6 +246,18 @@ Live-check helper: scratchpad drive_run.py pattern (sample -> confirm -> wait).
   tex() (1.171 \times 10^{-202} instead of 1.171e-202) and \text{} for
   words. Live check: 28/40 significant at 0.05, 26/40 at 0.001, 10 KaTeX
   blocks, no errors, no horizontal scroll. Backend 222, frontend 63 tests.
+- T6.3d: Risk Predictions tab (components/predictions/). New backend
+  app/api/predictions.py: GET /predictions/{id} (50 per page, band filter,
+  case-insensitive literal ID search, typed PredictionRow) so paging does
+  not refetch the 300 KB results; GET /predictions/{id}/csv streams the
+  same filter as an attachment, neutralising cells that start with = + - @
+  (CSV injection from uploaded IDs/values). UI: band filter pills with
+  counts, 300 ms debounced search, previous page kept visible while the
+  next loads, reasons as chips (▲ raises / ▼ lowers risk, sign taken from
+  the server text), pagination, Download CSV link. The finished analysis
+  view now unmounts the progress/Data Health grid instead of hiding it.
+  Live check: 2,899 Low rows, search "yqz" -> 8944-YQZDP, CSV matches the
+  filter, 375 px no horizontal scroll. Backend 226, frontend 70 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

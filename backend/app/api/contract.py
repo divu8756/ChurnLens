@@ -390,6 +390,26 @@ class ResultsPayload(BaseModel):
     errors: list[ErrorEvent] = Field(default_factory=list)
 
 
+class PredictionRow(BaseModel):
+    customer_id: str
+    churn_probability: float
+    risk_band: RiskBand
+    actual_churn: int
+    reason_1: str | None = None
+    reason_2: str | None = None
+    reason_3: str | None = None
+
+
+class PredictionsResponse(BaseModel):
+    page: int
+    page_size: int
+    total: int
+    pages: int
+    band: RiskBand | None = None
+    q: str | None = None
+    items: list[PredictionRow]
+
+
 class ResultsResponse(BaseModel):
     session_id: str
     status: RunStatus

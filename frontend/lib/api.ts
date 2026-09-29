@@ -13,6 +13,8 @@ export type ResultsResponse = Schemas["ResultsResponse"];
 export type PredictionsPage = Schemas["PredictionsPage"];
 export type RiskBand = NonNullable<PredictionsPage["band"]>;
 export type StreamEvents = Schemas["StreamEvents"];
+export type PredictionsResponse = Schemas["PredictionsResponse"];
+export type PredictionRow = Schemas["PredictionRow"];
 export type NodeFinishEvent = Schemas["NodeFinishEvent"];
 export type ErrorEvent = Schemas["ErrorEvent"];
 export type DoneEvent = Schemas["DoneEvent"];
@@ -161,6 +163,30 @@ export function getResults(
   const query = new URLSearchParams({ page: String(options.page ?? 1) });
   if (options.band) query.set("band", options.band);
   return request<ResultsResponse>(`/results/${enc(sessionId)}?${query}`, { signal: options.signal });
+}
+
+export type PredictionsQuery = { page?: number; band?: RiskBand | null; q?: string };
+
+function predictionsQuery({ page, band, q }: PredictionsQuery): URLSearchParams {
+  const query = new URLSearchParams();
+  if (page) query.set("page", String(page));
+  if (band) query.set("band", band);
+  if (q && q.trim()) query.set("q", q.trim());
+  return query;
+}
+
+export function getPredictions(
+  sessionId: string,
+  options: PredictionsQuery & { signal?: AbortSignal } = {},
+): Promise<PredictionsResponse> {
+  const query = predictionsQuery({ page: options.page ?? 1, band: options.band, q: options.q });
+  return request<PredictionsResponse>(`/predictions/${enc(sessionId)}?${query}`, { signal: options.signal });
+}
+
+/** Direct download link: the server sends the CSV as an attachment. */
+export function predictionsCsvUrl(sessionId: string, options: Omit<PredictionsQuery, "page"> = {}): string {
+  const query = predictionsQuery(options).toString();
+  return `${API_URL}/predictions/${enc(sessionId)}/csv${query ? `?${query}` : ""}`;
 }
 
 /** URL for the SSE progress stream; `after` resumes after that event id. */

@@ -199,3 +199,49 @@ def test_results_types_hypothesis_keys(finished_session):
                 test["inputs"]["observed"]["rows"])
         else:
             assert set(test["inputs"]["groups"]) == {"churned", "retained"}
+
+
+# ------------------------------------------------------------ /predictions
+
+
+def test_predictions_endpoint_pages_filters_and_searches(finished_session):
+    client, sid = finished_session
+    body = client.get(f"/predictions/{sid}").json()
+    assert body["total"] == 350 and body["page_size"] == 50 and body["pages"] == 7
+    probs = [i["churn_probability"] for i in body["items"]]
+    assert probs == sorted(probs, reverse=True)
+    high = client.get(f"/predictions/{sid}", params={"band": "High"}).json()
+    assert all(i["risk_band"] == "High" for i in high["items"])
+    target = body["items"][3]["customer_id"]
+    found = client.get(f"/predictions/{sid}", params={"q": target.lower()}).json()
+    assert target in [i["customer_id"] for i in found["items"]]
+    none = client.get(f"/predictions/{sid}", params={"q": "no-such-id"}).json()
+    assert none["total"] == 0 and none["items"] == [] and none["pages"] == 1
+
+
+def test_predictions_errors(finished_session):
+    client, sid = finished_session
+    assert client.get(f"/predictions/{'f' * 32}").status_code == 410
+    assert client.get(f"/predictions/{sid}", params={"band": "Extreme"}).status_code == 422
+    assert client.get(f"/predictions/{sid}", params={"q": "x" * 101}).status_code == 422
+
+
+def test_predictions_csv_matches_the_filter(finished_session):
+    import csv
+    import io
+    client, sid = finished_session
+    response = client.get(f"/predictions/{sid}/csv", params={"band": "Low"})
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert 'filename="churn_predictions_low.csv"' in response.headers["content-disposition"]
+    rows = list(csv.DictReader(io.StringIO(response.text)))
+    page = client.get(f"/predictions/{sid}", params={"band": "Low"}).json()
+    assert len(rows) == page["total"] and all(r["risk_band"] == "Low" for r in rows)
+    assert rows[0]["customer_id"] == page["items"][0]["customer_id"]
+
+
+def test_csv_safe_neutralises_formulas():
+    from app.api.predictions import csv_safe
+    assert csv_safe("=HYPERLINK(1)") == "'=HYPERLINK(1)"
+    assert csv_safe("+1") == "'+1" and csv_safe("@x") == "'@x" and csv_safe("-2") == "'-2"
+    assert csv_safe("C00001") == "C00001" and csv_safe(0.5) == 0.5

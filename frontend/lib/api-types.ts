@@ -55,6 +55,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/predictions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Predictions */
+        get: operations["predictions_predictions__session_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/predictions/{session_id}/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Predictions Csv */
+        get: operations["predictions_csv_predictions__session_id__csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/results/{session_id}": {
         parameters: {
             query?: never;
@@ -663,6 +697,26 @@ export interface components {
             /** Rank */
             rank: number;
         };
+        /** PredictionRow */
+        PredictionRow: {
+            /** Actual Churn */
+            actual_churn: number;
+            /** Churn Probability */
+            churn_probability: number;
+            /** Customer Id */
+            customer_id: string;
+            /** Reason 1 */
+            reason_1?: string | null;
+            /** Reason 2 */
+            reason_2?: string | null;
+            /** Reason 3 */
+            reason_3?: string | null;
+            /**
+             * Risk Band
+             * @enum {string}
+             */
+            risk_band: "High" | "Medium" | "Low";
+        };
         /** PredictionsPage */
         PredictionsPage: {
             /** Available */
@@ -679,6 +733,23 @@ export interface components {
             page_size: number;
             /** Pages */
             pages: number;
+            /** Total */
+            total: number;
+        };
+        /** PredictionsResponse */
+        PredictionsResponse: {
+            /** Band */
+            band?: ("High" | "Medium" | "Low") | null;
+            /** Items */
+            items: components["schemas"]["PredictionRow"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Pages */
+            pages: number;
+            /** Q */
+            q?: string | null;
             /** Total */
             total: number;
         };
@@ -1091,6 +1162,113 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    predictions_predictions__session_id__get: {
+        parameters: {
+            query?: {
+                page?: number;
+                band?: ("High" | "Medium" | "Low") | null;
+                /** @description Case-insensitive part of a customer ID */
+                q?: string | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PredictionsResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    predictions_csv_predictions__session_id__csv_get: {
+        parameters: {
+            query?: {
+                band?: ("High" | "Medium" | "Low") | null;
+                /** @description Case-insensitive part of a customer ID */
+                q?: string | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Filtered predictions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
