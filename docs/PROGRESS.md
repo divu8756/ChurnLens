@@ -306,6 +306,12 @@ flowchart TD
   metrics to calibrated probabilities there.
 - Hypothesis test cap (40) keeps columns in data order; with more candidates
   the last ones are skipped (Telco: OfferCost).
+- Prompt injection: column names and category values from the uploaded file
+  appear in LLM prompts. Every number is still validated against state, so
+  the risk is misleading wording, not wrong numbers. Consider sanitising
+  labels (Phase 8 hardening).
+- At temperature 0, flash-lite often repeats the same unlisted numbers on a
+  retry despite feedback; those items are then dropped (by design).
 - Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
   yet; planned for Phase 8 hardening.
 
