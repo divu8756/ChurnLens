@@ -197,6 +197,92 @@
         "title": "ConfirmedSchema",
         "type": "object"
       },
+      "ConfusionMatrix": {
+        "properties": {
+          "fn": {
+            "title": "Fn",
+            "type": "integer"
+          },
+          "fp": {
+            "title": "Fp",
+            "type": "integer"
+          },
+          "tn": {
+            "title": "Tn",
+            "type": "integer"
+          },
+          "tp": {
+            "title": "Tp",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tn",
+          "fp",
+          "fn",
+          "tp"
+        ],
+        "title": "ConfusionMatrix",
+        "type": "object"
+      },
+      "CvScores": {
+        "additionalProperties": true,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pr_auc_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pr Auc Mean"
+          },
+          "pr_auc_std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pr Auc Std"
+          },
+          "roc_auc_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roc Auc Mean"
+          },
+          "roc_auc_std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roc Auc Std"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CvScores",
+        "type": "object"
+      },
       "DataHealth": {
         "properties": {
           "class_balance": {
@@ -287,6 +373,147 @@
         "title": "DoneEvent",
         "type": "object"
       },
+      "DriverImpactRow": {
+        "properties": {
+          "feature": {
+            "title": "Feature",
+            "type": "string"
+          },
+          "mean_abs_shap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Abs Shap"
+          },
+          "odds_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Odds Ratio"
+          },
+          "or_ci_lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Or Ci Lower"
+          },
+          "or_ci_upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Or Ci Upper"
+          },
+          "or_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Or Label"
+          },
+          "p_adjusted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Adjusted"
+          },
+          "permutation_importance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permutation Importance"
+          },
+          "permutation_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permutation Rank"
+          },
+          "significant": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Significant"
+          },
+          "test_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Name"
+          }
+        },
+        "required": [
+          "feature"
+        ],
+        "title": "DriverImpactRow",
+        "type": "object"
+      },
+      "DroppedTerm": {
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "term": {
+            "title": "Term",
+            "type": "string"
+          }
+        },
+        "required": [
+          "term",
+          "reason"
+        ],
+        "title": "DroppedTerm",
+        "type": "object"
+      },
       "ErrorEvent": {
         "properties": {
           "fatal": {
@@ -314,6 +541,38 @@
           "message"
         ],
         "title": "ErrorEvent",
+        "type": "object"
+      },
+      "FeatureImportance": {
+        "additionalProperties": true,
+        "properties": {
+          "driver_impact": {
+            "items": {
+              "$ref": "#/components/schemas/DriverImpactRow"
+            },
+            "title": "Driver Impact",
+            "type": "array"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/PermutationItem"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          }
+        },
+        "title": "FeatureImportance",
         "type": "object"
       },
       "Figure": {
@@ -379,6 +638,16 @@
             ],
             "title": "Accuracy"
           },
+          "confusion_matrix": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfusionMatrix"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "f1": {
             "anyOf": [
               {
@@ -437,6 +706,27 @@
               }
             ],
             "title": "Roc Auc"
+          },
+          "roc_curve": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RocCurve"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
           }
         },
         "required": [
@@ -609,6 +899,29 @@
         "title": "LabelOption",
         "type": "object"
       },
+      "LeakageWarning": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "measure": {
+            "title": "Measure",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "column",
+          "measure",
+          "value"
+        ],
+        "title": "LeakageWarning",
+        "type": "object"
+      },
       "ModelMetrics": {
         "additionalProperties": true,
         "properties": {
@@ -619,6 +932,20 @@
           "chosen_model_name": {
             "title": "Chosen Model Name",
             "type": "string"
+          },
+          "cv": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CvScores"
+            },
+            "title": "Cv",
+            "type": "object"
+          },
+          "leakage_warnings": {
+            "items": {
+              "$ref": "#/components/schemas/LeakageWarning"
+            },
+            "title": "Leakage Warnings",
+            "type": "array"
           },
           "n_test": {
             "title": "N Test",
@@ -637,6 +964,17 @@
                 "type": "null"
               }
             ]
+          },
+          "selection_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Rule"
           },
           "test": {
             "$ref": "#/components/schemas/HeldOutMetrics"
@@ -700,6 +1038,177 @@
         "title": "NodeStartEvent",
         "type": "object"
       },
+      "OddsRatioTerm": {
+        "additionalProperties": true,
+        "properties": {
+          "ci_lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Lower"
+          },
+          "ci_upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Upper"
+          },
+          "feature": {
+            "title": "Feature",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "odds_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Odds Ratio"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "term": {
+            "title": "Term",
+            "type": "string"
+          }
+        },
+        "required": [
+          "feature",
+          "kind",
+          "label",
+          "term"
+        ],
+        "title": "OddsRatioTerm",
+        "type": "object"
+      },
+      "OddsRatios": {
+        "additionalProperties": true,
+        "properties": {
+          "converged": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Converged"
+          },
+          "dropped": {
+            "items": {
+              "$ref": "#/components/schemas/DroppedTerm"
+            },
+            "title": "Dropped",
+            "type": "array"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "n": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N"
+          },
+          "pseudo_r2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pseudo R2"
+          },
+          "terms": {
+            "items": {
+              "$ref": "#/components/schemas/OddsRatioTerm"
+            },
+            "title": "Terms",
+            "type": "array"
+          }
+        },
+        "title": "OddsRatios",
+        "type": "object"
+      },
       "OutlierCounts": {
         "properties": {
           "iqr": {
@@ -716,6 +1225,34 @@
           "zscore"
         ],
         "title": "OutlierCounts",
+        "type": "object"
+      },
+      "PermutationItem": {
+        "properties": {
+          "feature": {
+            "title": "Feature",
+            "type": "string"
+          },
+          "importance_mean": {
+            "title": "Importance Mean",
+            "type": "number"
+          },
+          "importance_std": {
+            "title": "Importance Std",
+            "type": "number"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "feature",
+          "importance_mean",
+          "importance_std",
+          "rank"
+        ],
+        "title": "PermutationItem",
         "type": "object"
       },
       "PredictionsPage": {
@@ -912,6 +1449,16 @@
             "title": "Errors",
             "type": "array"
           },
+          "feature_importance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeatureImportance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "final_error": {
             "anyOf": [
               {
@@ -971,6 +1518,16 @@
               }
             ]
           },
+          "odds_ratios": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OddsRatios"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "positive_label": {
             "anyOf": [
               {
@@ -981,6 +1538,16 @@
               }
             ],
             "title": "Positive Label"
+          },
+          "shap_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShapSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "target_column": {
             "anyOf": [
@@ -1068,6 +1635,30 @@
           "total"
         ],
         "title": "RiskBands",
+        "type": "object"
+      },
+      "RocCurve": {
+        "properties": {
+          "fpr": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Fpr",
+            "type": "array"
+          },
+          "tpr": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Tpr",
+            "type": "array"
+          }
+        },
+        "required": [
+          "fpr",
+          "tpr"
+        ],
+        "title": "RocCurve",
         "type": "object"
       },
       "RunStatusResponse": {
@@ -1215,6 +1806,153 @@
           "source"
         ],
         "title": "SchemaProposalOut",
+        "type": "object"
+      },
+      "ShapFeature": {
+        "properties": {
+          "feature": {
+            "title": "Feature",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ShapPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "feature",
+          "kind",
+          "points"
+        ],
+        "title": "ShapFeature",
+        "type": "object"
+      },
+      "ShapGlobal": {
+        "properties": {
+          "feature": {
+            "title": "Feature",
+            "type": "string"
+          },
+          "mean_abs_shap": {
+            "title": "Mean Abs Shap",
+            "type": "number"
+          }
+        },
+        "required": [
+          "feature",
+          "mean_abs_shap"
+        ],
+        "title": "ShapGlobal",
+        "type": "object"
+      },
+      "ShapPoint": {
+        "properties": {
+          "shap": {
+            "title": "Shap",
+            "type": "number"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "shap"
+        ],
+        "title": "ShapPoint",
+        "type": "object"
+      },
+      "ShapSummary": {
+        "additionalProperties": true,
+        "properties": {
+          "beeswarm": {
+            "items": {
+              "$ref": "#/components/schemas/ShapFeature"
+            },
+            "title": "Beeswarm",
+            "type": "array"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "explained_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explained Model"
+          },
+          "global": {
+            "items": {
+              "$ref": "#/components/schemas/ShapGlobal"
+            },
+            "title": "Global",
+            "type": "array"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "n_rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Rows"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale"
+          }
+        },
+        "title": "ShapSummary",
         "type": "object"
       },
       "StreamEvents": {

@@ -3,13 +3,12 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T6.3b (Churn Drivers tab)
+T6.3c (Hypothesis Testing tab)
 
 ## Next step
-T6.3b on branch phase-6 (T6.1, T6.2, T6.3a committed and pushed): type the
-keys the tab reads in app/api/contract.py (feature_importance, shap_summary,
-odds_ratios, model_metrics.test confusion matrix / ROC), regenerate types,
-build components/drivers/ and register the tab in components/dashboard/dashboard.tsx.
+T6.3c on branch phase-6 (T6.1-T6.3b committed and pushed): type
+hypothesis_results in app/api/contract.py, regenerate types, add KaTeX,
+build components/hypothesis/ and register the tab in components/dashboard/dashboard.tsx.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -222,6 +221,18 @@ build components/drivers/ and register the tab in components/dashboard/dashboard
   through) and reuses the agents' Insight/Recommendation models. Live check
   on Telco (111 s run, 11/15 verified): KPIs 7,000 / 25.66% / 2,239 /
   142,056 / 0.83; 375 px has no horizontal scroll. Backend 218, frontend 49 tests.
+- T6.3b: Churn Drivers tab (components/drivers/): test metrics table with
+  plain meanings + CV model comparison, confusion matrix, ROC curve with
+  chance line, permutation importance bars with ± 1 SD whiskers, SHAP dot
+  plot (Okabe-Ito blue-to-vermillion by value), odds-ratio forest plot on a
+  log axis with 95% CI whiskers (15 strongest terms, dropped terms listed),
+  driver summary table, leakage warning banner. Contract types the confusion
+  matrix, ROC, cv, leakage warnings, feature_importance, shap_summary
+  ("global" served under its real name) and odds_ratios. lib/drivers.ts
+  (ordering, whiskers, log axis, deterministic jitter) is unit-tested. Live
+  check on Telco fixed three display bugs (ROC ticks rounded 0.25 to 0.3,
+  forest axis clipped CI whiskers, long labels cut off). Backend 219,
+  frontend 56 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

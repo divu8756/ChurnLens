@@ -207,6 +207,32 @@ export interface components {
             /** Time Column */
             time_column?: string | null;
         };
+        /** ConfusionMatrix */
+        ConfusionMatrix: {
+            /** Fn */
+            fn: number;
+            /** Fp */
+            fp: number;
+            /** Tn */
+            tn: number;
+            /** Tp */
+            tp: number;
+        };
+        /** CvScores */
+        CvScores: {
+            /** Name */
+            name: string;
+            /** Pr Auc Mean */
+            pr_auc_mean?: number | null;
+            /** Pr Auc Std */
+            pr_auc_std?: number | null;
+            /** Roc Auc Mean */
+            roc_auc_mean?: number | null;
+            /** Roc Auc Std */
+            roc_auc_std?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** DataHealth */
         DataHealth: {
             class_balance: components["schemas"]["ClassBalance"];
@@ -242,6 +268,38 @@ export interface components {
             /** Ok */
             ok: boolean;
         };
+        /** DriverImpactRow */
+        DriverImpactRow: {
+            /** Feature */
+            feature: string;
+            /** Mean Abs Shap */
+            mean_abs_shap?: number | null;
+            /** Odds Ratio */
+            odds_ratio?: number | null;
+            /** Or Ci Lower */
+            or_ci_lower?: number | null;
+            /** Or Ci Upper */
+            or_ci_upper?: number | null;
+            /** Or Label */
+            or_label?: string | null;
+            /** P Adjusted */
+            p_adjusted?: number | null;
+            /** Permutation Importance */
+            permutation_importance?: number | null;
+            /** Permutation Rank */
+            permutation_rank?: number | null;
+            /** Significant */
+            significant?: boolean | null;
+            /** Test Name */
+            test_name?: string | null;
+        };
+        /** DroppedTerm */
+        DroppedTerm: {
+            /** Reason */
+            reason: string;
+            /** Term */
+            term: string;
+        };
         /** ErrorEvent */
         ErrorEvent: {
             /**
@@ -253,6 +311,17 @@ export interface components {
             message: string;
             /** Node */
             node?: string | null;
+        };
+        /** FeatureImportance */
+        FeatureImportance: {
+            /** Driver Impact */
+            driver_impact?: components["schemas"]["DriverImpactRow"][];
+            /** Features */
+            features?: components["schemas"]["PermutationItem"][];
+            /** Method */
+            method?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         /** Figure */
         Figure: {
@@ -277,6 +346,7 @@ export interface components {
         HeldOutMetrics: {
             /** Accuracy */
             accuracy?: number | null;
+            confusion_matrix?: components["schemas"]["ConfusionMatrix"] | null;
             /** F1 */
             f1?: number | null;
             /** N Test */
@@ -289,6 +359,9 @@ export interface components {
             recall?: number | null;
             /** Roc Auc */
             roc_auc?: number | null;
+            roc_curve?: components["schemas"]["RocCurve"] | null;
+            /** Threshold */
+            threshold?: number | null;
         } & {
             [key: string]: unknown;
         };
@@ -353,17 +426,34 @@ export interface components {
             /** Values */
             values: string[];
         };
+        /** LeakageWarning */
+        LeakageWarning: {
+            /** Column */
+            column: string;
+            /** Measure */
+            measure: string;
+            /** Value */
+            value: number;
+        };
         /** ModelMetrics */
         ModelMetrics: {
             /** Chosen Model */
             chosen_model: string;
             /** Chosen Model Name */
             chosen_model_name: string;
+            /** Cv */
+            cv?: {
+                [key: string]: components["schemas"]["CvScores"];
+            };
+            /** Leakage Warnings */
+            leakage_warnings?: components["schemas"]["LeakageWarning"][];
             /** N Test */
             n_test: number;
             /** N Train */
             n_train: number;
             risk_bands?: components["schemas"]["RiskBands"] | null;
+            /** Selection Rule */
+            selection_rule?: string | null;
             test: components["schemas"]["HeldOutMetrics"];
         } & {
             [key: string]: unknown;
@@ -385,12 +475,67 @@ export interface components {
             /** Node */
             node: string;
         };
+        /** OddsRatioTerm */
+        OddsRatioTerm: {
+            /** Ci Lower */
+            ci_lower?: number | null;
+            /** Ci Upper */
+            ci_upper?: number | null;
+            /** Feature */
+            feature: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Level */
+            level?: string | null;
+            /** Odds Ratio */
+            odds_ratio?: number | null;
+            /** P Value */
+            p_value?: number | null;
+            /** Reference */
+            reference?: string | null;
+            /** Term */
+            term: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** OddsRatios */
+        OddsRatios: {
+            /** Converged */
+            converged?: boolean | null;
+            /** Dropped */
+            dropped?: components["schemas"]["DroppedTerm"][];
+            /** Error */
+            error?: string | null;
+            /** Method */
+            method?: string | null;
+            /** N */
+            n?: number | null;
+            /** Pseudo R2 */
+            pseudo_r2?: number | null;
+            /** Terms */
+            terms?: components["schemas"]["OddsRatioTerm"][];
+        } & {
+            [key: string]: unknown;
+        };
         /** OutlierCounts */
         OutlierCounts: {
             /** Iqr */
             iqr: number;
             /** Zscore */
             zscore: number;
+        };
+        /** PermutationItem */
+        PermutationItem: {
+            /** Feature */
+            feature: string;
+            /** Importance Mean */
+            importance_mean: number;
+            /** Importance Std */
+            importance_std: number;
+            /** Rank */
+            rank: number;
         };
         /** PredictionsPage */
         PredictionsPage: {
@@ -460,6 +605,7 @@ export interface components {
             data_health?: components["schemas"]["DataHealth"] | null;
             /** Errors */
             errors?: components["schemas"]["ErrorEvent"][];
+            feature_importance?: components["schemas"]["FeatureImportance"] | null;
             /** Final Error */
             final_error?: string | null;
             /** Final Insights */
@@ -468,8 +614,10 @@ export interface components {
             final_recommendations?: components["schemas"]["Recommendation"][] | null;
             impact_estimates?: components["schemas"]["ImpactEstimates"] | null;
             model_metrics?: components["schemas"]["ModelMetrics"] | null;
+            odds_ratios?: components["schemas"]["OddsRatios"] | null;
             /** Positive Label */
             positive_label?: string | null;
+            shap_summary?: components["schemas"]["ShapSummary"] | null;
             /** Target Column */
             target_column?: string | null;
             validation_report?: components["schemas"]["ValidationReport"] | null;
@@ -502,6 +650,13 @@ export interface components {
             total: number;
         } & {
             [key: string]: unknown;
+        };
+        /** RocCurve */
+        RocCurve: {
+            /** Fpr */
+            fpr: number[];
+            /** Tpr */
+            tpr: number[];
         };
         /** RunStatusResponse */
         RunStatusResponse: {
@@ -552,6 +707,48 @@ export interface components {
             target_column?: string | null;
             /** Time Column */
             time_column?: string | null;
+        };
+        /** ShapFeature */
+        ShapFeature: {
+            /** Feature */
+            feature: string;
+            /** Kind */
+            kind: string;
+            /** Points */
+            points: components["schemas"]["ShapPoint"][];
+        };
+        /** ShapGlobal */
+        ShapGlobal: {
+            /** Feature */
+            feature: string;
+            /** Mean Abs Shap */
+            mean_abs_shap: number;
+        };
+        /** ShapPoint */
+        ShapPoint: {
+            /** Shap */
+            shap: number;
+            /** Value */
+            value?: number | string | null;
+        };
+        /** ShapSummary */
+        ShapSummary: {
+            /** Beeswarm */
+            beeswarm?: components["schemas"]["ShapFeature"][];
+            /** Error */
+            error?: string | null;
+            /** Explained Model */
+            explained_model?: string | null;
+            /** Global */
+            global?: components["schemas"]["ShapGlobal"][];
+            /** Method */
+            method?: string | null;
+            /** N Rows */
+            n_rows?: number | null;
+            /** Scale */
+            scale?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         /**
          * StreamEvents

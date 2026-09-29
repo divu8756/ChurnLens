@@ -165,8 +165,22 @@ def test_results_types_overview_keys(finished_session):
     results = client.get(f"/results/{sid}").json()["results"]
     metrics = results["model_metrics"]
     assert 0 <= metrics["test"]["roc_auc"] <= 1 and metrics["chosen_model_name"]
-    assert "confusion_matrix" in metrics["test"]  # untyped keys still pass through
+    assert "features" in metrics  # untyped keys still pass through
     assert sum(metrics["risk_bands"]["band_counts"].values()) == metrics["risk_bands"]["total"]
     overall = results["impact_estimates"]["overall"]
     assert overall["id"] == "overall" and overall["customers"] > 0
     assert "items" in results["impact_estimates"]
+
+
+def test_results_types_driver_keys(finished_session):
+    client, sid = finished_session
+    results = client.get(f"/results/{sid}").json()["results"]
+    test = results["model_metrics"]["test"]
+    cm = test["confusion_matrix"]
+    assert cm["tn"] + cm["fp"] + cm["fn"] + cm["tp"] == test["n_test"]
+    assert len(test["roc_curve"]["fpr"]) == len(test["roc_curve"]["tpr"])
+    shap = results["shap_summary"]
+    assert "global" in shap and "global_" not in shap  # served under its real name
+    assert shap["global"][0]["mean_abs_shap"] >= shap["global"][-1]["mean_abs_shap"]
+    assert results["feature_importance"]["driver_impact"][0]["feature"]
+    assert all("odds_ratio" in t for t in results["odds_ratios"]["terms"])

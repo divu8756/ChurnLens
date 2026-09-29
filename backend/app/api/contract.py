@@ -131,6 +131,32 @@ class Passthrough(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class ConfusionMatrix(BaseModel):
+    tn: int
+    fp: int
+    fn: int
+    tp: int
+
+
+class RocCurve(BaseModel):
+    fpr: list[float]
+    tpr: list[float]
+
+
+class CvScores(Passthrough):
+    name: str
+    roc_auc_mean: float | None = None
+    roc_auc_std: float | None = None
+    pr_auc_mean: float | None = None
+    pr_auc_std: float | None = None
+
+
+class LeakageWarning(BaseModel):
+    column: str
+    measure: str
+    value: float
+
+
 class HeldOutMetrics(Passthrough):
     # None when undefined (e.g. no positive predictions); NaN becomes null in JSON.
     roc_auc: float | None = None
@@ -140,6 +166,9 @@ class HeldOutMetrics(Passthrough):
     recall: float | None = None
     f1: float | None = None
     n_test: int
+    threshold: float | None = None
+    confusion_matrix: ConfusionMatrix | None = None
+    roc_curve: RocCurve | None = None
 
 
 class RiskBands(Passthrough):
@@ -155,6 +184,90 @@ class ModelMetrics(Passthrough):
     n_train: int
     n_test: int
     risk_bands: RiskBands | None = None
+    selection_rule: str | None = None
+    cv: dict[str, CvScores] = Field(default_factory=dict)
+    leakage_warnings: list[LeakageWarning] = Field(default_factory=list)
+
+
+class PermutationItem(BaseModel):
+    feature: str
+    importance_mean: float
+    importance_std: float
+    rank: int
+
+
+class DriverImpactRow(BaseModel):
+    feature: str
+    permutation_rank: int | None = None
+    permutation_importance: float | None = None
+    mean_abs_shap: float | None = None
+    odds_ratio: float | None = None
+    or_ci_lower: float | None = None
+    or_ci_upper: float | None = None
+    or_label: str | None = None
+    test_name: str | None = None
+    p_adjusted: float | None = None
+    significant: bool | None = None
+
+
+class FeatureImportance(Passthrough):
+    method: str | None = None
+    features: list[PermutationItem] = Field(default_factory=list)
+    driver_impact: list[DriverImpactRow] = Field(default_factory=list)
+
+
+class ShapGlobal(BaseModel):
+    feature: str
+    mean_abs_shap: float
+
+
+class ShapPoint(BaseModel):
+    shap: float
+    value: float | str | None = None
+
+
+class ShapFeature(BaseModel):
+    feature: str
+    kind: str
+    points: list[ShapPoint]
+
+
+class ShapSummary(Passthrough):
+    method: str | None = None
+    explained_model: str | None = None
+    scale: str | None = None
+    n_rows: int | None = None
+    global_: list[ShapGlobal] = Field(default_factory=list, alias="global")
+    beeswarm: list[ShapFeature] = Field(default_factory=list)
+    error: str | None = None
+
+
+class OddsRatioTerm(Passthrough):
+    feature: str
+    kind: str
+    label: str
+    term: str
+    level: str | None = None
+    reference: str | None = None
+    odds_ratio: float | None = None
+    ci_lower: float | None = None
+    ci_upper: float | None = None
+    p_value: float | None = None
+
+
+class DroppedTerm(BaseModel):
+    term: str
+    reason: str
+
+
+class OddsRatios(Passthrough):
+    method: str | None = None
+    n: int | None = None
+    converged: bool | None = None
+    pseudo_r2: float | None = None
+    terms: list[OddsRatioTerm] = Field(default_factory=list)
+    dropped: list[DroppedTerm] = Field(default_factory=list)
+    error: str | None = None
 
 
 class ImpactGroup(Passthrough):
@@ -191,6 +304,9 @@ class ResultsPayload(BaseModel):
     data_health: DataHealth | None = None
     model_metrics: ModelMetrics | None = None
     impact_estimates: ImpactEstimates | None = None
+    feature_importance: FeatureImportance | None = None
+    shap_summary: ShapSummary | None = None
+    odds_ratios: OddsRatios | None = None
     final_insights: list[Insight] | None = None
     final_recommendations: list[Recommendation] | None = None
     validation_report: ValidationReport | None = None

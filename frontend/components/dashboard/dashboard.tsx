@@ -5,6 +5,7 @@ import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { ResultsPayload } from "@/lib/results";
 
 import { DataHealthView } from "../data-health";
+import { DriversTab } from "../drivers/drivers-tab";
 import { OverviewTab } from "../overview/overview-tab";
 import { EmptyState } from "../ui";
 
@@ -13,6 +14,7 @@ type Tab = { id: string; label: string; render: (results: ResultsPayload) => Rea
 // Each dashboard tab registers here (later tabs are added by their own tasks).
 const TABS: Tab[] = [
   { id: "overview", label: "Executive Overview", render: (r) => <OverviewTab results={r} /> },
+  { id: "drivers", label: "Churn Drivers", render: (r) => <DriversTab results={r} /> },
   {
     id: "health",
     label: "Data Health",
