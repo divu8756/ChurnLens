@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5.3
+T5.4
 
 ## Next step
-T5.3: insight_agent + recommendation_agent with structured output and feedback.
+T5.4: validator node (source keys, tolerance, text number scan, retries).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -151,6 +151,12 @@ T5.3: insight_agent + recommendation_agent with structured output and feedback.
   "associated with", impact only from impact_estimates, priority = impact vs
   effort; worked examples on a tiny fictional digest; {{feedback}} slot).
   Loader tests. 189 tests.
+- T5.3: agents/llm_agents.py: insight_agent (pro, temp 0) and
+  recommendation_agent (pro, temp 0.3) with Pydantic structured output
+  (Figure{source_key, value, display}; enums for effort/group; priority
+  1-5; <= 10 insights, <= 8 recommendations), digest-only prompts,
+  validator feedback injected as "Fix these issues", empty list + error on
+  LLM failure. 195 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
