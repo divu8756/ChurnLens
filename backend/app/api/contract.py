@@ -543,6 +543,21 @@ class OfferValue(BaseModel):
     expected_value: float
 
 
+EvidenceLabel = Literal["experiment-proven", "observational"]
+
+
+class OfferEvidenceInfo(BaseModel):
+    """Where an offer's retention effect comes from (Phase 5c feedback loop)."""
+
+    label: EvidenceLabel
+    experiment_id: int | None = None
+    retention_lift_per_acceptor: float | None = None
+    itt_difference: float | None = None
+    ci_low: float | None = None
+    ci_high: float | None = None
+    decision: str | None = None
+
+
 class NboSummary(Passthrough):
     customers_scored: int
     value_unit: Literal["revenue", "customers"]
@@ -550,6 +565,7 @@ class NboSummary(Passthrough):
     by_offer: list[OfferValue] = Field(default_factory=list)
     offer_models: dict[str, OfferModelInfo] = Field(default_factory=dict)
     excluded_by_discount: list[str] = Field(default_factory=list)
+    offer_evidence: dict[str, OfferEvidenceInfo] = Field(default_factory=dict)
     formula: str
     assumptions: list[OfferAssumption] = Field(default_factory=list)
 
@@ -629,6 +645,7 @@ class NextBestOffer(BaseModel):
     p_stay_if_accepted: float | None = None
     p_stay_if_declined: float | None = None
     retention_lift: float | None = None
+    evidence: EvidenceLabel | None = None
     customer_value: float
     offer_cost: float | None = None
     low_data: bool

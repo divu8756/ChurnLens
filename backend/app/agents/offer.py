@@ -18,11 +18,27 @@ from app.stats.offers import prepare, run_offer_effectiveness
 NBO_FILE = "next_best_offers.parquet"
 
 
-def nbo_config() -> NboConfig:
+def offer_evidence() -> dict[str, dict[str, Any]]:
+    """Latest decided-experiment evidence per offer (Phase 5c feedback loop)."""
+    from app.experiments.db import session_scope
+    from app.experiments.service import offer_evidence as load
+
+    evidence: dict[str, dict[str, Any]] = {}
+    with session_scope() as db:
+        for row in load(db):  # newest first
+            evidence.setdefault(row.offer.casefold(), {
+                "experiment_id": row.experiment_id,
+                "retention_lift_per_acceptor": row.retention_lift_per_acceptor,
+                "itt_difference": row.itt_difference, "ci_low": row.ci_low,
+                "ci_high": row.ci_high, "decision": row.decision})
+    return evidence
+
+
+def nbo_config(evidence: dict[str, dict[str, Any]] | None = None) -> NboConfig:
     settings = get_settings()
     return NboConfig(horizon_months=settings.NBO_HORIZON_MONTHS,
                      max_discount=settings.NBO_MAX_DISCOUNT,
-                     decline_days=settings.NBO_DECLINE_DAYS)
+                     decline_days=settings.NBO_DECLINE_DAYS, evidence=evidence or {})
 
 
 def _probabilities(path: str | None) -> pd.Series | None:
@@ -58,9 +74,15 @@ def offer_node(state: ChurnState) -> dict[str, Any]:
             predictions = pd.read_parquet(state.predictions_path,
                                           columns=["customer_id", "churn_probability",
                                                    "risk_band"])
+            try:
+                evidence = offer_evidence()
+            except Exception as exc:  # noqa: BLE001 - fall back to observational estimates
+                evidence = {}
+                errors.append(ErrorEntry(node="offer", message="Experiment evidence could "
+                                         f"not be loaded; using observational estimates: {exc}"))
             table, summary = score_next_best_offers(
                 frame, state.confirmed_schema, long, predictions, labels,
-                exclude=treatment_columns(state), cfg=nbo_config())
+                exclude=treatment_columns(state), cfg=nbo_config(evidence))
             path = Path(state.clean_path).with_name(NBO_FILE)
             table.to_parquet(path, index=False)
             update["offer_recommendations_path"] = str(path)

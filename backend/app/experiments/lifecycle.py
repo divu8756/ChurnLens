@@ -11,8 +11,9 @@ TRANSITIONS: dict[str, tuple[str, ...]] = {
     "draft": ("approved",),
     "approved": ("running",),
     "running": ("results_uploaded",),
-    # A newer results file may replace the previous one before the decision.
-    "results_uploaded": ("results_uploaded", "decided"),
+    # A newer results file may replace the previous one before the decision;
+    # "extend" sends the experiment back to running to collect more outcomes.
+    "results_uploaded": ("results_uploaded", "running", "decided"),
     "decided": (),
 }
 

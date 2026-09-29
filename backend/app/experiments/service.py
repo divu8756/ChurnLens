@@ -15,7 +15,7 @@ from app.config import get_settings
 from app.experiments.assignment import assign_groups, balance_check, snapshot_hash
 from app.experiments.data import NotAnalysed, cached_messages, session_customers
 from app.experiments.lifecycle import audit, change_status
-from app.experiments.models import Assignment, AuditLog, Experiment, Outcome
+from app.experiments.models import Assignment, AuditLog, Experiment, OfferEvidence, Outcome
 from app.experiments.results import (
     ResultsInvalid,
     early_look_warning,
@@ -25,11 +25,13 @@ from app.experiments.results import (
 from app.experiments.schemas import (
     AnalysisAssumptions,
     ApproveRequest,
+    DecideRequest,
     ExperimentCreate,
     ExperimentDesignFields,
     ExperimentUpdate,
 )
 from app.experiments.segments import SegmentError, apply_segment
+from app.experiments.summary import generate as generate_summary
 from app.stats.common import jsonable
 from app.stats.experiment_analysis import analyse
 from app.stats.experiment_design import DesignError, sample_size
@@ -383,3 +385,63 @@ def reanalyse(db: Session, exp: Experiment, assumptions: AnalysisAssumptions, ac
                                                  "verdict": exp.analysis["decision_helper"]
                                                  ["verdict"]})
     return exp
+
+
+def _evidence(exp: Experiment) -> OfferEvidence:
+    itt = exp.analysis["itt"]
+    t, c = itt["arms"]["treatment"], itt["arms"]["control"]
+    accept = exp.analysis["impact"].get("acceptance_rate")
+    reduction = c["rate"] - t["rate"]
+    lift = (min(1.0, max(0.0, reduction / accept)) if accept else None)
+    return OfferEvidence(
+        experiment_id=exp.id, offer=exp.offer,
+        segment_description=(exp.segment_definition or {}).get("description") or None,
+        decision=exp.decision or "", decided_at=datetime.now(UTC),
+        n_treatment=t["n"], n_control=c["n"], treatment_churn=t["rate"],
+        control_churn=c["rate"], itt_difference=itt["difference"]["value"],
+        ci_low=itt["difference"]["ci_low"], ci_high=itt["difference"]["ci_high"],
+        acceptance_rate=accept, retention_lift_per_acceptor=lift)
+
+
+def decide(db: Session, exp: Experiment, request: DecideRequest) -> Experiment:
+    if exp.status != "results_uploaded" or not exp.analysis:
+        raise ServiceError(409, f"Upload results before deciding; this experiment is "
+                                f"{exp.status}.")
+    if request.decision == "ship" and exp.analysis["srm"]["failed"]:
+        raise ServiceError(409, "Shipping is blocked: the sample ratio mismatch check failed, "
+                                "so the results are not trustworthy.")
+    exp.decision, exp.decision_note = request.decision, request.note
+    details = {"verdict": exp.analysis["decision_helper"]["verdict"]}
+    if request.decision == "extend":
+        if request.new_planned_end:
+            details["new_planned_end"] = request.new_planned_end.isoformat()
+            exp.planned_end = request.new_planned_end
+        change_status(db, exp, "running", request.decider, action="decided_extend",
+                      note=request.note, details=details)
+        return exp
+    change_status(db, exp, "decided", request.decider, action=f"decided_{request.decision}",
+                  note=request.note, details=details)
+    # Feedback loop: a measured effect beats an observational one in next best offer.
+    # SRM-failed results never become evidence.
+    if not exp.analysis["srm"]["failed"]:
+        db.add(_evidence(exp))
+    return exp
+
+
+def offer_evidence(db: Session) -> list[OfferEvidence]:
+    return list(db.scalars(select(OfferEvidence).order_by(OfferEvidence.decided_at.desc(),
+                                                          OfferEvidence.id.desc())))
+
+
+def summary(db: Session, exp: Experiment) -> dict[str, Any]:
+    """The validated plain-English summary, generated once per analysis (cached in it)."""
+    if not exp.analysis:
+        raise ServiceError(409, "Upload results before asking for a summary.")
+    cached = exp.analysis.get("summary")
+    if cached:
+        return cached
+    result = generate_summary(exp.analysis, exp.offer)
+    # Reassign so SQLAlchemy sees the JSON change.
+    exp.analysis = {**exp.analysis, "summary": result}
+    audit(db, exp, "system", "summary_generated", details={"source": result["source"]})
+    return result

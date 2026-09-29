@@ -18,10 +18,13 @@ from app.experiments.schemas import (
     ApproveRequest,
     AssignRequest,
     AuditEntryOut,
+    DecideRequest,
     ExperimentCreate,
     ExperimentOut,
     ExperimentSummary,
+    ExperimentSummaryOut,
     ExperimentUpdate,
+    OfferEvidenceOut,
     ReanalyseRequest,
 )
 
@@ -74,6 +77,12 @@ def create_experiment(payload: ExperimentCreate, request: Request,
 def list_experiments(db: DB) -> list[ExperimentSummary]:
     rows = db.scalars(select(Experiment).order_by(Experiment.id.desc()))
     return [ExperimentSummary.model_validate(e) for e in rows]
+
+
+@router.get("/offer-evidence", response_model=list[OfferEvidenceOut])
+def list_offer_evidence(db: DB) -> list[OfferEvidenceOut]:
+    """Measured offer effects from decided experiments (used by next best offer)."""
+    return [OfferEvidenceOut.model_validate(e) for e in service.offer_evidence(db)]
 
 
 @router.get("/{experiment_id}", response_model=ExperimentOut, responses=ERRORS)
@@ -135,3 +144,17 @@ async def upload_results(
 def reanalyse(experiment_id: int, body: ReanalyseRequest, db: DB) -> ExperimentOut:
     exp = _call(service.get_experiment, db, experiment_id)
     return _out(db, _call(service.reanalyse, db, exp, body.assumptions, body.actor))
+
+
+@router.post("/{experiment_id}/decide", response_model=ExperimentOut, responses=ERRORS)
+def decide(experiment_id: int, body: DecideRequest, db: DB) -> ExperimentOut:
+    exp = _call(service.get_experiment, db, experiment_id)
+    return _out(db, _call(service.decide, db, exp, body))
+
+
+@router.post("/{experiment_id}/summary", response_model=ExperimentSummaryOut, responses=ERRORS)
+def experiment_summary(experiment_id: int, db: DB) -> ExperimentSummaryOut:
+    exp = _call(service.get_experiment, db, experiment_id)
+    result = _call(service.summary, db, exp)
+    db.commit()
+    return ExperimentSummaryOut(**result)

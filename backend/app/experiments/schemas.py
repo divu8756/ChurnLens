@@ -100,6 +100,46 @@ class AnalysisAssumptions(BaseModel):
     arpu_tolerance: float = Field(default=0.05, ge=0, le=1)
 
 
+class DecideRequest(BaseModel):
+    decision: Literal["ship", "dont_ship", "extend"]
+    decider: str = Field(min_length=1, max_length=100)
+    note: str = Field(min_length=1, max_length=2000)
+    # Only for "extend": when the longer test should end.
+    new_planned_end: date | None = None
+
+
+class OfferEvidenceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    experiment_id: int
+    offer: str
+    segment_description: str | None
+    decision: str
+    decided_at: datetime
+    n_treatment: int
+    n_control: int
+    treatment_churn: float
+    control_churn: float
+    itt_difference: float
+    ci_low: float
+    ci_high: float
+    acceptance_rate: float | None
+    retention_lift_per_acceptor: float | None
+
+
+class SummaryFigure(BaseModel):
+    source_key: str
+    value: float
+    display: str
+
+
+class ExperimentSummaryOut(BaseModel):
+    sentences: list[str]
+    figures: list[SummaryFigure]
+    source: Literal["ai", "template"]
+    verdict: str
+    problems: list[str]
+
+
 class ReanalyseRequest(BaseModel):
     actor: str = Field(min_length=1, max_length=100)
     assumptions: AnalysisAssumptions

@@ -6,10 +6,21 @@ Project root: /Users/divyanshusrivastava/ChurnLens
 T5c.4 (Summary, decision gate, feedback loop, UI)
 
 ## Next step
-T5c.4: prompts/experiment_summary.v1.md + validated LLM summary, POST
-/experiments/{id}/decide, offer_evidence feedback into offer_node
-("experiment-proven" vs "observational"), Experiments tab (list, design
-wizard with live sample size, approval, results view, audit trail).
+T5c.4 backend is DONE (backend 343 tests green, types regenerated), but was
+NOT yet committed when the session paused: first run check_secrets.py and
+commit it ("feat(experiments): validated summary, decision gate, offer
+evidence feedback (T5c.4 backend)"). Built: prompts/experiment_summary.v1.md
++ app/experiments/summary.py (5 validated sentences, retry, template),
+POST /experiments/{id}/summary (cached in analysis), POST /experiments/{id}/decide
+(ship blocked on SRM; extend -> running; ship/dont_ship write offer_evidence
+unless SRM failed), GET /experiments/offer-evidence, migration 0004,
+NboConfig.evidence + "evidence" label per NBO row and summary.offer_evidence.
+Remaining for T5c.4: the frontend Experiments tab (list with status chips,
+design wizard with live sample size as MDE/power sliders move -> needs a
+stateless POST /experiments/design preview endpoint, approval screen, results
+view with per-arm bars + CI whiskers, forest plot, SRM/balance/guardrail
+strip, validated summary, verdict, decision form, audit trail) and the
+"experiment-proven" / "observational" label on offer cards; then T5c.5.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.

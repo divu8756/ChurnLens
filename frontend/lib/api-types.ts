@@ -56,6 +56,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/experiments/offer-evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Offer Evidence
+         * @description Measured offer effects from decided experiments (used by next best offer).
+         */
+        get: operations["list_offer_evidence_experiments_offer_evidence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/experiments/{experiment_id}": {
         parameters: {
             query?: never;
@@ -142,6 +162,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/experiments/{experiment_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide */
+        post: operations["decide_experiments__experiment_id__decide_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/experiments/{experiment_id}/results": {
         parameters: {
             query?: never;
@@ -153,6 +190,23 @@ export interface paths {
         put?: never;
         /** Upload Results */
         post: operations["upload_results_experiments__experiment_id__results_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/experiments/{experiment_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Experiment Summary */
+        post: operations["experiment_summary_experiments__experiment_id__summary_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -625,6 +679,20 @@ export interface components {
             /** Score Formula */
             score_formula: string;
         };
+        /** DecideRequest */
+        DecideRequest: {
+            /** Decider */
+            decider: string;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "ship" | "dont_ship" | "extend";
+            /** New Planned End */
+            new_planned_end?: string | null;
+            /** Note */
+            note: string;
+        };
         /** DoneEvent */
         DoneEvent: {
             /** Final Error */
@@ -855,6 +923,22 @@ export interface components {
             offer: string;
             /** Status */
             status: string;
+        };
+        /** ExperimentSummaryOut */
+        ExperimentSummaryOut: {
+            /** Figures */
+            figures: components["schemas"]["SummaryFigure"][];
+            /** Problems */
+            problems: string[];
+            /** Sentences */
+            sentences: string[];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "ai" | "template";
+            /** Verdict */
+            verdict: string;
         };
         /**
          * ExperimentUpdate
@@ -1226,6 +1310,10 @@ export interface components {
             excluded_by_discount?: string[];
             /** Formula */
             formula: string;
+            /** Offer Evidence */
+            offer_evidence?: {
+                [key: string]: components["schemas"]["OfferEvidenceInfo"];
+            };
             /** Offer Models */
             offer_models?: {
                 [key: string]: components["schemas"]["OfferModelInfo"];
@@ -1255,6 +1343,8 @@ export interface components {
             customer_value: number;
             /** Eligible Offers */
             eligible_offers: number;
+            /** Evidence */
+            evidence?: ("experiment-proven" | "observational") | null;
             /** Expected Value */
             expected_value: number;
             /** Formula */
@@ -1418,6 +1508,63 @@ export interface components {
             warnings?: string[];
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * OfferEvidenceInfo
+         * @description Where an offer's retention effect comes from (Phase 5c feedback loop).
+         */
+        OfferEvidenceInfo: {
+            /** Ci High */
+            ci_high?: number | null;
+            /** Ci Low */
+            ci_low?: number | null;
+            /** Decision */
+            decision?: string | null;
+            /** Experiment Id */
+            experiment_id?: number | null;
+            /** Itt Difference */
+            itt_difference?: number | null;
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "experiment-proven" | "observational";
+            /** Retention Lift Per Acceptor */
+            retention_lift_per_acceptor?: number | null;
+        };
+        /** OfferEvidenceOut */
+        OfferEvidenceOut: {
+            /** Acceptance Rate */
+            acceptance_rate: number | null;
+            /** Ci High */
+            ci_high: number;
+            /** Ci Low */
+            ci_low: number;
+            /** Control Churn */
+            control_churn: number;
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /** Decision */
+            decision: string;
+            /** Experiment Id */
+            experiment_id: number;
+            /** Itt Difference */
+            itt_difference: number;
+            /** N Control */
+            n_control: number;
+            /** N Treatment */
+            n_treatment: number;
+            /** Offer */
+            offer: string;
+            /** Retention Lift Per Acceptor */
+            retention_lift_per_acceptor: number | null;
+            /** Segment Description */
+            segment_description: string | null;
+            /** Treatment Churn */
+            treatment_churn: number;
         };
         /** OfferMessageResponse */
         OfferMessageResponse: {
@@ -1883,6 +2030,15 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** SummaryFigure */
+        SummaryFigure: {
+            /** Display */
+            display: string;
+            /** Source Key */
+            source_key: string;
+            /** Value */
+            value: number;
+        };
         /** SurvivalCurve */
         SurvivalCurve: {
             /** Ci Lower */
@@ -2193,6 +2349,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_offer_evidence_experiments_offer_evidence_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferEvidenceOut"][];
                 };
             };
         };
@@ -2616,6 +2792,77 @@ export interface operations {
             };
         };
     };
+    decide_experiments__experiment_id__decide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     upload_results_experiments__experiment_id__results_post: {
         parameters: {
             query?: never;
@@ -2638,6 +2885,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExperimentOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    experiment_summary_experiments__experiment_id__summary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentSummaryOut"];
                 };
             };
             /** @description Not Found */

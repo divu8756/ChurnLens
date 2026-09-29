@@ -908,6 +908,50 @@
         "title": "DataHealth",
         "type": "object"
       },
+      "DecideRequest": {
+        "properties": {
+          "decider": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Decider",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "ship",
+              "dont_ship",
+              "extend"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "new_planned_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Planned End"
+          },
+          "note": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "decider",
+          "note"
+        ],
+        "title": "DecideRequest",
+        "type": "object"
+      },
       "DoneEvent": {
         "properties": {
           "final_error": {
@@ -1691,6 +1735,52 @@
           "decision"
         ],
         "title": "ExperimentSummary",
+        "type": "object"
+      },
+      "ExperimentSummaryOut": {
+        "properties": {
+          "figures": {
+            "items": {
+              "$ref": "#/components/schemas/SummaryFigure"
+            },
+            "title": "Figures",
+            "type": "array"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "sentences": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sentences",
+            "type": "array"
+          },
+          "source": {
+            "enum": [
+              "ai",
+              "template"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "verdict": {
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sentences",
+          "figures",
+          "source",
+          "verdict",
+          "problems"
+        ],
+        "title": "ExperimentSummaryOut",
         "type": "object"
       },
       "ExperimentUpdate": {
@@ -2967,6 +3057,13 @@
             "title": "Formula",
             "type": "string"
           },
+          "offer_evidence": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OfferEvidenceInfo"
+            },
+            "title": "Offer Evidence",
+            "type": "object"
+          },
           "offer_models": {
             "additionalProperties": {
               "$ref": "#/components/schemas/OfferModelInfo"
@@ -3021,6 +3118,21 @@
           "eligible_offers": {
             "title": "Eligible Offers",
             "type": "integer"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "enum": [
+                  "experiment-proven",
+                  "observational"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
           },
           "expected_value": {
             "title": "Expected Value",
@@ -3607,6 +3719,190 @@
           "offered"
         ],
         "title": "OfferEffectiveness",
+        "type": "object"
+      },
+      "OfferEvidenceInfo": {
+        "description": "Where an offer's retention effect comes from (Phase 5c feedback loop).",
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "experiment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Id"
+          },
+          "itt_difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itt Difference"
+          },
+          "label": {
+            "enum": [
+              "experiment-proven",
+              "observational"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "retention_lift_per_acceptor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Lift Per Acceptor"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "OfferEvidenceInfo",
+        "type": "object"
+      },
+      "OfferEvidenceOut": {
+        "properties": {
+          "acceptance_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance Rate"
+          },
+          "ci_high": {
+            "title": "Ci High",
+            "type": "number"
+          },
+          "ci_low": {
+            "title": "Ci Low",
+            "type": "number"
+          },
+          "control_churn": {
+            "title": "Control Churn",
+            "type": "number"
+          },
+          "decided_at": {
+            "format": "date-time",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "integer"
+          },
+          "itt_difference": {
+            "title": "Itt Difference",
+            "type": "number"
+          },
+          "n_control": {
+            "title": "N Control",
+            "type": "integer"
+          },
+          "n_treatment": {
+            "title": "N Treatment",
+            "type": "integer"
+          },
+          "offer": {
+            "title": "Offer",
+            "type": "string"
+          },
+          "retention_lift_per_acceptor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Lift Per Acceptor"
+          },
+          "segment_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Description"
+          },
+          "treatment_churn": {
+            "title": "Treatment Churn",
+            "type": "number"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "offer",
+          "segment_description",
+          "decision",
+          "decided_at",
+          "n_treatment",
+          "n_control",
+          "treatment_churn",
+          "control_churn",
+          "itt_difference",
+          "ci_low",
+          "ci_high",
+          "acceptance_rate",
+          "retention_lift_per_acceptor"
+        ],
+        "title": "OfferEvidenceOut",
         "type": "object"
       },
       "OfferMessageResponse": {
@@ -5156,6 +5452,29 @@
         "title": "StreamEvents",
         "type": "object"
       },
+      "SummaryFigure": {
+        "properties": {
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "source_key",
+          "value",
+          "display"
+        ],
+        "title": "SummaryFigure",
+        "type": "object"
+      },
       "SurvivalCurve": {
         "properties": {
           "ci_lower": {
@@ -5742,6 +6061,32 @@
         ]
       }
     },
+    "/experiments/offer-evidence": {
+      "get": {
+        "description": "Measured offer effects from decided experiments (used by next best offer).",
+        "operationId": "list_offer_evidence_experiments_offer_evidence_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OfferEvidenceOut"
+                  },
+                  "title": "Response List Offer Evidence Experiments Offer Evidence Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Offer Evidence",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
     "/experiments/{experiment_id}": {
       "get": {
         "operationId": "get_experiment_experiments__experiment_id__get",
@@ -6271,6 +6616,98 @@
         ]
       }
     },
+    "/experiments/{experiment_id}/decide": {
+      "post": {
+        "operationId": "decide_experiments__experiment_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
     "/experiments/{experiment_id}/results": {
       "post": {
         "operationId": "upload_results_experiments__experiment_id__results_post",
@@ -6358,6 +6795,88 @@
           }
         },
         "summary": "Upload Results",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/summary": {
+      "post": {
+        "operationId": "experiment_summary_experiments__experiment_id__summary_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Experiment Summary",
         "tags": [
           "experiments"
         ]

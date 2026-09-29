@@ -145,3 +145,26 @@ class Outcome(Base):
     churned: Mapped[int] = mapped_column(Integer)
     revenue: Mapped[float | None] = mapped_column(Float)
     complaints: Mapped[float | None] = mapped_column(Float)
+
+
+class OfferEvidence(Base):
+    """Measured effect of an offer from a decided experiment (feeds next best offer)."""
+
+    __tablename__ = "offer_evidence"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    experiment_id: Mapped[int] = mapped_column(ForeignKey("experiments.id"), unique=True)
+    offer: Mapped[str] = mapped_column(String(200), index=True)
+    segment_description: Mapped[str | None] = mapped_column(Text)
+    decision: Mapped[str] = mapped_column(String(20))
+    decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    n_treatment: Mapped[int] = mapped_column(Integer)
+    n_control: Mapped[int] = mapped_column(Integer)
+    treatment_churn: Mapped[float] = mapped_column(Float)
+    control_churn: Mapped[float] = mapped_column(Float)
+    itt_difference: Mapped[float] = mapped_column(Float)
+    ci_low: Mapped[float] = mapped_column(Float)
+    ci_high: Mapped[float] = mapped_column(Float)
+    acceptance_rate: Mapped[float | None] = mapped_column(Float)
+    # ITT churn reduction / acceptance rate (effect per acceptor, clipped to [0, 1]).
+    retention_lift_per_acceptor: Mapped[float | None] = mapped_column(Float)
