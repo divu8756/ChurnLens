@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5.4
+T5.5
 
 ## Next step
-T5.4: validator node (source keys, tolerance, text number scan, retries).
+T5.5: one real end-to-end Telco run with Gemini (cap 60 calls), report in docs/runs/.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -157,6 +157,15 @@ T5.4: validator node (source keys, tolerance, text number scan, retries).
   1-5; <= 10 insights, <= 8 recommendations), digest-only prompts,
   validator feedback injected as "Fix these issues", empty list + error on
   LLM failure. 195 tests.
+- T5.4: app/validation.py + validator_node: source_key must resolve and be
+  numeric; value and display match (1% rel / 0.005 abs, fraction vs
+  percent); every standalone number in text fields must be a declared
+  figure ("5G", "Q1", "90d" ignored; "< 0.001" accepted when true);
+  recommendation impact must cite impact_estimates. Failing agents get
+  feedback and are retried (max 2 each); then failing items are dropped.
+  Validator writes its own final_insights / final_recommendations (one
+  producer per key). Graph loop test: bad recommendation -> retried with
+  feedback -> passes. 209 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

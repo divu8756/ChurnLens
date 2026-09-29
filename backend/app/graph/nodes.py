@@ -16,6 +16,7 @@ from app.agents.ingest import ingest_node
 from app.agents.llm_agents import insight_agent_node, recommendation_agent_node
 from app.agents.modelling import modelling_node
 from app.agents.schema_agent import schema_agent_node
+from app.agents.validator import validator_node
 from app.graph import builder as b
 from app.graph.builder import NodeFn
 
@@ -34,4 +35,5 @@ def default_nodes() -> dict[str, NodeFn]:
         b.IMPACT: impact_node,
         b.INSIGHT_AGENT: insight_agent_node,
         b.RECOMMENDATION_AGENT: recommendation_agent_node,
+        b.VALIDATOR: validator_node,
     }

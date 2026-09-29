@@ -73,6 +73,9 @@ class ChurnState(BaseModel):
     validation_report: JsonDict | None = None
     validator_feedback: JsonDict = Field(default_factory=dict)
     retry_counts: dict[str, int] = Field(default_factory=dict)
+    # validator output: the agents' items that passed (failing items dropped)
+    final_insights: list[JsonDict] = Field(default_factory=list)
+    final_recommendations: list[JsonDict] = Field(default_factory=list)
     report_paths: JsonDict | None = None
 
     # error_node
