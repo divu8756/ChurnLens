@@ -160,6 +160,28 @@ export interface components {
             /** Sheet Name */
             sheet_name?: string | null;
         };
+        /** ClassBalance */
+        ClassBalance: {
+            /** Negative */
+            negative: number;
+            /** Positive */
+            positive: number;
+            /** Positive Label */
+            positive_label: string;
+            /** Positive Rate */
+            positive_rate: number;
+        };
+        /** CleaningStep */
+        CleaningStep: {
+            /** Column */
+            column?: string | null;
+            /** Detail */
+            detail: string;
+            /** Rows Affected */
+            rows_affected: number;
+            /** Step */
+            step: string;
+        };
         /** ConfirmedColumn */
         ConfirmedColumn: {
             /** Name */
@@ -184,6 +206,34 @@ export interface components {
             target_column: string;
             /** Time Column */
             time_column?: string | null;
+        };
+        /** DataHealth */
+        DataHealth: {
+            class_balance: components["schemas"]["ClassBalance"];
+            /** Columns */
+            columns: number;
+            /** Duplicates Removed */
+            duplicates_removed: number;
+            /** Health Score */
+            health_score: number;
+            /** Missing Pct After */
+            missing_pct_after: {
+                [key: string]: number;
+            };
+            /** Missing Pct Before */
+            missing_pct_before: {
+                [key: string]: number;
+            };
+            /** Outliers Flagged */
+            outliers_flagged: {
+                [key: string]: components["schemas"]["OutlierCounts"];
+            };
+            /** Rows After */
+            rows_after: number;
+            /** Rows Before */
+            rows_before: number;
+            /** Score Formula */
+            score_formula: string;
         };
         /** DoneEvent */
         DoneEvent: {
@@ -214,6 +264,13 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** LabelOption */
+        LabelOption: {
+            /** Column */
+            column: string;
+            /** Values */
+            values: string[];
+        };
         /** NodeFinishEvent */
         NodeFinishEvent: {
             /** Detail */
@@ -230,6 +287,13 @@ export interface components {
         NodeStartEvent: {
             /** Node */
             node: string;
+        };
+        /** OutlierCounts */
+        OutlierCounts: {
+            /** Iqr */
+            iqr: number;
+            /** Zscore */
+            zscore: number;
         };
         /** PredictionsPage */
         PredictionsPage: {
@@ -262,13 +326,29 @@ export interface components {
              */
             semantic_type: "id" | "numeric" | "categorical" | "binary" | "datetime" | "text";
         };
+        /**
+         * ResultsPayload
+         * @description Keys the dashboard reads are typed; the rest pass through until their tab is built.
+         */
+        ResultsPayload: {
+            /** Cleaning Log */
+            cleaning_log?: components["schemas"]["CleaningStep"][] | null;
+            data_health?: components["schemas"]["DataHealth"] | null;
+            /** Errors */
+            errors?: components["schemas"]["ErrorEvent"][];
+            /** Final Error */
+            final_error?: string | null;
+            /** Positive Label */
+            positive_label?: string | null;
+            /** Target Column */
+            target_column?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** ResultsResponse */
         ResultsResponse: {
             predictions: components["schemas"]["PredictionsPage"];
-            /** Results */
-            results: {
-                [key: string]: unknown;
-            };
+            results: components["schemas"]["ResultsPayload"];
             /** Session Id */
             session_id: string;
             /**
@@ -304,6 +384,8 @@ export interface components {
             columns: components["schemas"]["ProposedColumn"][];
             /** Id Columns */
             id_columns?: string[];
+            /** Label Options */
+            label_options?: components["schemas"]["LabelOption"][];
             /** Positive Label */
             positive_label?: string | null;
             /**

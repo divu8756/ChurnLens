@@ -7,7 +7,7 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from app import sessions
-from app.api.contract import HTTPErrorOut, PredictionsPage, ResultsResponse
+from app.api.contract import HTTPErrorOut, PredictionsPage, ResultsPayload, ResultsResponse
 from app.graph.state import ErrorEntry, ProgressEntry
 from app.stats.common import jsonable
 
@@ -81,7 +81,7 @@ def results(
     return ResultsResponse(
         session_id=session_id,
         status=status,
-        results=payload,
+        results=ResultsPayload(**payload),
         predictions=PredictionsPage(**predictions_page(values.get("predictions_path"), page,
                                                        band)),
     )

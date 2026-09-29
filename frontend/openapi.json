@@ -55,6 +55,68 @@
         "title": "Body_upload_upload_post",
         "type": "object"
       },
+      "ClassBalance": {
+        "properties": {
+          "negative": {
+            "title": "Negative",
+            "type": "integer"
+          },
+          "positive": {
+            "title": "Positive",
+            "type": "integer"
+          },
+          "positive_label": {
+            "title": "Positive Label",
+            "type": "string"
+          },
+          "positive_rate": {
+            "title": "Positive Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "positive",
+          "negative",
+          "positive_rate",
+          "positive_label"
+        ],
+        "title": "ClassBalance",
+        "type": "object"
+      },
+      "CleaningStep": {
+        "properties": {
+          "column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "rows_affected": {
+            "title": "Rows Affected",
+            "type": "integer"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "rows_affected",
+          "detail"
+        ],
+        "title": "CleaningStep",
+        "type": "object"
+      },
       "ConfirmedColumn": {
         "properties": {
           "name": {
@@ -133,6 +195,72 @@
           "positive_label"
         ],
         "title": "ConfirmedSchema",
+        "type": "object"
+      },
+      "DataHealth": {
+        "properties": {
+          "class_balance": {
+            "$ref": "#/components/schemas/ClassBalance"
+          },
+          "columns": {
+            "title": "Columns",
+            "type": "integer"
+          },
+          "duplicates_removed": {
+            "title": "Duplicates Removed",
+            "type": "integer"
+          },
+          "health_score": {
+            "title": "Health Score",
+            "type": "integer"
+          },
+          "missing_pct_after": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Missing Pct After",
+            "type": "object"
+          },
+          "missing_pct_before": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Missing Pct Before",
+            "type": "object"
+          },
+          "outliers_flagged": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OutlierCounts"
+            },
+            "title": "Outliers Flagged",
+            "type": "object"
+          },
+          "rows_after": {
+            "title": "Rows After",
+            "type": "integer"
+          },
+          "rows_before": {
+            "title": "Rows Before",
+            "type": "integer"
+          },
+          "score_formula": {
+            "title": "Score Formula",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rows_before",
+          "rows_after",
+          "columns",
+          "duplicates_removed",
+          "missing_pct_before",
+          "missing_pct_after",
+          "outliers_flagged",
+          "class_balance",
+          "health_score",
+          "score_formula"
+        ],
+        "title": "DataHealth",
         "type": "object"
       },
       "DoneEvent": {
@@ -214,6 +342,27 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "LabelOption": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "column",
+          "values"
+        ],
+        "title": "LabelOption",
+        "type": "object"
+      },
       "NodeFinishEvent": {
         "properties": {
           "detail": {
@@ -260,6 +409,24 @@
           "node"
         ],
         "title": "NodeStartEvent",
+        "type": "object"
+      },
+      "OutlierCounts": {
+        "properties": {
+          "iqr": {
+            "title": "Iqr",
+            "type": "integer"
+          },
+          "zscore": {
+            "title": "Zscore",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "iqr",
+          "zscore"
+        ],
+        "title": "OutlierCounts",
         "type": "object"
       },
       "PredictionsPage": {
@@ -351,15 +518,85 @@
         "title": "ProposedColumn",
         "type": "object"
       },
+      "ResultsPayload": {
+        "additionalProperties": true,
+        "description": "Keys the dashboard reads are typed; the rest pass through until their tab is built.",
+        "properties": {
+          "cleaning_log": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CleaningStep"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cleaning Log"
+          },
+          "data_health": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataHealth"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ErrorEvent"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "final_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Error"
+          },
+          "positive_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Positive Label"
+          },
+          "target_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Column"
+          }
+        },
+        "title": "ResultsPayload",
+        "type": "object"
+      },
       "ResultsResponse": {
         "properties": {
           "predictions": {
             "$ref": "#/components/schemas/PredictionsPage"
           },
           "results": {
-            "additionalProperties": true,
-            "title": "Results",
-            "type": "object"
+            "$ref": "#/components/schemas/ResultsPayload"
           },
           "session_id": {
             "title": "Session Id",
@@ -452,6 +689,13 @@
               "type": "string"
             },
             "title": "Id Columns",
+            "type": "array"
+          },
+          "label_options": {
+            "items": {
+              "$ref": "#/components/schemas/LabelOption"
+            },
+            "title": "Label Options",
             "type": "array"
           },
           "positive_label": {

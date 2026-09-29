@@ -147,3 +147,14 @@ def test_results_errors_for_bad_requests(finished_session):
     assert client.get(f"/results/{'f' * 32}").status_code == 410
     assert client.get(f"/results/{sid}?band=Extreme").status_code == 422
     assert client.get(f"/results/{sid}?page=0").status_code == 422
+
+
+def test_results_types_data_health_and_keeps_other_keys(finished_session):
+    client, sid = finished_session
+    results = client.get(f"/results/{sid}").json()["results"]
+    health = results["data_health"]
+    assert 0 <= health["health_score"] <= 100
+    assert set(health["class_balance"]) == {"positive", "negative", "positive_rate",
+                                            "positive_label"}
+    assert all({"step", "rows_affected", "detail"} <= set(s) for s in results["cleaning_log"])
+    assert "model_metrics" in results and "hypothesis_results" in results

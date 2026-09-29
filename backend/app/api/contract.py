@@ -6,7 +6,7 @@ so every shape the browser reads is declared here or on a router.
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schema_validation import SemanticType
 
@@ -21,6 +21,11 @@ class ProposedColumn(BaseModel):
     confidence: float
 
 
+class LabelOption(BaseModel):
+    column: str
+    values: list[str]
+
+
 class SchemaProposalOut(BaseModel):
     columns: list[ProposedColumn]
     target_column: str | None = None
@@ -31,6 +36,7 @@ class SchemaProposalOut(BaseModel):
     reasoning: str = ""
     source: Literal["ai+rules", "rules"]
     target_candidates: list[str] = Field(default_factory=list)
+    label_options: list[LabelOption] = Field(default_factory=list)
 
 
 # ------------------------------------------------------------------ SSE events
@@ -86,11 +92,55 @@ class PredictionsPage(BaseModel):
     items: list[dict[str, Any]]
 
 
+class CleaningStep(BaseModel):
+    step: str
+    column: str | None = None
+    rows_affected: int
+    detail: str
+
+
+class OutlierCounts(BaseModel):
+    iqr: int
+    zscore: int
+
+
+class ClassBalance(BaseModel):
+    positive: int
+    negative: int
+    positive_rate: float
+    positive_label: str
+
+
+class DataHealth(BaseModel):
+    rows_before: int
+    rows_after: int
+    columns: int
+    duplicates_removed: int
+    missing_pct_before: dict[str, float]
+    missing_pct_after: dict[str, float]
+    outliers_flagged: dict[str, OutlierCounts]
+    class_balance: ClassBalance
+    health_score: int
+    score_formula: str
+
+
+class ResultsPayload(BaseModel):
+    """Keys the dashboard reads are typed; the rest pass through until their tab is built."""
+
+    model_config = ConfigDict(extra="allow")
+
+    target_column: str | None = None
+    positive_label: str | None = None
+    cleaning_log: list[CleaningStep] | None = None
+    data_health: DataHealth | None = None
+    final_error: str | None = None
+    errors: list[ErrorEvent] = Field(default_factory=list)
+
+
 class ResultsResponse(BaseModel):
     session_id: str
     status: RunStatus
-    # Typed per dashboard tab as the tabs are built (T6.3).
-    results: dict[str, Any]
+    results: ResultsPayload
     predictions: PredictionsPage
 
 

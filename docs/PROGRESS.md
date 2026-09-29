@@ -3,10 +3,11 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T6.2 (upload, progress, schema confirmation, data health)
+T6.3a (Executive Overview tab)
 
 ## Next step
-T6.2 on branch phase-6: upload page, live progress stepper, schema confirmation, Data Health.
+T6.3a on branch phase-6 (T6.1 and T6.2 are committed and pushed there):
+add a typed results model for the keys the tab reads, then build the tab.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -191,6 +192,21 @@ T6.2 on branch phase-6: upload page, live progress stepper, schema confirmation,
   and unmount). vitest in CI. Fixed a flaky backend test: test_runs left
   background runs going into the next test's fake LLM; the fixture now waits
   for them. Backend 215 tests, frontend 29 tests.
+- T6.2: upload page (drag-drop, browser type/size checks, sheet picker,
+  Try sample data, anonymised-data warning), /analysis/[sessionId] (starts
+  the run idempotently, so a reload re-attaches), live progress stepper
+  (parallel nodes side by side; skipped/failed/waiting shown), schema
+  confirmation (type per column, ID = type "ID", target + positive-label
+  picker from new proposal.label_options, time and revenue pickers, AI
+  reasoning, local checks + server 422 problems inline), Data Health
+  (score + formula, row counts, class balance, missing % chart in Recharts,
+  cleaning log). Loading/empty/error/expired states; no horizontal scroll at
+  375 px. Backend: results.data_health / cleaning_log typed in the contract.
+  Checked in a browser against a live backend on the Telco sample: rules
+  fallback proposal, confirm, Data Health after cleaning (score 81,
+  7,014 -> 7,000 rows), run done (10 insights, 5 recommendations, 12/15
+  verified), offer skipped, reload re-attaches, fake session -> expired, the
+  stream resumed once with ?after=4. Backend 216 tests, frontend 39 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -231,6 +247,7 @@ T6.2 on branch phase-6: upload page, live progress stepper, schema confirmation,
 - Dev dependencies added in T6.1 (frontend): openapi-typescript (types from
   OpenAPI), vitest + @testing-library/react + jsdom (hook tests, required by
   the runbook). @types/node raised to ^24 to match Node 24 (vitest's peer range).
+- recharts 3 added in T6.2 (listed in the CLAUDE.md stack) for dashboard charts.
 - Results sub-objects are still dict[str, Any] in the contract; each T6.3 tab
   adds typed models for the keys it reads.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.

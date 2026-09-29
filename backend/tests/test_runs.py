@@ -121,6 +121,9 @@ def test_graph_pauses_at_human_review_with_proposal(client):
     pending = client.app.state.runs.pending_interrupt(session_id)
     assert pending["proposal"]["target_column"] == "Churn"
     assert pending["proposal"]["source"] == "rules"  # LLM failed -> heuristics
+    options = {o["column"]: o["values"] for o in pending["proposal"]["label_options"]}
+    assert options["Churn"] == ["No", "Yes"]
+    assert "tenure" not in options  # only columns with exactly two values
     assert [e.event for e in run.events][-1] == "awaiting_confirmation"
 
 
