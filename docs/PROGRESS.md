@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 4 gate
+Phase 4 gate (PR open)
 
 ## Next step
-Phase 4 gate: review, end-to-end Telco run on a live server, PR, CI, merge. Then T5.1.
+Merge the Phase 4 PR when CI is green, then T5.1 (results digest + impact node).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -130,6 +130,11 @@ Phase 4 gate: review, end-to-end Telco run on a live server, PR, CI, merge. Then
   100 per page, filter by band, 410/409/422 errors; works from the
   checkpoint after a restart. Fixed: SHAP column map crashed when a model
   had no categorical columns. 173 tests.
+- Phase 4 gate: live end-to-end Telco run: analysis 10.8 s after
+  confirmation, LR test ROC-AUC 0.831, bands High 2,239 / Medium 1,862 /
+  Low 2,899, /results payload 324 KB. Fixed (Medium): schema proposal took
+  ~68 s when Gemini was overloaded; structured_call now takes max_attempts
+  and the schema agent uses 2 (the rules fallback is good). 174 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -245,6 +250,10 @@ flowchart TD
   customer traits. They still enter segmentation and hypothesis tests until
   Phase 5b confirms offer_columns; then exclude them from segmentation and
   the churn model (runbook T4.1 / data dictionary).
+- Risk bands use the chosen model's raw probabilities. With class_weight=
+  "balanced" these run high (Telco: 32% High vs ~25% churn). Phase 5d adds
+  calibration (CalibratedClassifierCV on train); switch bands and money
+  metrics to calibrated probabilities there.
 - Hypothesis test cap (40) keeps columns in data order; with more candidates
   the last ones are skipped (Telco: OfferCost).
 - Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
