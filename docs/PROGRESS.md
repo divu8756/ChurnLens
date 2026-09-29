@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T4.2
+T4.3
 
 ## Next step
-T4.2: SHAP (TreeExplainer / fallback) and statsmodels odds ratios; driver_impact.
+T4.3: score all customers, risk bands, top 3 SHAP reasons, GET /results/{id}.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -114,6 +114,14 @@ T4.2: SHAP (TreeExplainer / fallback) and statsmodels odds ratios; driver_impact
   permutation importance on original columns; model saved with joblib.
   Telco (treatments excluded): LR chosen, test ROC-AUC 0.829, PR-AUC 0.611;
   top drivers Contract, tenure, InternetService. 154 tests.
+- T4.2: stats/explain.py: SHAP on the chosen model (TreeExplainer, else
+  shap.Explainer with 100-row background; Telco LR -> LinearExplainer),
+  one-hot SHAP summed back to original features, global mean |SHAP| +
+  beeswarm points; statsmodels Logit odds ratios on train (per 1 SD / vs
+  most frequent level, 95% CI), singular and separated terms dropped with
+  a note; driver_impact table (permutation rank, SHAP, OR + CI, BH p) in
+  feature_importance. Explanation failures are non-fatal. ORs equal
+  statsmodels within 1e-9. Telco: Two year vs Month-to-month OR 0.08. 164 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -142,6 +150,8 @@ T4.2: SHAP (TreeExplainer / fallback) and statsmodels odds ratios; driver_impact
   "Unknown"): imputing before the train/test split leaks test data, and some
   blanks are meaningful (NPS, AvgResolutionDays). The model pipeline imputes
   medians on the training split; stats tests drop missing values per test.
+- SHAP explains the chosen model (runbook said the gradient boosting model):
+  per-customer reasons must explain the model that produced the score.
 - pandas pinned to 2.3.3 (not 3.x): lifelines 0.30.3 requires pandas < 3.
   The full suite passes on 2.3.3.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
