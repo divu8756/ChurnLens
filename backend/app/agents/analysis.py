@@ -10,6 +10,7 @@ from app.graph.errors import FatalNodeError
 from app.graph.state import ChurnState, ProgressEntry
 from app.stats.eda import run_eda
 from app.stats.segmentation import run_segmentation
+from app.stats.survival import run_survival
 
 SEGMENTS_FILE = "segments.parquet"
 
@@ -42,3 +43,17 @@ def segmentation_node(state: ChurnState) -> dict[str, Any]:
     return {"segments": result,
             "progress": [ProgressEntry(node="segmentation", status="done",
                                        detail=f"{result['k']} segments")]}
+
+
+def survival_node(state: ChurnState) -> dict[str, Any]:
+    frame, schema = _load(state)
+    result = run_survival(frame, schema)
+    if result["skipped"]:
+        return {"survival_results": result,
+                "progress": [ProgressEntry(node="survival", status="skipped",
+                                           detail=result["reason"])]}
+    median = result["overall"]["median_survival"]
+    detail = (f"median survival {median:g}" if median is not None
+              else "median survival not reached")
+    return {"survival_results": result,
+            "progress": [ProgressEntry(node="survival", status="done", detail=detail)]}

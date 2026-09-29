@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T3.3
+T3.4
 
 ## Next step
-T3.3: survival node (Kaplan-Meier, log-rank) with lifelines.
+T3.4: hypothesis testing node (chi-square/Fisher, Welch/Mann-Whitney, BH).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -88,6 +88,11 @@ T3.3: survival node (Kaplan-Meier, log-rank) with lifelines.
   (size, % of base, churn rate and lift, means, z-scores), auto labels from
   top-2 features; per-customer labels saved to segments.parquet (not state);
   skip path under 2 features. 123 tests.
+- T3.3: stats/survival.py + survival_node (lifelines): KM overall and for the
+  top 3 categoricals by Cramer's V (2-6 levels, groups >= 5 rows), median
+  (or "not reached"), survival at 6/12/24 (null beyond follow-up), 95% CI,
+  multivariate log-rank per variable, curves <= 200 points. KM and log-rank
+  equal lifelines called directly. 132 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -116,6 +121,8 @@ T3.3: survival node (Kaplan-Meier, log-rank) with lifelines.
   "Unknown"): imputing before the train/test split leaks test data, and some
   blanks are meaningful (NPS, AvgResolutionDays). The model pipeline imputes
   medians on the training split; stats tests drop missing values per test.
+- pandas pinned to 2.3.3 (not 3.x): lifelines 0.30.3 requires pandas < 3.
+  The full suite passes on 2.3.3.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).
