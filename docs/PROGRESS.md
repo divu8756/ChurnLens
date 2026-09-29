@@ -3,13 +3,11 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T6.4 (end-to-end Playwright check)
+Phase 6 gate (review, PR)
 
 ## Next step
-T6.4 on branch phase-6 (all six tabs committed and pushed): Playwright test
-of the full Telco flow against a local backend with the LLM mocked (upload
-sample, confirm schema, wait for done, open every tab, no console errors),
-as a separate CI job on PRs to main. Then S6 checkpoint and the Phase 6 gate.
+Phase 6 gate: strict review of git diff main...phase-6, fix High/Medium,
+push, open the PR; the human merges it (merges need their approval).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -276,6 +274,15 @@ as a separate CI job on PRs to main. Then S6 checkpoint and the Phase 6 gate.
   "-0.0". Live check fixed a heatmap clipped to 4 columns and uneven column
   widths, and a legend overlapping the axis label. Tab order now follows
   SPEC. Backend 227, frontend 82 tests.
+- T6.4: Playwright E2E (frontend/e2e/telco.spec.ts, playwright.config.ts,
+  `npm run e2e`): real API via scripts/e2e_server.py with a FakeLLM (rules
+  schema; one insight and one recommendation that cite real deterministic
+  Telco values and pass the real validator; LLM env forced to placeholders)
+  plus a production build on :3100. Flow: sample -> confirm schema -> Data
+  Health -> dashboard -> every tab with key assertions (7,000 / 25.66%,
+  KaTeX, band filter, CSV link, recommendation impact) -> no console
+  errors. ~20 s locally. New CI job `e2e` on PRs to main (report uploaded
+  on failure). @playwright/test 1.63 added (runbook).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -386,6 +393,11 @@ flowchart TD
    large data, tests for fan-out merge and resume.
 
 ## Checkpoints for the human
+- S6 (end of Phase 6, MVP): run the app locally and click through all tabs:
+  backend `cd backend && .venv/bin/uvicorn app.main:app --port 8010`,
+  frontend `cd frontend && NEXT_PUBLIC_API_URL=http://localhost:8010 npm run dev`,
+  open http://localhost:3000 and press "Try sample data". Or run
+  `cd frontend && npm run e2e` for the automated walk-through.
 - S1 (T1.1): architecture summary, graph flow and risks are under Decisions above.
 - S5 (T5.5): live Telco run with real Gemini, see docs/runs/phase5_telco_run.md
   (11/15 AI items verified by the validator; top insight: Month-to-month
