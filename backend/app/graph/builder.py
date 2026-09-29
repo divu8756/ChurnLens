@@ -16,6 +16,7 @@ from langgraph.errors import GraphBubbleUp
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from app.graph.errors import FatalNodeError
 from app.graph.state import ChurnState, ErrorEntry, ProgressEntry
 
 NodeFn = Callable[[ChurnState], dict[str, Any]]
@@ -43,10 +44,6 @@ ALL_NODES = (
     VALIDATOR, REPORT, ERROR_NODE,
 )
 PARALLEL_ANALYSIS = (EDA, SEGMENTATION, HYPOTHESIS)
-
-
-class FatalNodeError(Exception):
-    """Raised by a node when the run cannot continue (routes to error_node)."""
 
 
 def safe_node(name: str, fn: NodeFn) -> NodeFn:

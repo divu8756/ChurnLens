@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T2.2
+T2.3
 
 ## Next step
-T2.2: POST /upload, POST /sample, ingest_node, session cleanup.
+T2.3: schema agent prompt file + schema_agent node with heuristics fallback.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -40,6 +40,12 @@ T2.2: POST /upload, POST /sample, ingest_node, session cleanup.
   interrupt() passes through), conditional survival/offer edges, validator
   retry routing, SQLite checkpointer factory (Postgres behind DATABASE_URL,
   driver installed at deploy time), docs/graph.md. Backend 38 tests.
+- T2.2: POST /upload (extension + real content checks, size, row limits,
+  latin-1 fallback, duplicate columns renamed with a warning, ragged rows
+  rejected), multi-sheet xlsx flow (choose_sheet then POST
+  /upload/{id}/sheet), POST /sample, parquet under DATA_DIR/sessions/{id},
+  2-hour cleanup loop, session ids validated against path traversal,
+  ingest_node. Backend 61 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -138,6 +144,8 @@ flowchart TD
   Pro when one exists) in backend/.env.
 
 ## Known issues
+- Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
+  yet; planned for Phase 8 hardening.
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

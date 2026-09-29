@@ -17,9 +17,10 @@ os.environ.update(TEST_ENV)
 
 
 @pytest.fixture(autouse=True)
-def _fresh_settings():
+def _fresh_settings(tmp_path, monkeypatch):
     from app.config import get_settings
 
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
