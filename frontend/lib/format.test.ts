@@ -18,6 +18,9 @@ describe("format", () => {
   it("formats statistics to 2 dp", () => {
     expect(formatStat(0.8308140608)).toBe("0.83");
     expect(formatStat(undefined)).toBe("–");
+    expect(formatStat(-0.004, 1)).toBe("0.0");
+    expect(formatStat(-0.04, 1)).toBe("0.0");
+    expect(formatStat(-0.06, 1)).toBe("-0.1");
   });
 
   it("shows tiny p-values as < 0.001", () => {

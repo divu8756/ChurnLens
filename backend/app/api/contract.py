@@ -368,6 +368,123 @@ class HypothesisResults(Passthrough):
     skipped: list[SkippedTest] = Field(default_factory=list)
 
 
+class GroupSummary(BaseModel):
+    n: int
+    mean: float | None = None
+    median: float | None = None
+    std: float | None = None
+
+
+class Histogram(BaseModel):
+    edges: list[float]
+    counts: list[int]
+
+
+class NumericSummary(Passthrough):
+    count: int
+    missing: int
+    churned: GroupSummary
+    retained: GroupSummary
+    mean: float | None = None
+    median: float | None = None
+    histogram: Histogram
+
+
+class LevelRate(BaseModel):
+    level: str
+    n: int
+    churned: int
+    churn_rate: float
+
+
+class CategorySummary(BaseModel):
+    levels: list[LevelRate]
+    levels_folded_into_other: int = 0
+
+
+class Correlation(BaseModel):
+    columns: list[str] = Field(default_factory=list)
+    matrix: list[list[float | None]] = Field(default_factory=list)
+    with_target: dict[str, float | None] = Field(default_factory=dict)
+
+
+class TenureBand(BaseModel):
+    band: str
+    n: int
+    churned: int
+    churn_rate: float
+
+
+class TenureBands(Passthrough):
+    bands: list[TenureBand] = Field(default_factory=list)
+
+
+class EdaResults(Passthrough):
+    overview: dict[str, float | int | None]
+    numeric: dict[str, NumericSummary] = Field(default_factory=dict)
+    categorical: dict[str, CategorySummary] = Field(default_factory=dict)
+    correlation: Correlation = Field(default_factory=Correlation)
+    tenure_bands: TenureBands | None = None
+
+
+class Segment(Passthrough):
+    segment: int
+    label: str
+    size: int
+    pct_of_base: float
+    churn_rate: float
+    churn_lift: float | None = None
+    feature_means: dict[str, float | None] = Field(default_factory=dict)
+    feature_z: dict[str, float | None] = Field(default_factory=dict)
+
+
+class Segments(Passthrough):
+    skipped: bool
+    reason: str | None = None
+    k: int | None = None
+    features: list[str] = Field(default_factory=list)
+    overall_churn_rate: float | None = None
+    segments: list[Segment] = Field(default_factory=list)
+
+
+class SurvivalCurve(BaseModel):
+    time: list[float]
+    survival: list[float | None]
+    ci_lower: list[float | None]
+    ci_upper: list[float | None]
+
+
+class KmSummary(Passthrough):
+    label: str
+    n: int
+    events: int
+    median_survival: float | None = None
+    median_reached: bool
+    survival_at: dict[str, float | None] = Field(default_factory=dict)
+    curve: SurvivalCurve
+
+
+class LogRank(BaseModel):
+    statistic: float | None = None
+    p_value: float | None = None
+    df: int | None = None
+
+
+class SurvivalGroup(Passthrough):
+    column: str
+    cramers_v: float | None = None
+    logrank: LogRank
+    curves: list[KmSummary]
+
+
+class SurvivalResults(Passthrough):
+    skipped: bool
+    reason: str | None = None
+    time_column: str | None = None
+    overall: KmSummary | None = None
+    by_group: list[SurvivalGroup] = Field(default_factory=list)
+
+
 class ResultsPayload(BaseModel):
     """Keys the dashboard reads are typed; the rest pass through until their tab is built."""
 
@@ -383,6 +500,9 @@ class ResultsPayload(BaseModel):
     shap_summary: ShapSummary | None = None
     odds_ratios: OddsRatios | None = None
     hypothesis_results: HypothesisResults | None = None
+    eda_results: EdaResults | None = None
+    segments: Segments | None = None
+    survival_results: SurvivalResults | None = None
     final_insights: list[Insight] | None = None
     final_recommendations: list[Recommendation] | None = None
     validation_report: ValidationReport | None = None

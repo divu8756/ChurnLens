@@ -3,13 +3,13 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T6.3e (Recommendations tab)
+T6.4 (end-to-end Playwright check)
 
 ## Next step
-T6.3e on branch phase-6 (T6.1-T6.3d committed and pushed): build
-components/recommendations/ from results.final_recommendations (already
-typed), grouped Quick wins / Medium-term / Strategic, sorted by priority,
-and register the tab in components/dashboard/dashboard.tsx.
+T6.4 on branch phase-6 (all six tabs committed and pushed): Playwright test
+of the full Telco flow against a local backend with the LLM mocked (upload
+sample, confirm schema, wait for done, open every tab, no console errors),
+as a separate CI job on PRs to main. Then S6 checkpoint and the Phase 6 gate.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -258,6 +258,24 @@ and register the tab in components/dashboard/dashboard.tsx.
   view now unmounts the progress/Data Health grid instead of hiding it.
   Live check: 2,899 Low rows, search "yqz" -> 8944-YQZDP, CSV matches the
   filter, 375 px no horizontal scroll. Backend 226, frontend 70 tests.
+- T6.3e: Recommendations tab (components/recommendations/): cards grouped
+  Quick wins / Medium-term / Strategic (fixed order, empty groups hidden),
+  sorted by priority, each with problem, action, who, customers affected,
+  impact labelled from its impact_estimates key (monthly revenue kept /
+  fewer churners) with the stated assumption, and effort; validator badge;
+  bar chart of customers reached per recommendation coloured by group.
+- T6.3f: Customer Insights tab (components/insights/): top 10 insights with
+  non-significant ones visibly marked (dashed border, badge, note); churn
+  rate by category (column picker ordered by test evidence, overall-rate
+  line); churned vs retained mean/median; segment cards (size, churn rate,
+  lift, most distinctive features by z); Kaplan-Meier curves overall or by
+  group with medians and log-rank p; correlation heatmap of the 12 columns
+  most correlated with churn (diverging Okabe-Ito colours). Contract types
+  eda_results, segments, survival_results (survival is null when there is
+  no time column: the graph skips the node). formatStat no longer prints
+  "-0.0". Live check fixed a heatmap clipped to 4 columns and uneven column
+  widths, and a legend overlapping the axis label. Tab order now follows
+  SPEC. Backend 227, frontend 82 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

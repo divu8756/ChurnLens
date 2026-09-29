@@ -18,7 +18,9 @@ export function formatPercent(fraction: number | null | undefined, digits = 2): 
 
 /** Statistics (test statistics, effect sizes, AUC) to 2 dp by default. */
 export function formatStat(value: number | null | undefined, digits = 2): string {
-  return valid(value) ? value.toFixed(digits) : DASH;
+  if (!valid(value)) return DASH;
+  const text = value.toFixed(digits);
+  return /^-0(\.0+)?$/.test(text) ? text.slice(1) : text; // no "-0.0" for tiny negatives
 }
 
 /** p-values: 3 dp, and anything below 0.001 as "< 0.001". */

@@ -201,6 +201,21 @@ def test_results_types_hypothesis_keys(finished_session):
             assert set(test["inputs"]["groups"]) == {"churned", "retained"}
 
 
+def test_results_types_customer_insight_keys(finished_session):
+    client, sid = finished_session
+    results = client.get(f"/results/{sid}").json()["results"]
+    eda = results["eda_results"]
+    assert eda["overview"]["rows"] == 350
+    for summary in eda["categorical"].values():
+        rates = [lvl["churn_rate"] for lvl in summary["levels"]]
+        assert rates == sorted(rates, reverse=True)
+    corr = eda["correlation"]
+    assert len(corr["matrix"]) == len(corr["columns"])
+    segments = results["segments"]
+    assert segments["skipped"] or sum(s["size"] for s in segments["segments"]) == 350
+    assert results["survival_results"] is None  # no time column: the graph skips the node
+
+
 # ------------------------------------------------------------ /predictions
 
 

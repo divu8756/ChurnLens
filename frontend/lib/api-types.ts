@@ -212,6 +212,16 @@ export interface components {
             /** Substituted */
             substituted: string;
         };
+        /** CategorySummary */
+        CategorySummary: {
+            /** Levels */
+            levels: components["schemas"]["LevelRate"][];
+            /**
+             * Levels Folded Into Other
+             * @default 0
+             */
+            levels_folded_into_other: number;
+        };
         /** ClassBalance */
         ClassBalance: {
             /** Negative */
@@ -269,6 +279,17 @@ export interface components {
             tn: number;
             /** Tp */
             tp: number;
+        };
+        /** Correlation */
+        Correlation: {
+            /** Columns */
+            columns?: string[];
+            /** Matrix */
+            matrix?: (number | null)[][];
+            /** With Target */
+            with_target?: {
+                [key: string]: number | null;
+            };
         };
         /** CvScores */
         CvScores: {
@@ -352,6 +373,25 @@ export interface components {
             /** Term */
             term: string;
         };
+        /** EdaResults */
+        EdaResults: {
+            /** Categorical */
+            categorical?: {
+                [key: string]: components["schemas"]["CategorySummary"];
+            };
+            correlation?: components["schemas"]["Correlation"];
+            /** Numeric */
+            numeric?: {
+                [key: string]: components["schemas"]["NumericSummary"];
+            };
+            /** Overview */
+            overview: {
+                [key: string]: number | null;
+            };
+            tenure_bands?: components["schemas"]["TenureBands"] | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** EffectSize */
         EffectSize: {
             /** Band */
@@ -406,6 +446,17 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** GroupSummary */
+        GroupSummary: {
+            /** Mean */
+            mean?: number | null;
+            /** Median */
+            median?: number | null;
+            /** N */
+            n: number;
+            /** Std */
+            std?: number | null;
+        };
         /** HTTPErrorOut */
         HTTPErrorOut: {
             /** Detail */
@@ -438,6 +489,13 @@ export interface components {
             threshold?: number | null;
         } & {
             [key: string]: unknown;
+        };
+        /** Histogram */
+        Histogram: {
+            /** Counts */
+            counts: number[];
+            /** Edges */
+            edges: number[];
         };
         /** HypothesisInputs */
         HypothesisInputs: {
@@ -570,6 +628,26 @@ export interface components {
             /** Title */
             title: string;
         };
+        /** KmSummary */
+        KmSummary: {
+            curve: components["schemas"]["SurvivalCurve"];
+            /** Events */
+            events: number;
+            /** Label */
+            label: string;
+            /** Median Reached */
+            median_reached: boolean;
+            /** Median Survival */
+            median_survival?: number | null;
+            /** N */
+            n: number;
+            /** Survival At */
+            survival_at?: {
+                [key: string]: number | null;
+            };
+        } & {
+            [key: string]: unknown;
+        };
         /** LabelOption */
         LabelOption: {
             /** Column */
@@ -594,6 +672,26 @@ export interface components {
             measure: string;
             /** Value */
             value: number;
+        };
+        /** LevelRate */
+        LevelRate: {
+            /** Churn Rate */
+            churn_rate: number;
+            /** Churned */
+            churned: number;
+            /** Level */
+            level: string;
+            /** N */
+            n: number;
+        };
+        /** LogRank */
+        LogRank: {
+            /** Df */
+            df?: number | null;
+            /** P Value */
+            p_value?: number | null;
+            /** Statistic */
+            statistic?: number | null;
         };
         /** ModelMetrics */
         ModelMetrics: {
@@ -634,6 +732,22 @@ export interface components {
         NodeStartEvent: {
             /** Node */
             node: string;
+        };
+        /** NumericSummary */
+        NumericSummary: {
+            churned: components["schemas"]["GroupSummary"];
+            /** Count */
+            count: number;
+            histogram: components["schemas"]["Histogram"];
+            /** Mean */
+            mean?: number | null;
+            /** Median */
+            median?: number | null;
+            /** Missing */
+            missing: number;
+            retained: components["schemas"]["GroupSummary"];
+        } & {
+            [key: string]: unknown;
         };
         /** OddsRatioTerm */
         OddsRatioTerm: {
@@ -800,6 +914,7 @@ export interface components {
             /** Cleaning Log */
             cleaning_log?: components["schemas"]["CleaningStep"][] | null;
             data_health?: components["schemas"]["DataHealth"] | null;
+            eda_results?: components["schemas"]["EdaResults"] | null;
             /** Errors */
             errors?: components["schemas"]["ErrorEvent"][];
             feature_importance?: components["schemas"]["FeatureImportance"] | null;
@@ -815,7 +930,9 @@ export interface components {
             odds_ratios?: components["schemas"]["OddsRatios"] | null;
             /** Positive Label */
             positive_label?: string | null;
+            segments?: components["schemas"]["Segments"] | null;
             shap_summary?: components["schemas"]["ShapSummary"] | null;
+            survival_results?: components["schemas"]["SurvivalResults"] | null;
             /** Target Column */
             target_column?: string | null;
             validation_report?: components["schemas"]["ValidationReport"] | null;
@@ -906,6 +1023,48 @@ export interface components {
             /** Time Column */
             time_column?: string | null;
         };
+        /** Segment */
+        Segment: {
+            /** Churn Lift */
+            churn_lift?: number | null;
+            /** Churn Rate */
+            churn_rate: number;
+            /** Feature Means */
+            feature_means?: {
+                [key: string]: number | null;
+            };
+            /** Feature Z */
+            feature_z?: {
+                [key: string]: number | null;
+            };
+            /** Label */
+            label: string;
+            /** Pct Of Base */
+            pct_of_base: number;
+            /** Segment */
+            segment: number;
+            /** Size */
+            size: number;
+        } & {
+            [key: string]: unknown;
+        };
+        /** Segments */
+        Segments: {
+            /** Features */
+            features?: string[];
+            /** K */
+            k?: number | null;
+            /** Overall Churn Rate */
+            overall_churn_rate?: number | null;
+            /** Reason */
+            reason?: string | null;
+            /** Segments */
+            segments?: components["schemas"]["Segment"][];
+            /** Skipped */
+            skipped: boolean;
+        } & {
+            [key: string]: unknown;
+        };
         /** ShapFeature */
         ShapFeature: {
             /** Feature */
@@ -973,6 +1132,61 @@ export interface components {
             resumed: {
                 [key: string]: unknown;
             };
+        };
+        /** SurvivalCurve */
+        SurvivalCurve: {
+            /** Ci Lower */
+            ci_lower: (number | null)[];
+            /** Ci Upper */
+            ci_upper: (number | null)[];
+            /** Survival */
+            survival: (number | null)[];
+            /** Time */
+            time: number[];
+        };
+        /** SurvivalGroup */
+        SurvivalGroup: {
+            /** Column */
+            column: string;
+            /** Cramers V */
+            cramers_v?: number | null;
+            /** Curves */
+            curves: components["schemas"]["KmSummary"][];
+            logrank: components["schemas"]["LogRank"];
+        } & {
+            [key: string]: unknown;
+        };
+        /** SurvivalResults */
+        SurvivalResults: {
+            /** By Group */
+            by_group?: components["schemas"]["SurvivalGroup"][];
+            overall?: components["schemas"]["KmSummary"] | null;
+            /** Reason */
+            reason?: string | null;
+            /** Skipped */
+            skipped: boolean;
+            /** Time Column */
+            time_column?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** TenureBand */
+        TenureBand: {
+            /** Band */
+            band: string;
+            /** Churn Rate */
+            churn_rate: number;
+            /** Churned */
+            churned: number;
+            /** N */
+            n: number;
+        };
+        /** TenureBands */
+        TenureBands: {
+            /** Bands */
+            bands?: components["schemas"]["TenureBand"][];
+        } & {
+            [key: string]: unknown;
         };
         /** UploadResponse */
         UploadResponse: {

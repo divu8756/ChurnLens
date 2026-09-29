@@ -101,6 +101,27 @@
         "title": "CalculationStep",
         "type": "object"
       },
+      "CategorySummary": {
+        "properties": {
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/LevelRate"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "levels_folded_into_other": {
+            "default": 0,
+            "title": "Levels Folded Into Other",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "levels"
+        ],
+        "title": "CategorySummary",
+        "type": "object"
+      },
       "ClassBalance": {
         "properties": {
           "negative": {
@@ -269,6 +290,50 @@
           "tp"
         ],
         "title": "ConfusionMatrix",
+        "type": "object"
+      },
+      "Correlation": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "matrix": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Matrix",
+            "type": "array"
+          },
+          "with_target": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "With Target",
+            "type": "object"
+          }
+        },
+        "title": "Correlation",
         "type": "object"
       },
       "CvScores": {
@@ -560,6 +625,60 @@
         "title": "DroppedTerm",
         "type": "object"
       },
+      "EdaResults": {
+        "additionalProperties": true,
+        "properties": {
+          "categorical": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CategorySummary"
+            },
+            "title": "Categorical",
+            "type": "object"
+          },
+          "correlation": {
+            "$ref": "#/components/schemas/Correlation"
+          },
+          "numeric": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/NumericSummary"
+            },
+            "title": "Numeric",
+            "type": "object"
+          },
+          "overview": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Overview",
+            "type": "object"
+          },
+          "tenure_bands": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TenureBands"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "overview"
+        ],
+        "title": "EdaResults",
+        "type": "object"
+      },
       "EffectSize": {
         "properties": {
           "band": {
@@ -720,6 +839,52 @@
         "title": "GroupStats",
         "type": "object"
       },
+      "GroupSummary": {
+        "properties": {
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Std"
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "title": "GroupSummary",
+        "type": "object"
+      },
       "HTTPErrorOut": {
         "properties": {
           "detail": {
@@ -855,6 +1020,30 @@
           "n_test"
         ],
         "title": "HeldOutMetrics",
+        "type": "object"
+      },
+      "Histogram": {
+        "properties": {
+          "counts": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Edges",
+            "type": "array"
+          }
+        },
+        "required": [
+          "edges",
+          "counts"
+        ],
+        "title": "Histogram",
         "type": "object"
       },
       "HypothesisInputs": {
@@ -1250,6 +1439,64 @@
         "title": "Insight",
         "type": "object"
       },
+      "KmSummary": {
+        "additionalProperties": true,
+        "properties": {
+          "curve": {
+            "$ref": "#/components/schemas/SurvivalCurve"
+          },
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "median_reached": {
+            "title": "Median Reached",
+            "type": "boolean"
+          },
+          "median_survival": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Survival"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "survival_at": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Survival At",
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "n",
+          "events",
+          "median_reached",
+          "curve"
+        ],
+        "title": "KmSummary",
+        "type": "object"
+      },
       "LabelOption": {
         "properties": {
           "column": {
@@ -1327,6 +1574,73 @@
           "value"
         ],
         "title": "LeakageWarning",
+        "type": "object"
+      },
+      "LevelRate": {
+        "properties": {
+          "churn_rate": {
+            "title": "Churn Rate",
+            "type": "number"
+          },
+          "churned": {
+            "title": "Churned",
+            "type": "integer"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "level",
+          "n",
+          "churned",
+          "churn_rate"
+        ],
+        "title": "LevelRate",
+        "type": "object"
+      },
+      "LogRank": {
+        "properties": {
+          "df": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Df"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "statistic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statistic"
+          }
+        },
+        "title": "LogRank",
         "type": "object"
       },
       "ModelMetrics": {
@@ -1443,6 +1757,59 @@
           "node"
         ],
         "title": "NodeStartEvent",
+        "type": "object"
+      },
+      "NumericSummary": {
+        "additionalProperties": true,
+        "properties": {
+          "churned": {
+            "$ref": "#/components/schemas/GroupSummary"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "histogram": {
+            "$ref": "#/components/schemas/Histogram"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "missing": {
+            "title": "Missing",
+            "type": "integer"
+          },
+          "retained": {
+            "$ref": "#/components/schemas/GroupSummary"
+          }
+        },
+        "required": [
+          "count",
+          "missing",
+          "churned",
+          "retained",
+          "histogram"
+        ],
+        "title": "NumericSummary",
         "type": "object"
       },
       "OddsRatioTerm": {
@@ -1978,6 +2345,16 @@
               }
             ]
           },
+          "eda_results": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EdaResults"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "errors": {
             "items": {
               "$ref": "#/components/schemas/ErrorEvent"
@@ -2085,10 +2462,30 @@
             ],
             "title": "Positive Label"
           },
+          "segments": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Segments"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "shap_summary": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/ShapSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "survival_results": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SurvivalResults"
               },
               {
                 "type": "null"
@@ -2354,6 +2751,140 @@
         "title": "SchemaProposalOut",
         "type": "object"
       },
+      "Segment": {
+        "additionalProperties": true,
+        "properties": {
+          "churn_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Lift"
+          },
+          "churn_rate": {
+            "title": "Churn Rate",
+            "type": "number"
+          },
+          "feature_means": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Feature Means",
+            "type": "object"
+          },
+          "feature_z": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Feature Z",
+            "type": "object"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "pct_of_base": {
+            "title": "Pct Of Base",
+            "type": "number"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "integer"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "segment",
+          "label",
+          "size",
+          "pct_of_base",
+          "churn_rate"
+        ],
+        "title": "Segment",
+        "type": "object"
+      },
+      "Segments": {
+        "additionalProperties": true,
+        "properties": {
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "K"
+          },
+          "overall_churn_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Churn Rate"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/Segment"
+            },
+            "title": "Segments",
+            "type": "array"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "skipped"
+        ],
+        "title": "Segments",
+        "type": "object"
+      },
       "ShapFeature": {
         "properties": {
           "feature": {
@@ -2558,6 +3089,199 @@
           "done"
         ],
         "title": "StreamEvents",
+        "type": "object"
+      },
+      "SurvivalCurve": {
+        "properties": {
+          "ci_lower": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Ci Lower",
+            "type": "array"
+          },
+          "ci_upper": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Ci Upper",
+            "type": "array"
+          },
+          "survival": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Survival",
+            "type": "array"
+          },
+          "time": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Time",
+            "type": "array"
+          }
+        },
+        "required": [
+          "time",
+          "survival",
+          "ci_lower",
+          "ci_upper"
+        ],
+        "title": "SurvivalCurve",
+        "type": "object"
+      },
+      "SurvivalGroup": {
+        "additionalProperties": true,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "cramers_v": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cramers V"
+          },
+          "curves": {
+            "items": {
+              "$ref": "#/components/schemas/KmSummary"
+            },
+            "title": "Curves",
+            "type": "array"
+          },
+          "logrank": {
+            "$ref": "#/components/schemas/LogRank"
+          }
+        },
+        "required": [
+          "column",
+          "logrank",
+          "curves"
+        ],
+        "title": "SurvivalGroup",
+        "type": "object"
+      },
+      "SurvivalResults": {
+        "additionalProperties": true,
+        "properties": {
+          "by_group": {
+            "items": {
+              "$ref": "#/components/schemas/SurvivalGroup"
+            },
+            "title": "By Group",
+            "type": "array"
+          },
+          "overall": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KmSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "boolean"
+          },
+          "time_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Column"
+          }
+        },
+        "required": [
+          "skipped"
+        ],
+        "title": "SurvivalResults",
+        "type": "object"
+      },
+      "TenureBand": {
+        "properties": {
+          "band": {
+            "title": "Band",
+            "type": "string"
+          },
+          "churn_rate": {
+            "title": "Churn Rate",
+            "type": "number"
+          },
+          "churned": {
+            "title": "Churned",
+            "type": "integer"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "band",
+          "n",
+          "churned",
+          "churn_rate"
+        ],
+        "title": "TenureBand",
+        "type": "object"
+      },
+      "TenureBands": {
+        "additionalProperties": true,
+        "properties": {
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/TenureBand"
+            },
+            "title": "Bands",
+            "type": "array"
+          }
+        },
+        "title": "TenureBands",
         "type": "object"
       },
       "UploadResponse": {

@@ -7,7 +7,9 @@ import type { ResultsPayload } from "@/lib/results";
 import { DataHealthView } from "../data-health";
 import { DriversTab } from "../drivers/drivers-tab";
 import { HypothesisTab } from "../hypothesis/hypothesis-tab";
+import { InsightsTab } from "../insights/insights-tab";
 import { PredictionsTab } from "../predictions/predictions-tab";
+import { RecommendationsTab } from "../recommendations/recommendations-tab";
 import { OverviewTab } from "../overview/overview-tab";
 import { EmptyState } from "../ui";
 
@@ -16,9 +18,11 @@ type Tab = { id: string; label: string; render: (results: ResultsPayload, sessio
 // Each dashboard tab registers here (later tabs are added by their own tasks).
 const TABS: Tab[] = [
   { id: "overview", label: "Executive Overview", render: (r) => <OverviewTab results={r} /> },
+  { id: "insights", label: "Customer Insights", render: (r) => <InsightsTab results={r} /> },
   { id: "drivers", label: "Churn Drivers", render: (r) => <DriversTab results={r} /> },
   { id: "hypothesis", label: "Hypothesis Testing", render: (r) => <HypothesisTab results={r} /> },
   { id: "predictions", label: "Risk Predictions", render: (r, id) => <PredictionsTab results={r} sessionId={id} /> },
+  { id: "recommendations", label: "Recommendations", render: (r) => <RecommendationsTab results={r} /> },
   {
     id: "health",
     label: "Data Health",
