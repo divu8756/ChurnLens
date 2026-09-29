@@ -3,7 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     MAX_UPLOAD_MB: int = Field(default=10, ge=1)
     MAX_ROWS: int = Field(default=100_000, ge=1)
     MIN_ROWS: int = Field(default=100, ge=1)
+
+    @field_validator("DATA_DIR")
+    @classmethod
+    def _anchor_data_dir(cls, value: Path) -> Path:
+        # Relative paths are relative to backend/, not to wherever the server starts.
+        return value if value.is_absolute() else (BACKEND_DIR / value).resolve()
 
 
 class SettingsError(RuntimeError):

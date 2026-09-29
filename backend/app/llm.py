@@ -15,7 +15,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from app.config import get_settings
 
@@ -232,7 +232,10 @@ def _check_result(result: dict[str, Any], schema: type[BaseModel]) -> BaseModel:
     if parsed is None:
         raise _ContentFailure("empty response")
     if not isinstance(parsed, schema):
-        parsed = schema.model_validate(parsed)
+        try:
+            parsed = schema.model_validate(parsed)
+        except ValidationError as exc:
+            raise _ContentFailure("invalid output: ValidationError") from exc
     return parsed
 
 

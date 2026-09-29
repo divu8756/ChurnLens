@@ -27,6 +27,12 @@ Phase 1 gate: review, PR, CI, merge. Then T2.1.
   not retried, optional fallback model, token logging without prompts, usage
   listeners), app/llm_fake.py FakeLLM, scripts/gemini_smoke_test.py.
   Backend 27 tests passing.
+- Phase 1 gate review: fixed (Medium) wrong-type LLM output raised
+  ValidationError outside the content-retry path; fixed (Medium) relative
+  DATA_DIR resolved against the working directory instead of backend/.
+  Docker image built and checked (/health ok, runs as non-root user "app").
+  Backend 29 tests. Low, not fixed: "INTERNAL" substring match in
+  is_transient is broad; frontend has no unit tests yet (vitest arrives in T6.1).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

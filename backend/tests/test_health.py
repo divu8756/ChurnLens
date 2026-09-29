@@ -33,3 +33,12 @@ def test_missing_required_setting_fails_fast(monkeypatch):
 
 def test_api_key_is_not_in_settings_repr():
     assert "test-key-not-real" not in repr(config.get_settings())
+
+
+def test_relative_data_dir_is_anchored_to_backend(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", "./data")
+    expected = (config.BACKEND_DIR / "data").resolve()
+    assert expected == config.get_settings().DATA_DIR
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    config.get_settings.cache_clear()
+    assert tmp_path == config.get_settings().DATA_DIR

@@ -257,3 +257,9 @@ def test_fallback_failure_still_raises(fake, monkeypatch):
     with pytest.raises(llm.LLMUnavailable, match="transient"):
         llm.structured_call("pro", 0, "p", Verdict)
     assert len(fake.calls) == 2 * llm.MAX_TRANSIENT_ATTEMPTS
+
+
+def test_wrong_type_output_is_a_content_failure(fake):
+    fake.fixtures = {"Verdict": [FakeResponse(parsed=123), GOOD]}
+    assert llm.structured_call("fast", 0, "p", Verdict) == Verdict(**GOOD)
+    assert len(fake.calls) == 2
