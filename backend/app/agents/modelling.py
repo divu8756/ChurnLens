@@ -5,12 +5,15 @@ from typing import Any
 
 import pandas as pd
 
+from app.config import get_settings
 from app.graph.errors import FatalNodeError
 from app.graph.state import ChurnState, ErrorEntry, ProgressEntry
 from app.stats.explain import driver_impact, odds_ratios, shap_summary
 from app.stats.modelling import LeakageError, save_artifacts, train_and_evaluate
+from app.stats.predictions import score_customers
 
 MODEL_FILE = "model.joblib"
+PREDICTIONS_FILE = "predictions.parquet"
 
 
 def treatment_columns(state: ChurnState) -> list[str]:
@@ -50,12 +53,25 @@ def modelling_node(state: ChurnState) -> dict[str, Any]:
     importance["driver_impact"] = driver_impact(importance, shap_result, odds,
                                                 state.hypothesis_results)
 
+    settings = get_settings()
+    predictions_path: str | None = None
+    try:
+        table, summary = score_customers(artifacts, frame, schema,
+                                         settings.RISK_HIGH, settings.RISK_MEDIUM)
+        target = Path(state.clean_path).with_name(PREDICTIONS_FILE)
+        table.to_parquet(target, index=False)
+        predictions_path = str(target)
+        metrics["risk_bands"] = summary
+    except Exception as exc:
+        errors.append(ErrorEntry(node="modelling", message=f"Scoring failed: {exc}"))
+
     test = metrics["test"]
     return {
         "model_metrics": metrics,
         "feature_importance": importance,
         "shap_summary": shap_result,
         "odds_ratios": odds,
+        "predictions_path": predictions_path,
         "errors": errors,
         "progress": [ProgressEntry(
             node="modelling", status="done",

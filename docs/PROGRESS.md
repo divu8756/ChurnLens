@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T4.3
+Phase 4 gate
 
 ## Next step
-T4.3: score all customers, risk bands, top 3 SHAP reasons, GET /results/{id}.
+Phase 4 gate: review, end-to-end Telco run on a live server, PR, CI, merge. Then T5.1.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -122,6 +122,14 @@ T4.3: score all customers, risk bands, top 3 SHAP reasons, GET /results/{id}.
   a note; driver_impact table (permutation rank, SHAP, OR + CI, BH p) in
   feature_importance. Explanation failures are non-fatal. ORs equal
   statsmodels within 1e-9. Telco: Two year vs Month-to-month OR 0.08. 164 tests.
+- T4.3: stats/predictions.py: every customer scored by the chosen model
+  (probability 3 dp), bands from RISK_HIGH/RISK_MEDIUM (0.6/0.3), top 3
+  SHAP reasons as text ("Contract: Month-to-month (+0.18)"), sorted by risk,
+  written to predictions.parquet; band counts in model_metrics.risk_bands.
+  GET /results/{id}: all result keys (server paths stripped), predictions
+  100 per page, filter by band, 410/409/422 errors; works from the
+  checkpoint after a restart. Fixed: SHAP column map crashed when a model
+  had no categorical columns. 173 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

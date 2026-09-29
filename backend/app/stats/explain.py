@@ -41,6 +41,8 @@ def transformed_feature_map(prep: ColumnTransformer) -> list[str]:
     """Original feature name for every column of the transformed matrix."""
     owners: list[str] = []
     for name, transformer, columns in prep.transformers_:
+        if not len(columns):
+            continue  # an empty column list is never fitted
         if name == "num":
             owners.extend(columns)
         elif name == "cat":
