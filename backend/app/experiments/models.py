@@ -13,6 +13,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     event,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -67,6 +68,28 @@ class Experiment(Base):
     decision: Mapped[str | None] = mapped_column(String(20))
     decision_note: Mapped[str | None] = mapped_column(Text)
     data_snapshot_hash: Mapped[str | None] = mapped_column(String(64))
+    # Session the design and assignment came from (sessions expire; the IDs stay here).
+    source_session_id: Mapped[str | None] = mapped_column(String(32))
+    # Full sample-size output (experiment_design.sample_size) plus its assumptions.
+    design: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    # Balance check and assignment counts from the assign step.
+    assignment_summary: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+
+
+class Assignment(Base):
+    __tablename__ = "experiment_assignments"
+    __table_args__ = (
+        UniqueConstraint("experiment_id", "customer_id", name="uq_assignment_customer"),
+        CheckConstraint("arm IN ('treatment', 'control')", name="ck_assignment_arm"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    experiment_id: Mapped[int] = mapped_column(ForeignKey("experiments.id"), index=True)
+    customer_id: Mapped[str] = mapped_column(String(200), index=True)
+    arm: Mapped[str] = mapped_column(String(10))
+    offer: Mapped[str | None] = mapped_column(String(200))
+    message: Mapped[str | None] = mapped_column(Text)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class AuditLog(Base):

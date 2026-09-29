@@ -3,11 +3,13 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5c.2 (Approval gate + randomised assignment)
+T5c.3 (Results upload + analysis)
 
 ## Next step
-T5c.2: experiment endpoints (create draft, edit while draft, approve, assign,
-get), SHA-256 assignment, overlap exclusion, balance check (SMD), CSV export.
+T5c.3: POST /experiments/{id}/results (CSV validation against the stored
+assignment), stats/experiment_analysis.py (SRM, Wilson/Newcombe, z-test,
+achieved power, business impact, per-protocol, guardrails, pre-registered
+segments with BH, decision helper), all with source_keys.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -369,6 +371,19 @@ get), SHA-256 assignment, overlap exclusion, balance check (SMD), CSV export.
   Alembic migration 0001 packaged under app/experiments/migrations and run by
   init_db(); the audit log is append-only in the ORM and via DB triggers
   (SQLite and Postgres). Backend 296 tests (33 new).
+- T5c.2: /experiments API (create draft from a session + optional
+  recommendation, list, get with audit trail, PATCH while draft, approve with
+  approver + cost/eligibility checkbox, assign, assignment.csv).
+  app/experiments/segments.py (flat AND filters, no eval),
+  assignment.py (SHA-256 of "experiment_id:customer_id" -> [0,1) vs
+  control_share; SMD balance check with |SMD| > 0.1 flags, per level for
+  the plan column), data.py (session customers = cleaned data joined to
+  predictions; covariates churn_probability, time_column, revenue_column
+  and a plan/contract column found by name; attaches Phase 5b cached offer
+  messages without generating new ones), service.py, migration 0002
+  (experiment_assignments + design / assignment_summary / source_session_id).
+  CORS now allows PATCH. Backend 317 (21 new), frontend unchanged (types
+  regenerated).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -513,6 +528,14 @@ flowchart TD
   single n_required_per_arm (unequal splits need different sizes), plus
   outcome_window_days for "churn within N days". Power must be in [0.5, 1),
   control share in [0.05, 0.95].
+- T5c.2: an experiment's baseline is the segment's measured churn rate
+  unless the user enters one (assumption source data | user; alpha, power
+  and control share default | user). Assignment may use a newer analysed
+  session than the design (sessions expire after 2 h); the session used is
+  in the audit row. Customers in experiments with status running or
+  results_uploaded are excluded from new assignments. Assignment keeps
+  under-powered or imbalanced groups but records warnings (the hash is
+  deterministic, so re-randomising is not possible without a new experiment).
 
 ## Checkpoints for the human
 - S6 (end of Phase 6, MVP): run the app locally and click through all tabs:
@@ -564,6 +587,9 @@ flowchart TD
   not); duplicate customer IDs would share one row's features in next-best-
   offer scoring; offer acceptance models are weak on Telco (CV ROC-AUC
   0.48-0.64), so offer choice leans on the retention lift.
+- Phase 5c (Low, T5c.2): two experiments assigned at the same moment could
+  both claim the same customers (no DB lock across the overlap check);
+  assignment.csv does not neutralise spreadsheet formulas in messages.
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).
