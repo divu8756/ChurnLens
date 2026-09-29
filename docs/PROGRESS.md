@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 2 gate (PR open)
+Phase 3 gate (PR open)
 
 ## Next step
-Merge the Phase 2 PR when CI is green, then T3.1 (EDA node).
+Merge the Phase 3 PR when CI is green, then T4.1 (modelling).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -77,6 +77,33 @@ Merge the Phase 2 PR when CI is green, then T3.1 (EDA node).
   2.6 s). End-to-end on a live server: sample -> analyze -> paused with
   AI proposal (ai+rules, ~50 s Gemini latency) -> confirm -> cleaning (7,000
   rows, health 81) -> stubs -> done. Backend 105 tests.
+- Phase 2 merged to main (PR #2, CI green).
+- T3.1: stats/eda.py + eda_node: overview, numeric summaries (churned vs
+  retained, histograms), churn rate by level with n (sorted, > 20 levels
+  folded into Other), Pearson correlation on numerics + with target, tenure
+  bands when a time column exists; strict-JSON output. 115 tests.
+- T3.2: stats/segmentation.py + segmentation_node: numeric features (no id,
+  target, time, constant columns), median impute + scale, K-means k=2..8
+  (n_init 10, seed 42) chosen by silhouette (<= 5,000-row sample), profiles
+  (size, % of base, churn rate and lift, means, z-scores), auto labels from
+  top-2 features; per-customer labels saved to segments.parquet (not state);
+  skip path under 2 features. 123 tests.
+- T3.3: stats/survival.py + survival_node (lifelines): KM overall and for the
+  top 3 categoricals by Cramer's V (2-6 levels, groups >= 5 rows), median
+  (or "not reached"), survival at 6/12/24 (null beyond follow-up), 95% CI,
+  multivariate log-rank per variable, curves <= 200 points. KM and log-rank
+  equal lifelines called directly. 132 tests.
+- T3.4: stats/hypothesis.py + hypothesis_node: chi-square (no Yates, stated
+  explicitly), Fisher for sparse 2x2, rare-level merging into Other,
+  Shapiro (<= 5,000 sample) + Levene then Welch t (Cohen's d) or
+  Mann-Whitney (rank-biserial r), BH across tests, H0/H1, assumptions, why,
+  inputs, LaTeX steps with numbers, effect bands, conclusions; cap 40 tests;
+  constant/>20-level columns skipped. All equal scipy/statsmodels within
+  1e-9. Telco: Contract strongest (V 0.37), 28 of 40 significant. 146 tests.
+- Phase 3 gate: 100k-row timings clean 2.1 s, EDA 0.4 s, segmentation
+  5.1 s, survival 0.4 s, hypothesis 0.7 s. Real nodes run in parallel inside
+  the graph (run tests). No High/Medium issues found; Low items are in Known
+  issues (treatment columns, test cap order).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -105,6 +132,8 @@ Merge the Phase 2 PR when CI is green, then T3.1 (EDA node).
   "Unknown"): imputing before the train/test split leaks test data, and some
   blanks are meaningful (NPS, AvgResolutionDays). The model pipeline imputes
   medians on the training split; stats tests drop missing values per test.
+- pandas pinned to 2.3.3 (not 3.x): lifelines 0.30.3 requires pandas < 3.
+  The full suite passes on 2.3.3.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).
@@ -184,6 +213,12 @@ flowchart TD
 - Gemini Flash models often return 503 "high demand" (both 3.8 and 3.5 at
   the same time during T2.3). The schema agent then uses rules only, which
   are correct on Telco. Consider billing / another model if this persists.
+- Campaign/offer columns (OfferCost, CampaignGroup...) are treatments, not
+  customer traits. They still enter segmentation and hypothesis tests until
+  Phase 5b confirms offer_columns; then exclude them from segmentation and
+  the churn model (runbook T4.1 / data dictionary).
+- Hypothesis test cap (40) keeps columns in data order; with more candidates
+  the last ones are skipped (Telco: OfferCost).
 - Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
   yet; planned for Phase 8 hardening.
 

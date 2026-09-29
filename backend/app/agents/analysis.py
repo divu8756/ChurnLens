@@ -1,0 +1,68 @@
+"""Thin graph nodes for the parallel analysis step (EDA, segmentation, survival,
+hypothesis tests). Each reads the cleaned data and writes only its own key."""
+
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+
+from app.graph.errors import FatalNodeError
+from app.graph.state import ChurnState, ProgressEntry
+from app.stats.eda import run_eda
+from app.stats.hypothesis import run_hypothesis_tests
+from app.stats.segmentation import run_segmentation
+from app.stats.survival import run_survival
+
+SEGMENTS_FILE = "segments.parquet"
+
+
+def _load(state: ChurnState) -> tuple[pd.DataFrame, dict[str, Any]]:
+    if not state.clean_path or not state.confirmed_schema:
+        raise FatalNodeError("Analysis needs cleaned data and a confirmed schema.")
+    return pd.read_parquet(state.clean_path), state.confirmed_schema
+
+
+def eda_node(state: ChurnState) -> dict[str, Any]:
+    frame, schema = _load(state)
+    result = run_eda(frame, schema)
+    detail = (f"{len(result['numeric'])} numeric, {len(result['categorical'])} categorical "
+              "columns")
+    return {"eda_results": result,
+            "progress": [ProgressEntry(node="eda", status="done", detail=detail)]}
+
+
+def segmentation_node(state: ChurnState) -> dict[str, Any]:
+    frame, schema = _load(state)
+    result, labels = run_segmentation(frame, schema)
+    if labels is None:
+        return {"segments": result,
+                "progress": [ProgressEntry(node="segmentation", status="skipped",
+                                           detail=result["reason"])]}
+    path = Path(state.clean_path or "").with_name(SEGMENTS_FILE)
+    pd.DataFrame({"segment": labels}).to_parquet(path, index=False)
+    result["assignments_path"] = str(path)
+    return {"segments": result,
+            "progress": [ProgressEntry(node="segmentation", status="done",
+                                       detail=f"{result['k']} segments")]}
+
+
+def survival_node(state: ChurnState) -> dict[str, Any]:
+    frame, schema = _load(state)
+    result = run_survival(frame, schema)
+    if result["skipped"]:
+        return {"survival_results": result,
+                "progress": [ProgressEntry(node="survival", status="skipped",
+                                           detail=result["reason"])]}
+    median = result["overall"]["median_survival"]
+    detail = (f"median survival {median:g}" if median is not None
+              else "median survival not reached")
+    return {"survival_results": result,
+            "progress": [ProgressEntry(node="survival", status="done", detail=detail)]}
+
+
+def hypothesis_node(state: ChurnState) -> dict[str, Any]:
+    frame, schema = _load(state)
+    result = run_hypothesis_tests(frame, schema)
+    detail = f"{result['n_significant']} of {result['n_tests']} tests significant"
+    return {"hypothesis_results": result,
+            "progress": [ProgressEntry(node="hypothesis", status="done", detail=detail)]}
