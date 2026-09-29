@@ -3,10 +3,11 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 5 gate (PR open)
+Phase 6 gate (review, PR)
 
 ## Next step
-Merge the Phase 5 PR when CI is green, then Phase 6 (T6.1 typed API contract + frontend).
+Phase 6 gate: strict review of git diff main...phase-6, fix High/Medium,
+push, open the PR; the human merges it (merges need their approval).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -176,6 +177,117 @@ Merge the Phase 5 PR when CI is green, then Phase 6 (T6.1 typed API contract + f
   impact (validator now requires the same impact group); a failed retry
   wiped the agent's previous answer (now kept so only bad items drop).
   212 tests.
+- Phase 5 merged to main (PR #5, CI green; merged by the human).
+- T6.1: backend app/api/contract.py (SSE event payloads, SchemaProposalOut,
+  ResultsResponse, PredictionsPage, error bodies) declared in OpenAPI;
+  /results has a response model; /stream also accepts ?after=<id> because a
+  re-created browser EventSource cannot send Last-Event-ID (the header still
+  wins). scripts/export_openapi.py -> frontend/openapi.json, and
+  `npm run gen:types` -> lib/api-types.ts (openapi-typescript); a backend
+  test fails if the snapshot is stale. lib/api.ts: typed calls for every
+  endpoint, 30 s timeout, ApiError kinds (expired 410, conflict, validation
+  with problems, client, server, timeout, network). lib/progress.ts (pure
+  reducer) + lib/use-progress-stream.ts (EventSource, resume after last id,
+  5 reconnects in a row with backoff, 410 probe -> expired, closes on done
+  and unmount). vitest in CI. Fixed a flaky backend test: test_runs left
+  background runs going into the next test's fake LLM; the fixture now waits
+  for them. Backend 215 tests, frontend 29 tests.
+- T6.2: upload page (drag-drop, browser type/size checks, sheet picker,
+  Try sample data, anonymised-data warning), /analysis/[sessionId] (starts
+  the run idempotently, so a reload re-attaches), live progress stepper
+  (parallel nodes side by side; skipped/failed/waiting shown), schema
+  confirmation (type per column, ID = type "ID", target + positive-label
+  picker from new proposal.label_options, time and revenue pickers, AI
+  reasoning, local checks + server 422 problems inline), Data Health
+  (score + formula, row counts, class balance, missing % chart in Recharts,
+  cleaning log). Loading/empty/error/expired states; no horizontal scroll at
+  375 px. Backend: results.data_health / cleaning_log typed in the contract.
+  Checked in a browser against a live backend on the Telco sample: rules
+  fallback proposal, confirm, Data Health after cleaning (score 81,
+  7,014 -> 7,000 rows), run done (10 insights, 5 recommendations, 12/15
+  verified), offer skipped, reload re-attaches, fake session -> expired, the
+  stream resumed once with ?after=4. Backend 216 tests, frontend 39 tests.
+- T6.3a: dashboard shell (components/dashboard/dashboard.tsx: accessible
+  tabs with arrow keys, a TABS registry each later tab adds to; Data Health
+  is a tab too) shown when the run is done. Executive Overview
+  (components/overview/): 5 KPI cards with plain-English tooltips
+  (customers, churn rate, high-risk count, monthly revenue at risk, test
+  ROC-AUC), top 3 insights with significance badges, top 3 recommendations
+  by priority, validator badge (passed/checked, dropped), risk-band bar
+  chart with axis titles and a caption. lib/format.ts (%, 2 dp stats,
+  p < 0.001, counts, money), lib/palette.ts (Okabe-Ito). Contract types
+  model_metrics, impact_estimates, validation_report (extra keys pass
+  through) and reuses the agents' Insight/Recommendation models. Live check
+  on Telco (111 s run, 11/15 verified): KPIs 7,000 / 25.66% / 2,239 /
+  142,056 / 0.83; 375 px has no horizontal scroll. Backend 218, frontend 49 tests.
+- T6.3b: Churn Drivers tab (components/drivers/): test metrics table with
+  plain meanings + CV model comparison, confusion matrix, ROC curve with
+  chance line, permutation importance bars with ± 1 SD whiskers, SHAP dot
+  plot (Okabe-Ito blue-to-vermillion by value), odds-ratio forest plot on a
+  log axis with 95% CI whiskers (15 strongest terms, dropped terms listed),
+  driver summary table, leakage warning banner. Contract types the confusion
+  matrix, ROC, cv, leakage warnings, feature_importance, shap_summary
+  ("global" served under its real name) and odds_ratios. lib/drivers.ts
+  (ordering, whiskers, log axis, deterministic jitter) is unit-tested. Live
+  check on Telco fixed three display bugs (ROC ticks rounded 0.25 to 0.3,
+  forest axis clipped CI whiskers, long labels cut off). Backend 219,
+  frontend 56 tests.
+- T6.3c: Hypothesis Testing tab (components/hypothesis/): tests sorted by
+  adjusted p, statistic + df, "< 0.001" p-values, effect size with band,
+  alpha slider (0.001-0.1) re-deriving significance as p_adjusted < alpha
+  (BH adjustment does not depend on alpha) with a live count, rows expand
+  into H0/H1, why this test, assumption checks, observed/expected tables or
+  group stats, KaTeX formulas with substituted numbers, and the conclusion
+  (server text at its alpha, explained at other alphas). katex 0.18 added
+  (CLAUDE.md stack). Contract types hypothesis_results; found and fixed
+  df typed as int (Welch df is fractional). Backend: LaTeX steps now use
+  tex() (1.171 \times 10^{-202} instead of 1.171e-202) and \text{} for
+  words. Live check: 28/40 significant at 0.05, 26/40 at 0.001, 10 KaTeX
+  blocks, no errors, no horizontal scroll. Backend 222, frontend 63 tests.
+- T6.3d: Risk Predictions tab (components/predictions/). New backend
+  app/api/predictions.py: GET /predictions/{id} (50 per page, band filter,
+  case-insensitive literal ID search, typed PredictionRow) so paging does
+  not refetch the 300 KB results; GET /predictions/{id}/csv streams the
+  same filter as an attachment, neutralising cells that start with = + - @
+  (CSV injection from uploaded IDs/values). UI: band filter pills with
+  counts, 300 ms debounced search, previous page kept visible while the
+  next loads, reasons as chips (▲ raises / ▼ lowers risk, sign taken from
+  the server text), pagination, Download CSV link. The finished analysis
+  view now unmounts the progress/Data Health grid instead of hiding it.
+  Live check: 2,899 Low rows, search "yqz" -> 8944-YQZDP, CSV matches the
+  filter, 375 px no horizontal scroll. Backend 226, frontend 70 tests.
+- T6.3e: Recommendations tab (components/recommendations/): cards grouped
+  Quick wins / Medium-term / Strategic (fixed order, empty groups hidden),
+  sorted by priority, each with problem, action, who, customers affected,
+  impact labelled from its impact_estimates key (monthly revenue kept /
+  fewer churners) with the stated assumption, and effort; validator badge;
+  bar chart of customers reached per recommendation coloured by group.
+- T6.3f: Customer Insights tab (components/insights/): top 10 insights with
+  non-significant ones visibly marked (dashed border, badge, note); churn
+  rate by category (column picker ordered by test evidence, overall-rate
+  line); churned vs retained mean/median; segment cards (size, churn rate,
+  lift, most distinctive features by z); Kaplan-Meier curves overall or by
+  group with medians and log-rank p; correlation heatmap of the 12 columns
+  most correlated with churn (diverging Okabe-Ito colours). Contract types
+  eda_results, segments, survival_results (survival is null when there is
+  no time column: the graph skips the node). formatStat no longer prints
+  "-0.0". Live check fixed a heatmap clipped to 4 columns and uneven column
+  widths, and a legend overlapping the axis label. Tab order now follows
+  SPEC. Backend 227, frontend 82 tests.
+- T6.4: Playwright E2E (frontend/e2e/telco.spec.ts, playwright.config.ts,
+  `npm run e2e`): real API via scripts/e2e_server.py with a FakeLLM (rules
+  schema; one insight and one recommendation that cite real deterministic
+  Telco values and pass the real validator; LLM env forced to placeholders)
+  plus a production build on :3100. Flow: sample -> confirm schema -> Data
+  Health -> dashboard -> every tab with key assertions (7,000 / 25.66%,
+  KaTeX, band filter, CSV link, recommendation impact) -> no console
+  errors. ~20 s locally. New CI job `e2e` on PRs to main (report uploaded
+  on failure). @playwright/test 1.63 added (runbook).
+- Phase 6 gate review: fixed (Medium) /results validated the whole payload
+  in one go, so one result key with an unexpected shape would 500 the entire
+  dashboard; now a bad key is omitted with an error entry and the rest
+  loads (tested). No High issues. Low items added to Known issues. Backend
+  228, frontend 82 unit tests, E2E 1 (all green locally).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -213,6 +325,12 @@ Merge the Phase 5 PR when CI is green, then Phase 6 (T6.1 typed API contract + f
   per-customer reasons must explain the model that produced the score.
 - pandas pinned to 2.3.3 (not 3.x): lifelines 0.30.3 requires pandas < 3.
   The full suite passes on 2.3.3.
+- Dev dependencies added in T6.1 (frontend): openapi-typescript (types from
+  OpenAPI), vitest + @testing-library/react + jsdom (hook tests, required by
+  the runbook). @types/node raised to ^24 to match Node 24 (vitest's peer range).
+- recharts 3 added in T6.2 (listed in the CLAUDE.md stack) for dashboard charts.
+- Results sub-objects are still dict[str, Any] in the contract; each T6.3 tab
+  adds typed models for the keys it reads.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).
@@ -280,6 +398,11 @@ flowchart TD
    large data, tests for fan-out merge and resume.
 
 ## Checkpoints for the human
+- S6 (end of Phase 6, MVP): run the app locally and click through all tabs:
+  backend `cd backend && .venv/bin/uvicorn app.main:app --port 8010`,
+  frontend `cd frontend && NEXT_PUBLIC_API_URL=http://localhost:8010 npm run dev`,
+  open http://localhost:3000 and press "Try sample data". Or run
+  `cd frontend && npm run e2e` for the automated walk-through.
 - S1 (T1.1): architecture summary, graph flow and risks are under Decisions above.
 - S5 (T5.5): live Telco run with real Gemini, see docs/runs/phase5_telco_run.md
   (11/15 AI items verified by the validator; top insight: Month-to-month
@@ -314,6 +437,10 @@ flowchart TD
   retry despite feedback; those items are then dropped (by design).
 - Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
   yet; planned for Phase 8 hardening.
+
+- Phase 6 (Low): the 30 s client timeout can be short for a 10 MB upload on a
+  slow connection; /results sends the whole state on every call (~300 KB on
+  Telco); /predictions is not rate-limited yet (Phase 8 hardening).
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

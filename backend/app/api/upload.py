@@ -2,12 +2,13 @@
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app import sessions
+from app.api.contract import HTTPErrorOut
 from app.config import BACKEND_DIR, get_settings
 from app.ingest import (
     ParsedUpload,
@@ -22,6 +23,9 @@ router = APIRouter(tags=["upload"])
 
 SAMPLE_FILE = BACKEND_DIR / "sample_data" / "telco_churn.csv"
 PENDING_XLSX = "upload.xlsx"
+ERRORS: dict[int | str, dict[str, Any]] = {
+    code: {"model": HTTPErrorOut} for code in (400, 409, 410, 413, 415, 422, 503)
+}
 
 
 class UploadResponse(BaseModel):
@@ -68,7 +72,7 @@ def _finish(session_id: str, path: Path, filename: str, parsed: ParsedUpload) ->
     )
 
 
-@router.post("/upload", response_model=UploadResponse)
+@router.post("/upload", response_model=UploadResponse, responses=ERRORS)
 async def upload(
     file: Annotated[UploadFile, File()],
     sheet_name: Annotated[str | None, Form()] = None,
@@ -98,7 +102,7 @@ async def upload(
     return _finish(session_id, path, filename, parsed)
 
 
-@router.post("/upload/{session_id}/sheet", response_model=UploadResponse)
+@router.post("/upload/{session_id}/sheet", response_model=UploadResponse, responses=ERRORS)
 def choose_sheet(session_id: str, sheet_name: Annotated[str, Form()]) -> UploadResponse:
     settings = get_settings()
     try:
@@ -117,7 +121,7 @@ def choose_sheet(session_id: str, sheet_name: Annotated[str, Form()]) -> UploadR
     return _finish(session_id, path, meta["filename"], parsed)
 
 
-@router.post("/sample", response_model=UploadResponse)
+@router.post("/sample", response_model=UploadResponse, responses=ERRORS)
 def load_sample() -> UploadResponse:
     settings = get_settings()
     if not SAMPLE_FILE.exists():

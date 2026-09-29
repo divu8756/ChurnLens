@@ -53,7 +53,17 @@ def client(monkeypatch):
     )
     with TestClient(app) as test_client:
         yield test_client
+        _wait_for_background_runs(app.state.runs)
     llm.set_model_factory(None)
+
+
+def _wait_for_background_runs(manager: RunManager, timeout: float = 30.0) -> None:
+    """A run left going would call the LLM later, inside another test's fake."""
+    deadline = time.monotonic() + timeout
+    while any(r.status == "running" for r in manager._runs.values()):
+        if time.monotonic() > deadline:
+            raise AssertionError("a background run did not finish")
+        time.sleep(0.02)
 
 
 def upload(client) -> str:
@@ -73,9 +83,11 @@ def wait_for(client, session_id, status, timeout=10.0):
     raise AssertionError(f"run is {run.status}, expected {status}")
 
 
-def read_events(client, session_id, headers=None, stop=("done",)) -> list[tuple[str, dict]]:
+def read_events(client, session_id, headers=None, stop=("done",),
+                params=None) -> list[tuple[str, dict]]:
     events, current = [], {}
-    with client.stream("GET", f"/stream/{session_id}", headers=headers or {}) as response:
+    with client.stream("GET", f"/stream/{session_id}", headers=headers or {},
+                       params=params or {}) as response:
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("text/event-stream")
         for line in response.iter_lines():
@@ -109,6 +121,9 @@ def test_graph_pauses_at_human_review_with_proposal(client):
     pending = client.app.state.runs.pending_interrupt(session_id)
     assert pending["proposal"]["target_column"] == "Churn"
     assert pending["proposal"]["source"] == "rules"  # LLM failed -> heuristics
+    options = {o["column"]: o["values"] for o in pending["proposal"]["label_options"]}
+    assert options["Churn"] == ["No", "Yes"]
+    assert "tenure" not in options  # only columns with exactly two values
     assert [e.event for e in run.events][-1] == "awaiting_confirmation"
 
 
@@ -199,6 +214,19 @@ def test_sse_reconnect_with_last_event_id_skips_seen_events(client):
     resumed = read_events(client, session_id, headers={"Last-Event-ID": "4"})
     assert [i for _, _, i in resumed] == [i for _, _, i in all_events][4:]
 
+
+def test_sse_after_query_param_resumes_and_header_wins(client):
+    session_id = upload(client)
+    started(session_id, client)
+    wait_for(client, session_id, "awaiting_confirmation")
+    client.post(f"/confirm-schema/{session_id}", json=valid_schema())
+    wait_for(client, session_id, "done")
+    ids = [i for _, _, i in read_events(client, session_id)]
+    by_query = read_events(client, session_id, params={"after": 3})
+    assert [i for _, _, i in by_query] == ids[3:]
+    both = read_events(client, session_id, params={"after": 1},
+                       headers={"Last-Event-ID": "6"})
+    assert [i for _, _, i in both] == ids[6:]
 
 def test_sse_sends_heartbeat_while_paused(client, monkeypatch):
     # TestClient buffers a streamed body until it ends, so resume after a

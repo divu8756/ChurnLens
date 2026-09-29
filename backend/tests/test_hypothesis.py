@@ -193,3 +193,23 @@ def test_hypothesis_node(tmp_path):
     update = hypothesis_node(ChurnState(session_id="s", clean_path=str(path),
                                         confirmed_schema=SCHEMA))
     assert update["hypothesis_results"]["n_tests"] == 4
+
+
+def test_tex_numbers_use_powers_of_ten():
+    from app.stats.hypothesis import tex
+    assert tex(0.3659) == "0.3659"
+    assert tex(1.1706e-202) == r"1.171 \times 10^{-202}"
+    assert tex(2847012.0) == r"2.847 \times 10^{6}"
+
+
+def test_latex_steps_have_no_e_notation_or_bare_words():
+    import re
+
+    from app.stats.hypothesis import categorical_test, numeric_test
+    rng = np.random.default_rng(42)
+    y = pd.Series(rng.integers(0, 2, 400))
+    cat = categorical_test(pd.Series(np.where(y == 1, "a", rng.choice(["a", "b"], 400))), y, "c")
+    num = numeric_test(pd.Series(rng.normal(0, 1, 400) + y * 3), y, "x")
+    for step in cat["steps"] + num["steps"]:
+        assert not re.search(r"\de[+-]\d", step["substituted"]), step
+    assert r"\text{smallest }" in cat["steps"][0]["substituted"]

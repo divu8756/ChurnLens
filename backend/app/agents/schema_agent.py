@@ -114,6 +114,12 @@ def schema_agent_node(state: ChurnState) -> dict[str, Any]:
         errors.append(ErrorEntry(node="schema_agent", message=f"LLM fallback: {exc}"))
 
     result["target_candidates"] = profiling.likely_targets(frame)
+    # The confirmation screen offers these as positive-label choices (values, not rows).
+    result["label_options"] = [
+        {"column": str(col), "values": values}
+        for col in frame.columns
+        if (values := profiling.binary_values(frame[col])) is not None
+    ]
     return {
         "schema_proposal": result,
         "errors": errors,
