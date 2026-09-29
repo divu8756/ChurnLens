@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 1 gate
+Phase 2 gate (PR open)
 
 ## Next step
-Phase 1 gate: review, PR, CI, merge. Then T2.1.
+Merge the Phase 2 PR when CI is green, then T3.1 (EDA node).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -33,6 +33,50 @@ Phase 1 gate: review, PR, CI, merge. Then T2.1.
   Docker image built and checked (/health ok, runs as non-root user "app").
   Backend 29 tests. Low, not fixed: "INTERNAL" substring match in
   is_transient is broad; frontend has no unit tests yet (vitest arrives in T6.1).
+- Phase 1 merged to main (PR #1, CI green).
+- T2.1: ChurnState (Pydantic, reducers on errors/progress/telemetry_events),
+  graph builder with all 16 nodes as stubs, safe_node wrapper (FatalNodeError
+  routes to error_node, other errors are recorded and the run continues,
+  interrupt() passes through), conditional survival/offer edges, validator
+  retry routing, SQLite checkpointer factory (Postgres behind DATABASE_URL,
+  driver installed at deploy time), docs/graph.md. Backend 38 tests.
+- T2.2: POST /upload (extension + real content checks, size, row limits,
+  latin-1 fallback, duplicate columns renamed with a warning, ragged rows
+  rejected), multi-sheet xlsx flow (choose_sheet then POST
+  /upload/{id}/sheet), POST /sample, parquet under DATA_DIR/sessions/{id},
+  2-hour cleanup loop, session ids validated against path traversal,
+  ingest_node. Backend 61 tests.
+- T2.3: prompts/schema_agent.v1.md (+ minimal prompt loader, full T5.2
+  version later), stats/profiling.py (profile with <= 5 samples, id/target/
+  time/type heuristics; floats and numbers-as-text never flagged as ids),
+  schema_agent node (fast tier, temp 0, 30 s; rules win on ids; AI target
+  and positive label only accepted if valid for the data; falls back to rules
+  on LLM failure). Heuristics alone get Telco fully right (customerID id,
+  Churn/Yes target, tenure time column, TotalCharges numeric). Backend 73 tests.
+- T2.4: human_review node (interrupt only, no side effects before it),
+  schema validation (binary target, positive label, id/time columns),
+  RunManager (background thread per session, events with ids), POST
+  /analyze/{id} (added: explicit, idempotent run start), POST
+  /confirm-schema/{id} (422 with problem list, 409 if not paused or resumed
+  twice, 410 unknown), GET /stream/{id} SSE (node_start/finish, error,
+  awaiting_confirmation, resumed, done, 15 s heartbeat, Last-Event-ID
+  reconnect). Checkpoint serializer registers state types; tests run with
+  LANGGRAPH_STRICT_MSGPACK. pytest-timeout added (60 s). Backend 87 tests.
+- T2.5: stats/cleaning.py + cleaning_node: numeric coercion (blank ->
+  missing), trim/collapse spaces, unify case to the most common spelling,
+  exact duplicates, target -> 0/1, missing target rows dropped, categorical
+  blanks -> "Unknown", rare invalid negatives -> missing, IQR/z outlier
+  flags (never changed), data_health with documented 0-100 score, fatal on
+  one class or < MIN_ROWS. Telco: 11 TotalCharges blanks, 14 duplicates,
+  7,000 rows, InternetService case fixed, 5 negative call minutes. 103 tests.
+- Phase 2 gate review: fixed (Medium) exact duplicates were removed even
+  without an ID column, where identical rows can be different customers;
+  now only flagged. Fixed (Medium) .xlsx zip bomb: workbooks that unpack to
+  > 200 MB are rejected. Clearer "too few rows" message. Edge cases checked:
+  one column, all-null column, non-English headers, 100k rows (cleaning
+  2.6 s). End-to-end on a live server: sample -> analyze -> paused with
+  AI proposal (ai+rules, ~50 s Gemini latency) -> confirm -> cleaning (7,000
+  rows, health 81) -> stubs -> done. Backend 105 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -51,6 +95,16 @@ Phase 1 gate: review, PR, CI, merge. Then T2.1.
   Enabling billing is a paid-service decision for the human, so both tiers use
   gemini-3.8-flash for now, with GEMINI_MODEL_FALLBACK=gemini-3.5-flash for
   when 3.8-flash is overloaded (it returned 503s during testing).
+- SPEC's single "schema" state key is split into schema_proposal
+  (schema_agent) and confirmed_schema (human_review): one producer per key,
+  and "schema" would shadow a Pydantic BaseModel attribute. Fatal errors are
+  ErrorEntry(fatal=True) in the shared errors list rather than a separate key.
+- Runs live in memory in one API process (RunManager). A restart loses them
+  and /stream answers 410 "Session expired"; fine for one Render instance.
+- Cleaning does NOT median-impute numeric blanks (SPEC says median/mode/
+  "Unknown"): imputing before the train/test split leaks test data, and some
+  blanks are meaningful (NPS, AvgResolutionDays). The model pipeline imputes
+  medians on the training split; stats tests drop missing values per test.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).
@@ -127,6 +181,11 @@ flowchart TD
   Pro when one exists) in backend/.env.
 
 ## Known issues
+- Gemini Flash models often return 503 "high demand" (both 3.8 and 3.5 at
+  the same time during T2.3). The schema agent then uses rules only, which
+  are correct on Telco. Consider billing / another model if this persists.
+- Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
+  yet; planned for Phase 8 hardening.
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).
