@@ -12,6 +12,7 @@ from app.agents.analysis import (
 from app.agents.cleaning import cleaning_node
 from app.agents.human_review import human_review_node
 from app.agents.ingest import ingest_node
+from app.agents.modelling import modelling_node
 from app.agents.schema_agent import schema_agent_node
 from app.graph import builder as b
 from app.graph.builder import NodeFn
@@ -27,4 +28,5 @@ def default_nodes() -> dict[str, NodeFn]:
         b.SEGMENTATION: segmentation_node,
         b.SURVIVAL: survival_node,
         b.HYPOTHESIS: hypothesis_node,
+        b.MODELLING: modelling_node,
     }

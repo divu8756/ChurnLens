@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 3 gate (PR open)
+T4.2
 
 ## Next step
-Merge the Phase 3 PR when CI is green, then T4.1 (modelling).
+T4.2: SHAP (TreeExplainer / fallback) and statsmodels odds ratios; driver_impact.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -104,6 +104,16 @@ Merge the Phase 3 PR when CI is green, then T4.1 (modelling).
   5.1 s, survival 0.4 s, hypothesis 0.7 s. Real nodes run in parallel inside
   the graph (run tests). No High/Medium issues found; Low items are in Known
   issues (treatment columns, test cap order).
+- Phase 3 merged to main (PR #3, CI green).
+- T4.1: stats/modelling.py + modelling_node: features exclude ids, target,
+  datetimes, text and treatment columns (offer_columns from 5b); stratified
+  80/20 split before fitting; LR (balanced) vs HistGradientBoosting
+  (balanced) by 5-fold CV PR-AUC on train; one test evaluation (accuracy,
+  precision, recall, F1, ROC-AUC, PR-AUC, confusion matrix, ROC <= 100
+  points); leakage guard (> 0.99 fatal, |r| or V > 0.9 warning);
+  permutation importance on original columns; model saved with joblib.
+  Telco (treatments excluded): LR chosen, test ROC-AUC 0.829, PR-AUC 0.611;
+  top drivers Contract, tenure, InternetService. 154 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
