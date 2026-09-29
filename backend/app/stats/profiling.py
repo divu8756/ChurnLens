@@ -13,6 +13,12 @@ REVENUE_NAME = re.compile(r"monthly_?charges?|arpu|monthly_?(revenue|fee|bill|sp
                           r"mrr|monthly_?amount", re.I)
 TIME_NAME = re.compile(r"tenure|months?_?(as|with)?_?customer|lifetime|duration", re.I)
 ID_NAME = re.compile(r"(^|_|\b)(id|uuid|guid|key|row_?number|index)$", re.I)
+OFFER_NAME = re.compile(r"offer|promo|campaign|coupon|voucher|clicked|accepted|redeemed", re.I)
+OFFER_ACCEPTED = re.compile(r"accept|redeem", re.I)
+OFFER_DATE = re.compile(r"date|time|sent_?(at|on)", re.I)
+OFFER_COST = re.compile(r"cost|discount|amount|value", re.I)
+OFFER_GROUP = re.compile(r"campaign|group|arm|cohort|holdout|control", re.I)
+OFFER_SHOWN = re.compile(r"shown|sent|name|type|offer$|promo$", re.I)
 POSITIVE_WORDS = ("yes", "true", "1", "churned", "churn", "exited", "left", "cancelled", "y")
 
 
@@ -97,6 +103,40 @@ def likely_time_column(frame: pd.DataFrame) -> str | None:
     return None
 
 
+def likely_offer_columns(frame: pd.DataFrame,
+                         reserved: set[str] | None = None) -> dict[str, Any] | None:
+    """Offer/campaign columns by name (offer, promo, campaign, clicked, accepted, redeemed).
+
+    Returns an OfferColumns-shaped dict, or None when no column names an offer.
+    """
+    reserved = reserved or set()
+    candidates = [str(c) for c in frame.columns
+                  if OFFER_NAME.search(str(c)) and str(c) not in reserved]
+    if not candidates:
+        return None
+    left = list(candidates)
+
+    def take(test: Any) -> str | None:
+        for col in left:
+            if test(col):
+                left.remove(col)
+                return col
+        return None
+
+    accepted = take(lambda c: OFFER_ACCEPTED.search(c))
+    date = take(lambda c: OFFER_DATE.search(c) and not OFFER_ACCEPTED.search(c))
+    cost = take(lambda c: OFFER_COST.search(c) and _numeric_share(frame[c]) > 0.95)
+    group = take(lambda c: OFFER_GROUP.search(c) and not re.search(r"offer|promo", c, re.I))
+    shown = (take(lambda c: re.search(r"offer|promo|coupon|voucher", c, re.I)
+                  and OFFER_SHOWN.search(c) and not re.search(r"click|channel", c, re.I))
+             or take(lambda c: re.search(r"offer|promo|coupon|voucher", c, re.I)
+                     and not re.search(r"click|channel", c, re.I)))
+    if shown is None:
+        return None
+    return {"shown": shown, "accepted": accepted, "date": date, "cost": cost,
+            "group": group, "other": left}
+
+
 def likely_revenue_column(frame: pd.DataFrame) -> str | None:
     """A numeric column that looks like monthly revenue per customer (ARPU)."""
     for col in frame.columns:
@@ -148,5 +188,7 @@ def heuristic_schema(frame: pd.DataFrame) -> dict[str, Any]:
         "id_columns": ids,
         "time_column": likely_time_column(frame),
         "revenue_column": likely_revenue_column(frame),
+        "offer_columns": likely_offer_columns(
+            frame, reserved={*ids, *([target] if target else [])}),
         "reasoning": "Proposed by rules (column names, distinct values and types).",
     }

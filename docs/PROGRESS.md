@@ -3,11 +3,13 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 6 gate (review, PR)
+T5b.2 (offer effectiveness analysis)
 
 ## Next step
-Phase 6 gate: strict review of git diff main...phase-6, fix High/Medium,
-push, open the PR; the human merges it (merges need their approval).
+T5b.2 on branch phase-5b (T5b.1 committed): offer effectiveness in
+app/stats/offers.py from reshape_offers() output (acceptance, churn among
+acceptors / non-acceptors / never offered, chi-square or Fisher per offer in
+the BH family, leakage filter on offer_date, selection-bias warning).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -288,6 +290,26 @@ push, open the PR; the human merges it (merges need their approval).
   dashboard; now a bad key is omitted with an error entry and the rest
   loads (tested). No High issues. Low items added to Known issues. Backend
   228, frontend 82 unit tests, E2E 1 (all green locally).
+- Phase 6 merged to main (PR #6; merged by the human).
+- T5b.1: ConfirmedSchema.offer_columns (OfferColumns: shown, accepted, date,
+  cost, group, other; validated: columns exist, not target/ID/time/revenue,
+  paired lists), written to state by human_review. Offer/campaign columns
+  are treatments: feature_columns() now excludes them everywhere (EDA,
+  segmentation, hypothesis tests, model). Heuristic likely_offer_columns
+  (offer/promo/campaign/coupon/clicked/accepted/redeemed names) finds Telco's
+  OfferShown/Accepted/Date/Cost + CampaignGroup (+ channel, clicked as other).
+  Schema prompt v2 (v1 kept) adds flat offer fields; rules win, the AI only
+  fills empty fields with real, unreserved columns. stats/offers.py:
+  reshape_offers() turns all three layouts (one name column + Yes/No,
+  delimited lists with ; , | or newline, one 0/1 column per offer) into the
+  same long table (customer_id, offer, accepted, offer_date); names trimmed
+  and case-unified (ties go to the spelling that sorts first); blanks = no
+  offer; offer_catalog() lists only offers in the data (Telco: 6). Schema
+  screen gets a "Retention offers" section (edit/clear, "offer" tag on
+  columns). Telco effect: 35 hypothesis tests (23 significant) instead of
+  40 with the cap hit; campaign columns excluded from the model; the run
+  routes through the offer step (still a stub). Backend 238, frontend 86,
+  E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -419,16 +441,14 @@ flowchart TD
 - Gemini Flash models often return 503 "high demand" (both 3.8 and 3.5 at
   the same time during T2.3). The schema agent then uses rules only, which
   are correct on Telco. Consider billing / another model if this persists.
-- Campaign/offer columns (OfferCost, CampaignGroup...) are treatments, not
-  customer traits. They still enter segmentation and hypothesis tests until
-  Phase 5b confirms offer_columns; then exclude them from segmentation and
-  the churn model (runbook T4.1 / data dictionary).
+- (Resolved in T5b.1) Campaign/offer columns are now excluded from
+  segmentation, hypothesis tests and the model once confirmed.
 - Risk bands use the chosen model's raw probabilities. With class_weight=
   "balanced" these run high (Telco: 32% High vs ~25% churn). Phase 5d adds
   calibration (CalibratedClassifierCV on train); switch bands and money
   metrics to calibrated probabilities there.
 - Hypothesis test cap (40) keeps columns in data order; with more candidates
-  the last ones are skipped (Telco: OfferCost).
+  the last ones are skipped (Telco no longer hits it: 35 tests after T5b.1).
 - Prompt injection: column names and category values from the uploaded file
   appear in LLM prompts. Every number is still validated against state, so
   the risk is misleading wording, not wrong numbers. Consider sanitising

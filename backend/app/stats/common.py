@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from app.schema_validation import offer_column_names
 from app.stats.cleaning import column_types
 
 
@@ -32,9 +33,10 @@ def jsonable(value: Any) -> Any:
 
 
 def feature_columns(frame: pd.DataFrame, schema: dict[str, Any]) -> dict[str, list[str]]:
-    """Analysis columns by kind, excluding ids, the target and free text."""
+    """Analysis columns by kind, excluding ids, the target, free text and offer/campaign
+    columns (treatments, analysed separately in stats/offers.py)."""
     target = schema["target_column"]
-    ids = set(schema.get("id_columns", []))
+    ids = set(schema.get("id_columns", [])) | set(offer_column_names(schema.get("offer_columns")))
     types = column_types(frame, schema)
     groups: dict[str, list[str]] = {"numeric": [], "categorical": [], "datetime": []}
     for col, kind in types.items():

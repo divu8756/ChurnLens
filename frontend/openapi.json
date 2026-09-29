@@ -226,6 +226,16 @@
             "title": "Id Columns",
             "type": "array"
           },
+          "offer_columns": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferColumns"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "positive_label": {
             "title": "Positive Label",
             "type": "string"
@@ -1983,6 +1993,87 @@
         "title": "OddsRatios",
         "type": "object"
       },
+      "OfferColumns": {
+        "description": "Which columns describe a retention offer/campaign (Phase 5b). They are treatments:\nanalysed separately and kept out of the churn model, segments and trait tests.",
+        "properties": {
+          "accepted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group"
+          },
+          "other": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Other",
+            "type": "array"
+          },
+          "shown": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Shown"
+          }
+        },
+        "required": [
+          "shown"
+        ],
+        "title": "OfferColumns",
+        "type": "object"
+      },
       "OutlierCounts": {
         "properties": {
           "iqr": {
@@ -2678,6 +2769,16 @@
             },
             "title": "Label Options",
             "type": "array"
+          },
+          "offer_columns": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferColumns"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "positive_label": {
             "anyOf": [

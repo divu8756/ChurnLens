@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { SchemaProposal } from "./api";
-import { draftFromProposal, draftProblems, toConfirmed, withColumnType, withTarget } from "./schema-form";
+import { draftFromProposal, draftProblems, toConfirmed, withColumnType, withOfferField, withTarget } from "./schema-form";
 
 const proposal: SchemaProposal = {
   columns: [
@@ -34,6 +34,7 @@ describe("schema form", () => {
       id_columns: ["customerID"],
       time_column: "tenure",
       revenue_column: null,
+      offer_columns: null,
     });
     expect(draftProblems(draftFromProposal(proposal))).toEqual([]);
   });
@@ -55,5 +56,35 @@ describe("schema form", () => {
     expect(draftProblems(noLabel)).toContain("Choose which target value means the customer churned.");
     const clash = withColumnType(draftFromProposal(proposal), "tenure", "id");
     expect(draftProblems(clash)).toContain("The time column cannot be an ID column.");
+  });
+});
+
+describe("offer columns", () => {
+  const withOffers: SchemaProposal = {
+    ...proposal,
+    columns: [...proposal.columns, { name: "OfferShown", semantic_type: "categorical", confidence: 0.6 }],
+    offer_columns: { shown: "OfferShown", accepted: null, other: ["OfferChannel"] },
+  };
+
+  it("carries the proposed offer columns through to the confirmed schema", () => {
+    expect(toConfirmed(draftFromProposal(withOffers)).offer_columns).toEqual({
+      shown: "OfferShown",
+      accepted: null,
+      other: ["OfferChannel"],
+    });
+  });
+
+  it("clearing the shown column turns the offer analysis off", () => {
+    expect(withOfferField(draftFromProposal(withOffers), "shown", "").offer_columns).toBeNull();
+  });
+
+  it("sets a field and removes it from the other campaign columns", () => {
+    const draft = withOfferField(draftFromProposal(withOffers), "group", "OfferChannel");
+    expect(draft.offer_columns).toMatchObject({ group: "OfferChannel", other: [] });
+  });
+
+  it("rejects an offer column that is also the target", () => {
+    const draft = withOfferField(draftFromProposal(withOffers), "accepted", "Churn");
+    expect(draftProblems(draft)).toContain("Offer columns cannot also be the target, ID, time or revenue column: Churn.");
   });
 });

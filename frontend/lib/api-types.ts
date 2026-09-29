@@ -260,6 +260,7 @@ export interface components {
             columns?: components["schemas"]["ConfirmedColumn"][];
             /** Id Columns */
             id_columns?: string[];
+            offer_columns?: components["schemas"]["OfferColumns"] | null;
             /** Positive Label */
             positive_label: string;
             /** Revenue Column */
@@ -793,6 +794,25 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * OfferColumns
+         * @description Which columns describe a retention offer/campaign (Phase 5b). They are treatments:
+         *     analysed separately and kept out of the churn model, segments and trait tests.
+         */
+        OfferColumns: {
+            /** Accepted */
+            accepted?: string | string[] | null;
+            /** Cost */
+            cost?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Group */
+            group?: string | null;
+            /** Other */
+            other?: string[];
+            /** Shown */
+            shown: string | string[];
+        };
         /** OutlierCounts */
         OutlierCounts: {
             /** Iqr */
@@ -1002,6 +1022,7 @@ export interface components {
             id_columns?: string[];
             /** Label Options */
             label_options?: components["schemas"]["LabelOption"][];
+            offer_columns?: components["schemas"]["OfferColumns"] | null;
             /** Positive Label */
             positive_label?: string | null;
             /**

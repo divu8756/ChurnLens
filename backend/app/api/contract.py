@@ -9,7 +9,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.agents.llm_agents import Insight, Recommendation
-from app.schema_validation import SemanticType
+from app.schema_validation import OfferColumns, SemanticType
 
 RunStatus = Literal["running", "awaiting_confirmation", "done", "failed", "interrupted"]
 NodeStatus = Literal["started", "done", "skipped", "failed"]
@@ -38,6 +38,7 @@ class SchemaProposalOut(BaseModel):
     source: Literal["ai+rules", "rules"]
     target_candidates: list[str] = Field(default_factory=list)
     label_options: list[LabelOption] = Field(default_factory=list)
+    offer_columns: OfferColumns | None = None
 
 
 # ------------------------------------------------------------------ SSE events
