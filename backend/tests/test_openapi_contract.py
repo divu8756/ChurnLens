@@ -27,3 +27,17 @@ def test_contract_declares_sse_events_and_errors():
         "SchemaProblemsOut")
     stream = schema["paths"]["/stream/{session_id}"]["get"]["responses"]
     assert "text/event-stream" in stream["200"]["content"]
+
+
+def test_results_payload_accepts_validated_ai_items():
+    from test_validator import insight, rec
+
+    from app.api.contract import ResultsPayload
+
+    payload = ResultsPayload(final_insights=[insight()], final_recommendations=[rec()],
+                             validation_report={"checked": 2, "passed": 2, "failed": 0,
+                                                "dropped": 0, "final": True, "details": []})
+    dumped = payload.model_dump()
+    assert dumped["final_insights"][0]["figures"][0]["display"] == "26.5%"
+    assert dumped["final_recommendations"][0]["impact"]["assumption"]
+    assert dumped["validation_report"]["details"] == []  # extra keys kept

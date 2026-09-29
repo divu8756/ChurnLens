@@ -7,6 +7,7 @@ import { ApiError, getResults, startAnalysis, type ResultsResponse } from "@/lib
 import { cleaningFinished, stepperStages } from "@/lib/pipeline";
 import { useProgressStream } from "@/lib/use-progress-stream";
 
+import { Dashboard } from "./dashboard/dashboard";
 import { DataHealthView } from "./data-health";
 import { ProgressStepper } from "./progress-stepper";
 import { SchemaConfirmation } from "./schema-confirmation";
@@ -33,6 +34,8 @@ export function AnalysisView({ sessionId }: { sessionId: string }) {
   const progress = useProgressStream(start.state === "started" ? sessionId : null);
   const [results, setResults] = useState<ResultsResponse | null>(null);
   const [resultsError, setResultsError] = useState<string | null>(null);
+  // True once the results in state were loaded after the run finished.
+  const [finishedResults, setFinishedResults] = useState(false);
   const showHealth = cleaningFinished(progress);
   const finished = progress.done !== null;
 
@@ -56,6 +59,7 @@ export function AnalysisView({ sessionId }: { sessionId: string }) {
     getResults(sessionId, { signal: controller.signal })
       .then((r) => {
         setResults(r);
+        setFinishedResults(finished);
         setResultsError(null);
       })
       .catch((e: unknown) => {
@@ -116,11 +120,6 @@ export function AnalysisView({ sessionId }: { sessionId: string }) {
           ) : null}
         </Alert>
       ) : null}
-      {progress.done?.ok ? (
-        <Alert tone="info" title="Analysis complete">
-          Data health is below; the dashboard tabs are coming next.
-        </Alert>
-      ) : null}
 
       {progress.awaitingConfirmation && progress.proposal ? (
         <SchemaConfirmation
@@ -130,7 +129,17 @@ export function AnalysisView({ sessionId }: { sessionId: string }) {
         />
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
+      {progress.done?.ok ? (
+        results && finishedResults ? (
+          <Dashboard results={results.results} />
+        ) : resultsError ? (
+          <Alert tone="error" title={resultsError} />
+        ) : (
+          <Spinner label="Loading the dashboard..." />
+        )
+      ) : null}
+
+      <div className={progress.done?.ok ? "hidden" : "grid gap-6 lg:grid-cols-[18rem_1fr]"}>
         <Card title="Progress">
           {start.state === "started" && progress.connection === "connecting" && progress.order.length === 0 ? (
             <Spinner label="Connecting..." />

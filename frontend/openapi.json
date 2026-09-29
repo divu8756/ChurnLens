@@ -316,6 +316,29 @@
         "title": "ErrorEvent",
         "type": "object"
       },
+      "Figure": {
+        "properties": {
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "source_key",
+          "value",
+          "display"
+        ],
+        "title": "Figure",
+        "type": "object"
+      },
       "HTTPErrorOut": {
         "properties": {
           "detail": {
@@ -342,6 +365,229 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HeldOutMetrics": {
+        "additionalProperties": true,
+        "properties": {
+          "accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy"
+          },
+          "f1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "F1"
+          },
+          "n_test": {
+            "title": "N Test",
+            "type": "integer"
+          },
+          "pr_auc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pr Auc"
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precision"
+          },
+          "recall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recall"
+          },
+          "roc_auc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roc Auc"
+          }
+        },
+        "required": [
+          "n_test"
+        ],
+        "title": "HeldOutMetrics",
+        "type": "object"
+      },
+      "Impact": {
+        "properties": {
+          "assumption": {
+            "title": "Assumption",
+            "type": "string"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "source_key",
+          "value",
+          "assumption"
+        ],
+        "title": "Impact",
+        "type": "object"
+      },
+      "ImpactEstimates": {
+        "additionalProperties": true,
+        "properties": {
+          "overall": {
+            "$ref": "#/components/schemas/ImpactGroup"
+          },
+          "revenue_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue Column"
+          },
+          "revenue_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue Note"
+          }
+        },
+        "required": [
+          "overall"
+        ],
+        "title": "ImpactEstimates",
+        "type": "object"
+      },
+      "ImpactGroup": {
+        "additionalProperties": true,
+        "properties": {
+          "churn_rate": {
+            "title": "Churn Rate",
+            "type": "number"
+          },
+          "churners": {
+            "title": "Churners",
+            "type": "integer"
+          },
+          "customers": {
+            "title": "Customers",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "monthly_revenue_at_risk": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Revenue At Risk"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "customers",
+          "churners",
+          "churn_rate"
+        ],
+        "title": "ImpactGroup",
+        "type": "object"
+      },
+      "Insight": {
+        "properties": {
+          "causality_note": {
+            "default": "",
+            "title": "Causality Note",
+            "type": "string"
+          },
+          "figures": {
+            "items": {
+              "$ref": "#/components/schemas/Figure"
+            },
+            "title": "Figures",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "significant": {
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "text",
+          "significant"
+        ],
+        "title": "Insight",
+        "type": "object"
+      },
       "LabelOption": {
         "properties": {
           "column": {
@@ -361,6 +607,49 @@
           "values"
         ],
         "title": "LabelOption",
+        "type": "object"
+      },
+      "ModelMetrics": {
+        "additionalProperties": true,
+        "properties": {
+          "chosen_model": {
+            "title": "Chosen Model",
+            "type": "string"
+          },
+          "chosen_model_name": {
+            "title": "Chosen Model Name",
+            "type": "string"
+          },
+          "n_test": {
+            "title": "N Test",
+            "type": "integer"
+          },
+          "n_train": {
+            "title": "N Train",
+            "type": "integer"
+          },
+          "risk_bands": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskBands"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "test": {
+            "$ref": "#/components/schemas/HeldOutMetrics"
+          }
+        },
+        "required": [
+          "chosen_model",
+          "chosen_model_name",
+          "test",
+          "n_train",
+          "n_test"
+        ],
+        "title": "ModelMetrics",
         "type": "object"
       },
       "NodeFinishEvent": {
@@ -518,6 +807,76 @@
         "title": "ProposedColumn",
         "type": "object"
       },
+      "Recommendation": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "customers_affected": {
+            "$ref": "#/components/schemas/Figure"
+          },
+          "effort": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Effort",
+            "type": "string"
+          },
+          "figures": {
+            "items": {
+              "$ref": "#/components/schemas/Figure"
+            },
+            "title": "Figures",
+            "type": "array"
+          },
+          "group": {
+            "enum": [
+              "quick_win",
+              "medium_term",
+              "strategic"
+            ],
+            "title": "Group",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          },
+          "priority": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "problem": {
+            "title": "Problem",
+            "type": "string"
+          },
+          "target_segment": {
+            "title": "Target Segment",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "problem",
+          "action",
+          "target_segment",
+          "customers_affected",
+          "impact",
+          "effort",
+          "priority",
+          "group"
+        ],
+        "title": "Recommendation",
+        "type": "object"
+      },
       "ResultsPayload": {
         "additionalProperties": true,
         "description": "Keys the dashboard reads are typed; the rest pass through until their tab is built.",
@@ -564,6 +923,54 @@
             ],
             "title": "Final Error"
           },
+          "final_insights": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Insight"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Insights"
+          },
+          "final_recommendations": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Recommendation"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Recommendations"
+          },
+          "impact_estimates": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImpactEstimates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model_metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "positive_label": {
             "anyOf": [
               {
@@ -585,6 +992,16 @@
               }
             ],
             "title": "Target Column"
+          },
+          "validation_report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValidationReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "title": "ResultsPayload",
@@ -621,6 +1038,36 @@
           "predictions"
         ],
         "title": "ResultsResponse",
+        "type": "object"
+      },
+      "RiskBands": {
+        "additionalProperties": true,
+        "properties": {
+          "band_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Band Counts",
+            "type": "object"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Thresholds",
+            "type": "object"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "thresholds",
+          "band_counts",
+          "total"
+        ],
+        "title": "RiskBands",
         "type": "object"
       },
       "RunStatusResponse": {
@@ -922,6 +1369,40 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "ValidationReport": {
+        "additionalProperties": true,
+        "properties": {
+          "checked": {
+            "title": "Checked",
+            "type": "integer"
+          },
+          "dropped": {
+            "title": "Dropped",
+            "type": "integer"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "final": {
+            "title": "Final",
+            "type": "boolean"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "checked",
+          "passed",
+          "failed",
+          "dropped",
+          "final"
+        ],
+        "title": "ValidationReport",
         "type": "object"
       }
     }

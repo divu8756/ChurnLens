@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.agents.llm_agents import Insight, Recommendation
 from app.schema_validation import SemanticType
 
 RunStatus = Literal["running", "awaiting_confirmation", "done", "failed", "interrupted"]
@@ -124,6 +125,61 @@ class DataHealth(BaseModel):
     score_formula: str
 
 
+class Passthrough(BaseModel):
+    """Typed fields the dashboard reads; other keys pass through untouched."""
+
+    model_config = ConfigDict(extra="allow")
+
+
+class HeldOutMetrics(Passthrough):
+    # None when undefined (e.g. no positive predictions); NaN becomes null in JSON.
+    roc_auc: float | None = None
+    pr_auc: float | None = None
+    accuracy: float | None = None
+    precision: float | None = None
+    recall: float | None = None
+    f1: float | None = None
+    n_test: int
+
+
+class RiskBands(Passthrough):
+    thresholds: dict[str, float]
+    band_counts: dict[str, int]
+    total: int
+
+
+class ModelMetrics(Passthrough):
+    chosen_model: str
+    chosen_model_name: str
+    test: HeldOutMetrics
+    n_train: int
+    n_test: int
+    risk_bands: RiskBands | None = None
+
+
+class ImpactGroup(Passthrough):
+    id: str
+    label: str
+    customers: int
+    churners: int
+    churn_rate: float
+    monthly_revenue_at_risk: float | None = None
+
+
+class ImpactEstimates(Passthrough):
+    overall: ImpactGroup
+    revenue_column: str | None = None
+    revenue_note: str | None = None
+
+
+class ValidationReport(Passthrough):
+    checked: int
+    passed: int
+    failed: int
+    dropped: int
+    final: bool
+
+
 class ResultsPayload(BaseModel):
     """Keys the dashboard reads are typed; the rest pass through until their tab is built."""
 
@@ -133,6 +189,11 @@ class ResultsPayload(BaseModel):
     positive_label: str | None = None
     cleaning_log: list[CleaningStep] | None = None
     data_health: DataHealth | None = None
+    model_metrics: ModelMetrics | None = None
+    impact_estimates: ImpactEstimates | None = None
+    final_insights: list[Insight] | None = None
+    final_recommendations: list[Recommendation] | None = None
+    validation_report: ValidationReport | None = None
     final_error: str | None = None
     errors: list[ErrorEvent] = Field(default_factory=list)
 

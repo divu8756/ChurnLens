@@ -254,6 +254,15 @@ export interface components {
             /** Node */
             node?: string | null;
         };
+        /** Figure */
+        Figure: {
+            /** Display */
+            display: string;
+            /** Source Key */
+            source_key: string;
+            /** Value */
+            value: number;
+        };
         /** HTTPErrorOut */
         HTTPErrorOut: {
             /** Detail */
@@ -264,12 +273,100 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HeldOutMetrics */
+        HeldOutMetrics: {
+            /** Accuracy */
+            accuracy?: number | null;
+            /** F1 */
+            f1?: number | null;
+            /** N Test */
+            n_test: number;
+            /** Pr Auc */
+            pr_auc?: number | null;
+            /** Precision */
+            precision?: number | null;
+            /** Recall */
+            recall?: number | null;
+            /** Roc Auc */
+            roc_auc?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** Impact */
+        Impact: {
+            /** Assumption */
+            assumption: string;
+            /** Source Key */
+            source_key: string;
+            /** Value */
+            value: number;
+        };
+        /** ImpactEstimates */
+        ImpactEstimates: {
+            overall: components["schemas"]["ImpactGroup"];
+            /** Revenue Column */
+            revenue_column?: string | null;
+            /** Revenue Note */
+            revenue_note?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ImpactGroup */
+        ImpactGroup: {
+            /** Churn Rate */
+            churn_rate: number;
+            /** Churners */
+            churners: number;
+            /** Customers */
+            customers: number;
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Monthly Revenue At Risk */
+            monthly_revenue_at_risk?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** Insight */
+        Insight: {
+            /**
+             * Causality Note
+             * @default
+             */
+            causality_note: string;
+            /** Figures */
+            figures?: components["schemas"]["Figure"][];
+            /** Id */
+            id: string;
+            /** Significant */
+            significant: boolean;
+            /** Text */
+            text: string;
+            /** Title */
+            title: string;
+        };
         /** LabelOption */
         LabelOption: {
             /** Column */
             column: string;
             /** Values */
             values: string[];
+        };
+        /** ModelMetrics */
+        ModelMetrics: {
+            /** Chosen Model */
+            chosen_model: string;
+            /** Chosen Model Name */
+            chosen_model_name: string;
+            /** N Test */
+            n_test: number;
+            /** N Train */
+            n_train: number;
+            risk_bands?: components["schemas"]["RiskBands"] | null;
+            test: components["schemas"]["HeldOutMetrics"];
+        } & {
+            [key: string]: unknown;
         };
         /** NodeFinishEvent */
         NodeFinishEvent: {
@@ -326,6 +423,33 @@ export interface components {
              */
             semantic_type: "id" | "numeric" | "categorical" | "binary" | "datetime" | "text";
         };
+        /** Recommendation */
+        Recommendation: {
+            /** Action */
+            action: string;
+            customers_affected: components["schemas"]["Figure"];
+            /**
+             * Effort
+             * @enum {string}
+             */
+            effort: "low" | "medium" | "high";
+            /** Figures */
+            figures?: components["schemas"]["Figure"][];
+            /**
+             * Group
+             * @enum {string}
+             */
+            group: "quick_win" | "medium_term" | "strategic";
+            /** Id */
+            id: string;
+            impact: components["schemas"]["Impact"];
+            /** Priority */
+            priority: number;
+            /** Problem */
+            problem: string;
+            /** Target Segment */
+            target_segment: string;
+        };
         /**
          * ResultsPayload
          * @description Keys the dashboard reads are typed; the rest pass through until their tab is built.
@@ -338,10 +462,17 @@ export interface components {
             errors?: components["schemas"]["ErrorEvent"][];
             /** Final Error */
             final_error?: string | null;
+            /** Final Insights */
+            final_insights?: components["schemas"]["Insight"][] | null;
+            /** Final Recommendations */
+            final_recommendations?: components["schemas"]["Recommendation"][] | null;
+            impact_estimates?: components["schemas"]["ImpactEstimates"] | null;
+            model_metrics?: components["schemas"]["ModelMetrics"] | null;
             /** Positive Label */
             positive_label?: string | null;
             /** Target Column */
             target_column?: string | null;
+            validation_report?: components["schemas"]["ValidationReport"] | null;
         } & {
             [key: string]: unknown;
         };
@@ -356,6 +487,21 @@ export interface components {
              * @enum {string}
              */
             status: "running" | "awaiting_confirmation" | "done" | "failed" | "interrupted";
+        };
+        /** RiskBands */
+        RiskBands: {
+            /** Band Counts */
+            band_counts: {
+                [key: string]: number;
+            };
+            /** Thresholds */
+            thresholds: {
+                [key: string]: number;
+            };
+            /** Total */
+            total: number;
+        } & {
+            [key: string]: unknown;
         };
         /** RunStatusResponse */
         RunStatusResponse: {
@@ -469,6 +615,21 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** ValidationReport */
+        ValidationReport: {
+            /** Checked */
+            checked: number;
+            /** Dropped */
+            dropped: number;
+            /** Failed */
+            failed: number;
+            /** Final */
+            final: boolean;
+            /** Passed */
+            passed: number;
+        } & {
+            [key: string]: unknown;
         };
     };
     responses: never;

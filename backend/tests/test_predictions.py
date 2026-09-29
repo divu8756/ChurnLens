@@ -158,3 +158,15 @@ def test_results_types_data_health_and_keeps_other_keys(finished_session):
                                             "positive_label"}
     assert all({"step", "rows_affected", "detail"} <= set(s) for s in results["cleaning_log"])
     assert "model_metrics" in results and "hypothesis_results" in results
+
+
+def test_results_types_overview_keys(finished_session):
+    client, sid = finished_session
+    results = client.get(f"/results/{sid}").json()["results"]
+    metrics = results["model_metrics"]
+    assert 0 <= metrics["test"]["roc_auc"] <= 1 and metrics["chosen_model_name"]
+    assert "confusion_matrix" in metrics["test"]  # untyped keys still pass through
+    assert sum(metrics["risk_bands"]["band_counts"].values()) == metrics["risk_bands"]["total"]
+    overall = results["impact_estimates"]["overall"]
+    assert overall["id"] == "overall" and overall["customers"] > 0
+    assert "items" in results["impact_estimates"]

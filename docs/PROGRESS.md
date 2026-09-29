@@ -3,11 +3,13 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T6.3a (Executive Overview tab)
+T6.3b (Churn Drivers tab)
 
 ## Next step
-T6.3a on branch phase-6 (T6.1 and T6.2 are committed and pushed there):
-add a typed results model for the keys the tab reads, then build the tab.
+T6.3b on branch phase-6 (T6.1, T6.2, T6.3a committed and pushed): type the
+keys the tab reads in app/api/contract.py (feature_importance, shap_summary,
+odds_ratios, model_metrics.test confusion matrix / ROC), regenerate types,
+build components/drivers/ and register the tab in components/dashboard/dashboard.tsx.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -207,6 +209,19 @@ add a typed results model for the keys the tab reads, then build the tab.
   7,014 -> 7,000 rows), run done (10 insights, 5 recommendations, 12/15
   verified), offer skipped, reload re-attaches, fake session -> expired, the
   stream resumed once with ?after=4. Backend 216 tests, frontend 39 tests.
+- T6.3a: dashboard shell (components/dashboard/dashboard.tsx: accessible
+  tabs with arrow keys, a TABS registry each later tab adds to; Data Health
+  is a tab too) shown when the run is done. Executive Overview
+  (components/overview/): 5 KPI cards with plain-English tooltips
+  (customers, churn rate, high-risk count, monthly revenue at risk, test
+  ROC-AUC), top 3 insights with significance badges, top 3 recommendations
+  by priority, validator badge (passed/checked, dropped), risk-band bar
+  chart with axis titles and a caption. lib/format.ts (%, 2 dp stats,
+  p < 0.001, counts, money), lib/palette.ts (Okabe-Ito). Contract types
+  model_metrics, impact_estimates, validation_report (extra keys pass
+  through) and reuses the agents' Insight/Recommendation models. Live check
+  on Telco (111 s run, 11/15 verified): KPIs 7,000 / 25.66% / 2,239 /
+  142,056 / 0.83; 375 px has no horizontal scroll. Backend 218, frontend 49 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
