@@ -263,3 +263,10 @@ def test_wrong_type_output_is_a_content_failure(fake):
     fake.fixtures = {"Verdict": [FakeResponse(parsed=123), GOOD]}
     assert llm.structured_call("fast", 0, "p", Verdict) == Verdict(**GOOD)
     assert len(fake.calls) == 2
+
+
+def test_max_attempts_can_be_lowered(fake):
+    fake.fixtures = {"Verdict": [overloaded()]}
+    with pytest.raises(llm.LLMUnavailable):
+        llm.structured_call("pro", 0, "p", Verdict, max_attempts=1)
+    assert len(fake.calls) == 1

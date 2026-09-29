@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 3 gate (PR open)
+Phase 4 gate (PR open)
 
 ## Next step
-Merge the Phase 3 PR when CI is green, then T4.1 (modelling).
+Merge the Phase 4 PR when CI is green, then T5.1 (results digest + impact node).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -104,6 +104,37 @@ Merge the Phase 3 PR when CI is green, then T4.1 (modelling).
   5.1 s, survival 0.4 s, hypothesis 0.7 s. Real nodes run in parallel inside
   the graph (run tests). No High/Medium issues found; Low items are in Known
   issues (treatment columns, test cap order).
+- Phase 3 merged to main (PR #3, CI green).
+- T4.1: stats/modelling.py + modelling_node: features exclude ids, target,
+  datetimes, text and treatment columns (offer_columns from 5b); stratified
+  80/20 split before fitting; LR (balanced) vs HistGradientBoosting
+  (balanced) by 5-fold CV PR-AUC on train; one test evaluation (accuracy,
+  precision, recall, F1, ROC-AUC, PR-AUC, confusion matrix, ROC <= 100
+  points); leakage guard (> 0.99 fatal, |r| or V > 0.9 warning);
+  permutation importance on original columns; model saved with joblib.
+  Telco (treatments excluded): LR chosen, test ROC-AUC 0.829, PR-AUC 0.611;
+  top drivers Contract, tenure, InternetService. 154 tests.
+- T4.2: stats/explain.py: SHAP on the chosen model (TreeExplainer, else
+  shap.Explainer with 100-row background; Telco LR -> LinearExplainer),
+  one-hot SHAP summed back to original features, global mean |SHAP| +
+  beeswarm points; statsmodels Logit odds ratios on train (per 1 SD / vs
+  most frequent level, 95% CI), singular and separated terms dropped with
+  a note; driver_impact table (permutation rank, SHAP, OR + CI, BH p) in
+  feature_importance. Explanation failures are non-fatal. ORs equal
+  statsmodels within 1e-9. Telco: Two year vs Month-to-month OR 0.08. 164 tests.
+- T4.3: stats/predictions.py: every customer scored by the chosen model
+  (probability 3 dp), bands from RISK_HIGH/RISK_MEDIUM (0.6/0.3), top 3
+  SHAP reasons as text ("Contract: Month-to-month (+0.18)"), sorted by risk,
+  written to predictions.parquet; band counts in model_metrics.risk_bands.
+  GET /results/{id}: all result keys (server paths stripped), predictions
+  100 per page, filter by band, 410/409/422 errors; works from the
+  checkpoint after a restart. Fixed: SHAP column map crashed when a model
+  had no categorical columns. 173 tests.
+- Phase 4 gate: live end-to-end Telco run: analysis 10.8 s after
+  confirmation, LR test ROC-AUC 0.831, bands High 2,239 / Medium 1,862 /
+  Low 2,899, /results payload 324 KB. Fixed (Medium): schema proposal took
+  ~68 s when Gemini was overloaded; structured_call now takes max_attempts
+  and the schema agent uses 2 (the rules fallback is good). 174 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -132,6 +163,8 @@ Merge the Phase 3 PR when CI is green, then T4.1 (modelling).
   "Unknown"): imputing before the train/test split leaks test data, and some
   blanks are meaningful (NPS, AvgResolutionDays). The model pipeline imputes
   medians on the training split; stats tests drop missing values per test.
+- SHAP explains the chosen model (runbook said the gradient boosting model):
+  per-customer reasons must explain the model that produced the score.
 - pandas pinned to 2.3.3 (not 3.x): lifelines 0.30.3 requires pandas < 3.
   The full suite passes on 2.3.3.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
@@ -217,6 +250,10 @@ flowchart TD
   customer traits. They still enter segmentation and hypothesis tests until
   Phase 5b confirms offer_columns; then exclude them from segmentation and
   the churn model (runbook T4.1 / data dictionary).
+- Risk bands use the chosen model's raw probabilities. With class_weight=
+  "balanced" these run high (Telco: 32% High vs ~25% churn). Phase 5d adds
+  calibration (CalibratedClassifierCV on train); switch bands and money
+  metrics to calibrated probabilities there.
 - Hypothesis test cap (40) keeps columns in data order; with more candidates
   the last ones are skipped (Telco: OfferCost).
 - Per-IP rate limiting on /upload and /chat (SPEC API section) is not built

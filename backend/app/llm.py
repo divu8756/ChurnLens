@@ -276,7 +276,7 @@ class _Outcome:
 
 def _call_model(
     model: str, tier: Tier, temperature: float, prompt: Any,
-    schema: type[BaseModel], timeout_s: float,
+    schema: type[BaseModel], timeout_s: float, max_attempts: int = MAX_TRANSIENT_ATTEMPTS,
 ) -> _Outcome:
     runnable = _model_factory(model, temperature, timeout_s).with_structured_output(
         schema, include_raw=True
@@ -309,7 +309,7 @@ def _call_model(
                 break
             transient_attempts += 1
             outcome.error = f"transient {type(exc).__name__}"
-            if transient_attempts >= MAX_TRANSIENT_ATTEMPTS:
+            if transient_attempts >= max_attempts:
                 outcome.overloaded = True
                 break
             _sleep(backoff_seconds(transient_attempts, retry_delay_hint(exc)))
@@ -327,21 +327,24 @@ def structured_call[T: BaseModel](
     prompt: Any,
     schema: type[T],
     timeout_s: float = 60,
+    max_attempts: int = MAX_TRANSIENT_ATTEMPTS,
 ) -> T:
     """Call Gemini and return a validated `schema` instance.
 
-    Transient errors (429, 5xx, timeouts) are retried up to 3 attempts with
-    backoff. Blocked, empty or invalid responses get 1 retry. If the model
+    Transient errors (429, 5xx, timeouts) are retried up to `max_attempts`
+    (default 3) per model with backoff; nodes with a good non-LLM fallback
+    can pass fewer to fail fast. Blocked, empty or invalid responses get 1 retry. If the model
     stays overloaded and GEMINI_MODEL_FALLBACK is set, the fallback model is
     tried the same way. Anything else raises LLMUnavailable so the node's
     fallback runs.
     """
     primary = model_name(tier)
     fallback = get_settings().GEMINI_MODEL_FALLBACK
-    outcome = _call_model(primary, tier, temperature, prompt, schema, timeout_s)
+    outcome = _call_model(primary, tier, temperature, prompt, schema, timeout_s, max_attempts)
     if outcome.parsed is None and outcome.overloaded and fallback and fallback != primary:
         logger.warning("llm_fallback from=%s to=%s", primary, fallback)
-        outcome = _call_model(fallback, tier, temperature, prompt, schema, timeout_s)
+        outcome = _call_model(fallback, tier, temperature, prompt, schema, timeout_s,
+                              max_attempts)
     if outcome.parsed is not None:
         return cast(T, outcome.parsed)
     raise LLMUnavailable(

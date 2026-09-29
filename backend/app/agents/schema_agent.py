@@ -19,6 +19,8 @@ from app.stats import profiling
 
 PROMPT = ("schema_agent", 1)
 TIMEOUT_S = 30
+# The rules are a good fallback, so fail fast instead of making the user wait.
+MAX_ATTEMPTS = 2
 
 SemanticType = Literal["id", "numeric", "categorical", "binary", "datetime", "text"]
 
@@ -102,7 +104,7 @@ def schema_agent_node(state: ChurnState) -> dict[str, Any]:
     errors: list[ErrorEntry] = []
     try:
         proposal = llm.structured_call("fast", 0, build_prompt(frame), SchemaProposal,
-                                       timeout_s=TIMEOUT_S)
+                                       timeout_s=TIMEOUT_S, max_attempts=MAX_ATTEMPTS)
         result = merge(frame, heur, proposal)
         detail = "AI proposal merged with rules"
     except llm.LLMUnavailable as exc:
