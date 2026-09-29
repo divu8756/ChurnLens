@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 5 gate (PR open)
+T6.2 (upload, progress, schema confirmation, data health)
 
 ## Next step
-Merge the Phase 5 PR when CI is green, then Phase 6 (T6.1 typed API contract + frontend).
+T6.2 on branch phase-6: upload page, live progress stepper, schema confirmation, Data Health.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -176,6 +176,21 @@ Merge the Phase 5 PR when CI is green, then Phase 6 (T6.1 typed API contract + f
   impact (validator now requires the same impact group); a failed retry
   wiped the agent's previous answer (now kept so only bad items drop).
   212 tests.
+- Phase 5 merged to main (PR #5, CI green; merged by the human).
+- T6.1: backend app/api/contract.py (SSE event payloads, SchemaProposalOut,
+  ResultsResponse, PredictionsPage, error bodies) declared in OpenAPI;
+  /results has a response model; /stream also accepts ?after=<id> because a
+  re-created browser EventSource cannot send Last-Event-ID (the header still
+  wins). scripts/export_openapi.py -> frontend/openapi.json, and
+  `npm run gen:types` -> lib/api-types.ts (openapi-typescript); a backend
+  test fails if the snapshot is stale. lib/api.ts: typed calls for every
+  endpoint, 30 s timeout, ApiError kinds (expired 410, conflict, validation
+  with problems, client, server, timeout, network). lib/progress.ts (pure
+  reducer) + lib/use-progress-stream.ts (EventSource, resume after last id,
+  5 reconnects in a row with backoff, 410 probe -> expired, closes on done
+  and unmount). vitest in CI. Fixed a flaky backend test: test_runs left
+  background runs going into the next test's fake LLM; the fixture now waits
+  for them. Backend 215 tests, frontend 29 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -213,6 +228,11 @@ Merge the Phase 5 PR when CI is green, then Phase 6 (T6.1 typed API contract + f
   per-customer reasons must explain the model that produced the score.
 - pandas pinned to 2.3.3 (not 3.x): lifelines 0.30.3 requires pandas < 3.
   The full suite passes on 2.3.3.
+- Dev dependencies added in T6.1 (frontend): openapi-typescript (types from
+  OpenAPI), vitest + @testing-library/react + jsdom (hook tests, required by
+  the runbook). @types/node raised to ^24 to match Node 24 (vitest's peer range).
+- Results sub-objects are still dict[str, Any] in the contract; each T6.3 tab
+  adds typed models for the keys it reads.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).

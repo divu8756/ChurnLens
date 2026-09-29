@@ -4,14 +4,15 @@ import asyncio
 import json
 import time
 from collections.abc import AsyncIterator
-from typing import Annotated
+from typing import Annotated, Any
 
 import pandas as pd
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app import sessions
+from app.api.contract import HTTPErrorOut, SchemaProblemsOut, StreamEvents
 from app.runs import Event, RunConflict, RunManager
 from app.schema_validation import ConfirmedSchema, validate_schema
 
@@ -20,6 +21,9 @@ router = APIRouter(tags=["runs"])
 HEARTBEAT_S = 15.0
 POLL_S = 0.2
 EXPIRED = "Session expired, please re-upload."
+ERRORS: dict[int | str, dict[str, Any]] = {
+    409: {"model": HTTPErrorOut}, 410: {"model": HTTPErrorOut},
+}
 
 
 class RunStatusResponse(BaseModel):
@@ -40,14 +44,15 @@ def _require_session(session_id: str) -> None:
         raise HTTPException(409, "Choose a sheet before starting the analysis.")
 
 
-@router.post("/analyze/{session_id}", response_model=RunStatusResponse)
+@router.post("/analyze/{session_id}", response_model=RunStatusResponse, responses=ERRORS)
 def analyze(session_id: str, request: Request) -> RunStatusResponse:
     _require_session(session_id)
     run = _manager(request).start(session_id)
     return RunStatusResponse(session_id=session_id, status=run.status)
 
 
-@router.post("/confirm-schema/{session_id}", response_model=RunStatusResponse)
+@router.post("/confirm-schema/{session_id}", response_model=RunStatusResponse,
+             responses={**ERRORS, 422: {"model": SchemaProblemsOut}})
 def confirm_schema(session_id: str, schema: ConfirmedSchema,
                    request: Request) -> RunStatusResponse:
     _require_session(session_id)
@@ -73,11 +78,23 @@ def _format(event: Event) -> str:
     return f"id: {event.id}\nevent: {event.event}\ndata: {json.dumps(event.data, default=str)}\n\n"
 
 
-@router.get("/stream/{session_id}")
+@router.get(
+    "/stream/{session_id}",
+    response_class=StreamingResponse,
+    responses={
+        200: {"model": StreamEvents, "content": {"text/event-stream": {}},
+              "description": "Server-sent events; StreamEvents maps each event name "
+                             "to its data payload."},
+        410: {"model": HTTPErrorOut},
+    },
+)
 async def stream(
     session_id: str,
     request: Request,
     last_event_id: Annotated[str | None, Header(alias="Last-Event-ID")] = None,
+    after: Annotated[int | None, Query(ge=0, description=(
+        "Resume after this event id. For clients that cannot send Last-Event-ID, such "
+        "as a browser EventSource re-created after it closed."))] = None,
 ) -> StreamingResponse:
     try:
         sessions.read_meta(session_id)
@@ -87,7 +104,9 @@ async def stream(
     if run is None:
         # Unknown run: never started, or the server restarted and lost it.
         raise HTTPException(410, EXPIRED)
-    start_after = int(last_event_id) if last_event_id and last_event_id.isdigit() else 0
+    # The header wins: a browser's own reconnect keeps it current.
+    start_after = (int(last_event_id) if last_event_id and last_event_id.isdigit()
+                   else after or 0)
 
     async def events() -> AsyncIterator[str]:
         last_id, last_sent = start_after, time.monotonic()

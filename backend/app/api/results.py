@@ -7,6 +7,7 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from app import sessions
+from app.api.contract import HTTPErrorOut, PredictionsPage, ResultsResponse
 from app.graph.state import ErrorEntry, ProgressEntry
 from app.stats.common import jsonable
 
@@ -55,13 +56,14 @@ def predictions_page(path: str | None, page: int, band: str | None) -> dict[str,
             "items": jsonable(items.to_dict(orient="records"))}
 
 
-@router.get("/results/{session_id}")
+@router.get("/results/{session_id}", response_model=ResultsResponse,
+            responses={409: {"model": HTTPErrorOut}, 410: {"model": HTTPErrorOut}})
 def results(
     session_id: str,
     request: Request,
     page: Annotated[int, Query(ge=1)] = 1,
     band: Annotated[Literal["High", "Medium", "Low"] | None, Query()] = None,
-) -> dict[str, Any]:
+) -> ResultsResponse:
     try:
         sessions.read_meta(session_id)
     except sessions.SessionNotFound:
@@ -76,9 +78,10 @@ def results(
 
     payload = {key: _strip_paths(values.get(key)) for key in RESULT_KEYS}
     payload["errors"] = _dump(values.get("errors", []))
-    return {
-        "session_id": session_id,
-        "status": status,
-        "results": payload,
-        "predictions": predictions_page(values.get("predictions_path"), page, band),
-    }
+    return ResultsResponse(
+        session_id=session_id,
+        status=status,
+        results=payload,
+        predictions=PredictionsPage(**predictions_page(values.get("predictions_path"), page,
+                                                       band)),
+    )
