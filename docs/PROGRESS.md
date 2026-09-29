@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5.2
+T5.3
 
 ## Next step
-T5.2: insight_agent.v1.md and recommendation_agent.v1.md prompt files + loader tests.
+T5.3: insight_agent + recommendation_agent with structured output and feedback.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -146,6 +146,11 @@ T5.2: insight_agent.v1.md and recommendation_agent.v1.md prompt files + loader t
   Optional revenue_column added to the schema (heuristic: MonthlyCharges /
   ARPU names; validated numeric). tests/pipeline.py builds a full Telco
   state from the real nodes. 182 tests.
+- T5.2: prompts insight_agent.v1.md and recommendation_agent.v1.md (role,
+  task, input/output schema, rules incl. source_key citation, significance,
+  "associated with", impact only from impact_estimates, priority = impact vs
+  effort; worked examples on a tiny fictional digest; {{feedback}} slot).
+  Loader tests. 189 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
