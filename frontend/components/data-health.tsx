@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 
 import type { components } from "@/lib/api-types";
 
-import { Card, EmptyState } from "./ui";
+import { Alert, Card, EmptyState } from "./ui";
 
 type DataHealth = components["schemas"]["DataHealth"];
 type CleaningStep = components["schemas"]["CleaningStep"];
@@ -34,7 +34,16 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function DataHealthView({ health, log }: { health: DataHealth; log: CleaningStep[] }) {
+export function DataHealthView({
+  health,
+  log,
+  warnings = [],
+}: {
+  health: DataHealth;
+  log: CleaningStep[];
+  /** Offer-data checks (leakage, selection bias) from the offer analysis. */
+  warnings?: string[];
+}) {
   // Display only: the percentages come from the API; the browser just picks the non-zero ones.
   const missing = Object.entries(health.missing_pct_before)
     .filter(([, pct]) => pct > 0)
@@ -46,6 +55,11 @@ export function DataHealthView({ health, log }: { health: DataHealth; log: Clean
   return (
     <Card title="Data health">
       <div className="flex flex-col gap-6">
+        {warnings.map((w) => (
+          <Alert key={w} tone="warning" title="Offer data">
+            {w}
+          </Alert>
+        ))}
         <div className="flex flex-wrap items-end gap-6">
           <div>
             <p className="text-xs text-gray-500">Health score</p>

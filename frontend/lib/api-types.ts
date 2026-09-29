@@ -89,6 +89,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/predictions/{session_id}/offer/{customer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Next Best Offer */
+        get: operations["next_best_offer_predictions__session_id__offer__customer_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/predictions/{session_id}/offer/{customer_id}/message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Offer Message */
+        post: operations["offer_message_predictions__session_id__offer__customer_id__message_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/results/{session_id}": {
         parameters: {
             query?: never;
@@ -222,6 +256,15 @@ export interface components {
              */
             levels_folded_into_other: number;
         };
+        /** ChurnCell */
+        ChurnCell: {
+            /** Churn Rate */
+            churn_rate?: number | null;
+            /** Churned */
+            churned: number;
+            /** N */
+            n: number;
+        };
         /** ClassBalance */
         ClassBalance: {
             /** Negative */
@@ -260,6 +303,7 @@ export interface components {
             columns?: components["schemas"]["ConfirmedColumn"][];
             /** Id Columns */
             id_columns?: string[];
+            offer_columns?: components["schemas"]["OfferColumns"] | null;
             /** Positive Label */
             positive_label: string;
             /** Revenue Column */
@@ -550,9 +594,11 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "categorical" | "numeric";
+            kind: "categorical" | "numeric" | "offer";
             /** Merged Levels */
             merged_levels?: string[];
+            /** Offer */
+            offer?: string | null;
             /** P Adjusted */
             p_adjusted?: number | null;
             /** P Value */
@@ -716,6 +762,84 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** NboSummary */
+        NboSummary: {
+            /** Assumptions */
+            assumptions?: components["schemas"]["OfferAssumption"][];
+            /** By Offer */
+            by_offer?: components["schemas"]["OfferValue"][];
+            /** Customers Scored */
+            customers_scored: number;
+            /** Excluded By Discount */
+            excluded_by_discount?: string[];
+            /** Formula */
+            formula: string;
+            /** Offer Models */
+            offer_models?: {
+                [key: string]: components["schemas"]["OfferModelInfo"];
+            };
+            /** Total Expected Value */
+            total_expected_value: number;
+            /**
+             * Value Unit
+             * @enum {string}
+             */
+            value_unit: "revenue" | "customers";
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * NextBestOffer
+         * @description GET /predictions/{id}/offer/{customer_id}: why this offer, with every input.
+         */
+        NextBestOffer: {
+            /** Assumptions */
+            assumptions: components["schemas"]["OfferAssumption"][];
+            /** Best Offer */
+            best_offer: string;
+            /** Customer Id */
+            customer_id: string;
+            /** Customer Value */
+            customer_value: number;
+            /** Eligible Offers */
+            eligible_offers: number;
+            /** Expected Value */
+            expected_value: number;
+            /** Formula */
+            formula: string;
+            /** Low Data */
+            low_data: boolean;
+            /** No Offer Reason */
+            no_offer_reason?: string | null;
+            /** Offer Cost */
+            offer_cost?: number | null;
+            /** P Accept */
+            p_accept?: number | null;
+            /** P Churn */
+            p_churn: number;
+            /** P Stay If Accepted */
+            p_stay_if_accepted?: number | null;
+            /** P Stay If Declined */
+            p_stay_if_declined?: number | null;
+            /** Reasons */
+            reasons: string[];
+            /** Retention Lift */
+            retention_lift?: number | null;
+            /**
+             * Risk Band
+             * @enum {string}
+             */
+            risk_band: "High" | "Medium" | "Low";
+            /** Runner Up */
+            runner_up?: string | null;
+            /** Runner Up Value */
+            runner_up_value?: number | null;
+            /**
+             * Value Unit
+             * @enum {string}
+             */
+            value_unit: "revenue" | "customers";
+        };
         /** NodeFinishEvent */
         NodeFinishEvent: {
             /** Detail */
@@ -793,6 +917,142 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** OfferAssumption */
+        OfferAssumption: {
+            /** Name */
+            name: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "default" | "user" | "data";
+            /** Text */
+            text: string;
+            /** Value */
+            value?: number | null;
+        };
+        /**
+         * OfferColumns
+         * @description Which columns describe a retention offer/campaign (Phase 5b). They are treatments:
+         *     analysed separately and kept out of the churn model, segments and trait tests.
+         */
+        OfferColumns: {
+            /** Accepted */
+            accepted?: string | string[] | null;
+            /** Cost */
+            cost?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Group */
+            group?: string | null;
+            /** Other */
+            other?: string[];
+            /** Shown */
+            shown: string | string[];
+        };
+        /** OfferEffectiveness */
+        OfferEffectiveness: {
+            never_offered: components["schemas"]["ChurnCell"];
+            next_best_offer?: components["schemas"]["NboSummary"] | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            offered: components["schemas"]["ChurnCell"];
+            /** Offers */
+            offers?: components["schemas"]["OfferRow"][];
+            /** Warnings */
+            warnings?: string[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** OfferMessageResponse */
+        OfferMessageResponse: {
+            /** Cached */
+            cached: boolean;
+            /** Customer Id */
+            customer_id: string;
+            /** Message */
+            message: string;
+            /** Offer */
+            offer: string;
+            /** Problems */
+            problems?: string[];
+            /** Sms */
+            sms: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "ai" | "template";
+        };
+        /** OfferModelInfo */
+        OfferModelInfo: {
+            /** Accepted */
+            accepted: number;
+            /** Low Data */
+            low_data: boolean;
+            /** Method */
+            method: string;
+            /** Roc Auc */
+            roc_auc?: number | null;
+            /** Shown */
+            shown: number;
+        };
+        /** OfferRow */
+        OfferRow: {
+            /** Acceptance Rate */
+            acceptance_rate?: number | null;
+            /** Accepted */
+            accepted: number;
+            acceptors: components["schemas"]["ChurnCell"];
+            decliners: components["schemas"]["ChurnCell"];
+            /** Offer */
+            offer: string;
+            /** Segments */
+            segments?: components["schemas"]["OfferSegmentRow"][] | null;
+            /** Shown */
+            shown: number;
+            test?: components["schemas"]["OfferTestRef"] | null;
+        };
+        /** OfferSegmentRow */
+        OfferSegmentRow: {
+            /** Acceptance Rate */
+            acceptance_rate?: number | null;
+            /** Accepted */
+            accepted: number;
+            acceptors: components["schemas"]["ChurnCell"];
+            decliners: components["schemas"]["ChurnCell"];
+            /** Label */
+            label: string;
+            /** Segment */
+            segment: number;
+            /** Shown */
+            shown: number;
+        };
+        /** OfferTestRef */
+        OfferTestRef: {
+            /** P Adjusted */
+            p_adjusted?: number | null;
+            /** P Value */
+            p_value?: number | null;
+            /** Significant */
+            significant: boolean;
+            /** Test Name */
+            test_name: string;
+            /** Variable */
+            variable: string;
+        };
+        /** OfferValue */
+        OfferValue: {
+            /** Customers */
+            customers: number;
+            /** Expected Value */
+            expected_value: number;
+            /** Offer */
+            offer: string;
+        };
         /** OutlierCounts */
         OutlierCounts: {
             /** Iqr */
@@ -815,10 +1075,14 @@ export interface components {
         PredictionRow: {
             /** Actual Churn */
             actual_churn: number;
+            /** Best Offer */
+            best_offer?: string | null;
             /** Churn Probability */
             churn_probability: number;
             /** Customer Id */
             customer_id: string;
+            /** Expected Value */
+            expected_value?: number | null;
             /** Reason 1 */
             reason_1?: string | null;
             /** Reason 2 */
@@ -830,6 +1094,10 @@ export interface components {
              * @enum {string}
              */
             risk_band: "High" | "Medium" | "Low";
+            /** Runner Up */
+            runner_up?: string | null;
+            /** Runner Up Value */
+            runner_up_value?: number | null;
         };
         /** PredictionsPage */
         PredictionsPage: {
@@ -928,6 +1196,7 @@ export interface components {
             impact_estimates?: components["schemas"]["ImpactEstimates"] | null;
             model_metrics?: components["schemas"]["ModelMetrics"] | null;
             odds_ratios?: components["schemas"]["OddsRatios"] | null;
+            offer_effectiveness?: components["schemas"]["OfferEffectiveness"] | null;
             /** Positive Label */
             positive_label?: string | null;
             segments?: components["schemas"]["Segments"] | null;
@@ -1002,6 +1271,7 @@ export interface components {
             id_columns?: string[];
             /** Label Options */
             label_options?: components["schemas"]["LabelOption"][];
+            offer_columns?: components["schemas"]["OfferColumns"] | null;
             /** Positive Label */
             positive_label?: string | null;
             /**
@@ -1456,6 +1726,124 @@ export interface operations {
                 };
                 content: {
                     "text/csv": unknown;
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    next_best_offer_predictions__session_id__offer__customer_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NextBestOffer"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    offer_message_predictions__session_id__offer__customer_id__message_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferMessageResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
                 };
             };
             /** @description Conflict */

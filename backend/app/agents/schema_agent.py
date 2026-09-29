@@ -17,7 +17,7 @@ from app.graph.state import ChurnState, ErrorEntry, ProgressEntry
 from app.prompts.loader import render_prompt
 from app.stats import profiling
 
-PROMPT = ("schema_agent", 1)
+PROMPT = ("schema_agent", 2)
 TIMEOUT_S = 30
 # The rules are a good fallback, so fail fast instead of making the user wait.
 MAX_ATTEMPTS = 2
@@ -37,6 +37,12 @@ class SchemaProposal(BaseModel):
     positive_label: str | None = None
     id_columns: list[str] = Field(default_factory=list)
     time_column: str | None = None
+    # Flat on purpose (Gemini-friendly); merged into offer_columns by merge().
+    offer_shown_column: str | None = None
+    offer_accepted_column: str | None = None
+    offer_date_column: str | None = None
+    offer_cost_column: str | None = None
+    campaign_group_column: str | None = None
     reasoning: str = ""
 
 
@@ -85,6 +91,7 @@ def merge(frame: pd.DataFrame, heur: dict[str, Any], proposal: SchemaProposal) -
             frame[proposal.time_column], False) == "numeric":
         time_column = proposal.time_column
 
+    reserved = {*id_columns, target, time_column, heur.get("revenue_column")} - {None}
     return {
         "columns": columns,
         "target_column": target,
@@ -92,9 +99,36 @@ def merge(frame: pd.DataFrame, heur: dict[str, Any], proposal: SchemaProposal) -
         "id_columns": id_columns,
         "time_column": time_column,
         "revenue_column": heur.get("revenue_column"),
+        "offer_columns": merge_offer_columns(heur.get("offer_columns"), proposal, names,
+                                             reserved),
         "reasoning": " ".join([proposal.reasoning, *notes]).strip(),
         "source": "ai+rules",
     }
+
+
+OFFER_FIELDS = {"shown": "offer_shown_column", "accepted": "offer_accepted_column",
+                "date": "offer_date_column", "cost": "offer_cost_column",
+                "group": "campaign_group_column"}
+
+
+def merge_offer_columns(heur: dict[str, Any] | None, proposal: SchemaProposal,
+                        names: list[str], reserved: set[str]) -> dict[str, Any] | None:
+    """Rules first; the AI only fills offer fields the rules left empty, with real columns."""
+    merged: dict[str, Any] = dict(heur) if heur else {"other": []}
+    used = {v for k, v in merged.items() if k != "other" and isinstance(v, str)}
+    for field, attr in OFFER_FIELDS.items():
+        col = getattr(proposal, attr)
+        if merged.get(field) or not col or col not in names or col in reserved or col in used:
+            continue
+        merged[field] = col
+        used.add(col)
+        if col in merged.get("other", []):
+            merged["other"] = [c for c in merged["other"] if c != col]
+    if not merged.get("shown"):
+        return None
+    return {"shown": merged["shown"], "accepted": merged.get("accepted"),
+            "date": merged.get("date"), "cost": merged.get("cost"),
+            "group": merged.get("group"), "other": merged.get("other", [])}
 
 
 def schema_agent_node(state: ChurnState) -> dict[str, Any]:

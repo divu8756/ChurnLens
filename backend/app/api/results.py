@@ -21,8 +21,9 @@ RESULT_KEYS = (
     "target_column", "positive_label", "id_columns", "time_column", "confirmed_schema",
     "cleaning_log", "data_health", "eda_results", "segments", "survival_results",
     "hypothesis_results", "model_metrics", "feature_importance", "shap_summary",
-    "odds_ratios", "impact_estimates", "offer_effectiveness", "insights", "recommendations",
-    "final_insights", "final_recommendations", "validation_report", "final_error",
+    "odds_ratios", "impact_estimates", "offer_catalog", "offer_effectiveness", "insights",
+    "recommendations", "final_insights", "final_recommendations", "validation_report",
+    "final_error",
 )
 
 

@@ -15,6 +15,8 @@ export type RiskBand = NonNullable<PredictionsPage["band"]>;
 export type StreamEvents = Schemas["StreamEvents"];
 export type PredictionsResponse = Schemas["PredictionsResponse"];
 export type PredictionRow = Schemas["PredictionRow"];
+export type NextBestOffer = Schemas["NextBestOffer"];
+export type OfferMessage = Schemas["OfferMessageResponse"];
 export type NodeFinishEvent = Schemas["NodeFinishEvent"];
 export type ErrorEvent = Schemas["ErrorEvent"];
 export type DoneEvent = Schemas["DoneEvent"];
@@ -181,6 +183,18 @@ export function getPredictions(
 ): Promise<PredictionsResponse> {
   const query = predictionsQuery({ page: options.page ?? 1, band: options.band, q: options.q });
   return request<PredictionsResponse>(`/predictions/${enc(sessionId)}?${query}`, { signal: options.signal });
+}
+
+export function getNextBestOffer(sessionId: string, customerId: string, signal?: AbortSignal): Promise<NextBestOffer> {
+  return request<NextBestOffer>(`/predictions/${enc(sessionId)}/offer/${enc(customerId)}`, { signal });
+}
+
+/** Written by the LLM on demand (cached per customer on the server). */
+export function generateOfferMessage(sessionId: string, customerId: string, signal?: AbortSignal): Promise<OfferMessage> {
+  return request<OfferMessage>(`/predictions/${enc(sessionId)}/offer/${enc(customerId)}/message`, {
+    method: "POST",
+    signal,
+  });
 }
 
 /** Direct download link: the server sends the CSV as an attachment. */

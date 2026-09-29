@@ -28,7 +28,7 @@ const TABS: Tab[] = [
     label: "Data Health",
     render: (r) =>
       r.data_health ? (
-        <DataHealthView health={r.data_health} log={r.cleaning_log ?? []} />
+        <DataHealthView health={r.data_health} log={r.cleaning_log ?? []} warnings={r.offer_effectiveness?.warnings ?? []} />
       ) : (
         <EmptyState>Data health is not available.</EmptyState>
       ),

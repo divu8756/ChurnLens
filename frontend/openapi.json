@@ -122,6 +122,35 @@
         "title": "CategorySummary",
         "type": "object"
       },
+      "ChurnCell": {
+        "properties": {
+          "churn_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Rate"
+          },
+          "churned": {
+            "title": "Churned",
+            "type": "integer"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "n",
+          "churned"
+        ],
+        "title": "ChurnCell",
+        "type": "object"
+      },
       "ClassBalance": {
         "properties": {
           "negative": {
@@ -225,6 +254,16 @@
             },
             "title": "Id Columns",
             "type": "array"
+          },
+          "offer_columns": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferColumns"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "positive_label": {
             "title": "Positive Label",
@@ -1207,7 +1246,8 @@
           "kind": {
             "enum": [
               "categorical",
-              "numeric"
+              "numeric",
+              "offer"
             ],
             "title": "Kind",
             "type": "string"
@@ -1218,6 +1258,17 @@
             },
             "title": "Merged Levels",
             "type": "array"
+          },
+          "offer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer"
           },
           "p_adjusted": {
             "anyOf": [
@@ -1711,6 +1762,239 @@
         "title": "ModelMetrics",
         "type": "object"
       },
+      "NboSummary": {
+        "additionalProperties": true,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/OfferAssumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "by_offer": {
+            "items": {
+              "$ref": "#/components/schemas/OfferValue"
+            },
+            "title": "By Offer",
+            "type": "array"
+          },
+          "customers_scored": {
+            "title": "Customers Scored",
+            "type": "integer"
+          },
+          "excluded_by_discount": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Excluded By Discount",
+            "type": "array"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "offer_models": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OfferModelInfo"
+            },
+            "title": "Offer Models",
+            "type": "object"
+          },
+          "total_expected_value": {
+            "title": "Total Expected Value",
+            "type": "number"
+          },
+          "value_unit": {
+            "enum": [
+              "revenue",
+              "customers"
+            ],
+            "title": "Value Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customers_scored",
+          "value_unit",
+          "total_expected_value",
+          "formula"
+        ],
+        "title": "NboSummary",
+        "type": "object"
+      },
+      "NextBestOffer": {
+        "description": "GET /predictions/{id}/offer/{customer_id}: why this offer, with every input.",
+        "properties": {
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/OfferAssumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "best_offer": {
+            "title": "Best Offer",
+            "type": "string"
+          },
+          "customer_id": {
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "customer_value": {
+            "title": "Customer Value",
+            "type": "number"
+          },
+          "eligible_offers": {
+            "title": "Eligible Offers",
+            "type": "integer"
+          },
+          "expected_value": {
+            "title": "Expected Value",
+            "type": "number"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "low_data": {
+            "title": "Low Data",
+            "type": "boolean"
+          },
+          "no_offer_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Offer Reason"
+          },
+          "offer_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Cost"
+          },
+          "p_accept": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Accept"
+          },
+          "p_churn": {
+            "title": "P Churn",
+            "type": "number"
+          },
+          "p_stay_if_accepted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Stay If Accepted"
+          },
+          "p_stay_if_declined": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Stay If Declined"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "retention_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Lift"
+          },
+          "risk_band": {
+            "enum": [
+              "High",
+              "Medium",
+              "Low"
+            ],
+            "title": "Risk Band",
+            "type": "string"
+          },
+          "runner_up": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up"
+          },
+          "runner_up_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up Value"
+          },
+          "value_unit": {
+            "enum": [
+              "revenue",
+              "customers"
+            ],
+            "title": "Value Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "risk_band",
+          "reasons",
+          "best_offer",
+          "expected_value",
+          "p_churn",
+          "customer_value",
+          "low_data",
+          "eligible_offers",
+          "value_unit",
+          "formula",
+          "assumptions"
+        ],
+        "title": "NextBestOffer",
+        "type": "object"
+      },
       "NodeFinishEvent": {
         "properties": {
           "detail": {
@@ -1983,6 +2267,444 @@
         "title": "OddsRatios",
         "type": "object"
       },
+      "OfferAssumption": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "default",
+              "user",
+              "data"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "source",
+          "text"
+        ],
+        "title": "OfferAssumption",
+        "type": "object"
+      },
+      "OfferColumns": {
+        "description": "Which columns describe a retention offer/campaign (Phase 5b). They are treatments:\nanalysed separately and kept out of the churn model, segments and trait tests.",
+        "properties": {
+          "accepted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group"
+          },
+          "other": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Other",
+            "type": "array"
+          },
+          "shown": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Shown"
+          }
+        },
+        "required": [
+          "shown"
+        ],
+        "title": "OfferColumns",
+        "type": "object"
+      },
+      "OfferEffectiveness": {
+        "additionalProperties": true,
+        "properties": {
+          "never_offered": {
+            "$ref": "#/components/schemas/ChurnCell"
+          },
+          "next_best_offer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NboSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "offered": {
+            "$ref": "#/components/schemas/ChurnCell"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/OfferRow"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "never_offered",
+          "offered"
+        ],
+        "title": "OfferEffectiveness",
+        "type": "object"
+      },
+      "OfferMessageResponse": {
+        "properties": {
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "customer_id": {
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "offer": {
+            "title": "Offer",
+            "type": "string"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "sms": {
+            "title": "Sms",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "ai",
+              "template"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "offer",
+          "message",
+          "sms",
+          "source",
+          "cached"
+        ],
+        "title": "OfferMessageResponse",
+        "type": "object"
+      },
+      "OfferModelInfo": {
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "integer"
+          },
+          "low_data": {
+            "title": "Low Data",
+            "type": "boolean"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "roc_auc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roc Auc"
+          },
+          "shown": {
+            "title": "Shown",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "shown",
+          "accepted",
+          "low_data",
+          "method"
+        ],
+        "title": "OfferModelInfo",
+        "type": "object"
+      },
+      "OfferRow": {
+        "properties": {
+          "acceptance_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance Rate"
+          },
+          "accepted": {
+            "title": "Accepted",
+            "type": "integer"
+          },
+          "acceptors": {
+            "$ref": "#/components/schemas/ChurnCell"
+          },
+          "decliners": {
+            "$ref": "#/components/schemas/ChurnCell"
+          },
+          "offer": {
+            "title": "Offer",
+            "type": "string"
+          },
+          "segments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/OfferSegmentRow"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segments"
+          },
+          "shown": {
+            "title": "Shown",
+            "type": "integer"
+          },
+          "test": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferTestRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "offer",
+          "shown",
+          "accepted",
+          "acceptors",
+          "decliners"
+        ],
+        "title": "OfferRow",
+        "type": "object"
+      },
+      "OfferSegmentRow": {
+        "properties": {
+          "acceptance_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance Rate"
+          },
+          "accepted": {
+            "title": "Accepted",
+            "type": "integer"
+          },
+          "acceptors": {
+            "$ref": "#/components/schemas/ChurnCell"
+          },
+          "decliners": {
+            "$ref": "#/components/schemas/ChurnCell"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "integer"
+          },
+          "shown": {
+            "title": "Shown",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "segment",
+          "label",
+          "shown",
+          "accepted",
+          "acceptors",
+          "decliners"
+        ],
+        "title": "OfferSegmentRow",
+        "type": "object"
+      },
+      "OfferTestRef": {
+        "properties": {
+          "p_adjusted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Adjusted"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "significant": {
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "test_name": {
+            "title": "Test Name",
+            "type": "string"
+          },
+          "variable": {
+            "title": "Variable",
+            "type": "string"
+          }
+        },
+        "required": [
+          "test_name",
+          "variable",
+          "significant"
+        ],
+        "title": "OfferTestRef",
+        "type": "object"
+      },
+      "OfferValue": {
+        "properties": {
+          "customers": {
+            "title": "Customers",
+            "type": "integer"
+          },
+          "expected_value": {
+            "title": "Expected Value",
+            "type": "number"
+          },
+          "offer": {
+            "title": "Offer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "offer",
+          "customers",
+          "expected_value"
+        ],
+        "title": "OfferValue",
+        "type": "object"
+      },
       "OutlierCounts": {
         "properties": {
           "iqr": {
@@ -2035,6 +2757,17 @@
             "title": "Actual Churn",
             "type": "integer"
           },
+          "best_offer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Offer"
+          },
           "churn_probability": {
             "title": "Churn Probability",
             "type": "number"
@@ -2042,6 +2775,17 @@
           "customer_id": {
             "title": "Customer Id",
             "type": "string"
+          },
+          "expected_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Value"
           },
           "reason_1": {
             "anyOf": [
@@ -2084,6 +2828,28 @@
             ],
             "title": "Risk Band",
             "type": "string"
+          },
+          "runner_up": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up"
+          },
+          "runner_up_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up Value"
           }
         },
         "required": [
@@ -2451,6 +3217,16 @@
               }
             ]
           },
+          "offer_effectiveness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferEffectiveness"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "positive_label": {
             "anyOf": [
               {
@@ -2678,6 +3454,16 @@
             },
             "title": "Label Options",
             "type": "array"
+          },
+          "offer_columns": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferColumns"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "positive_label": {
             "anyOf": [
@@ -3803,6 +4589,168 @@
         "summary": "Predictions Csv",
         "tags": [
           "predictions"
+        ]
+      }
+    },
+    "/predictions/{session_id}/offer/{customer_id}": {
+      "get": {
+        "operationId": "next_best_offer_predictions__session_id__offer__customer_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "customer_id",
+            "required": true,
+            "schema": {
+              "title": "Customer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NextBestOffer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Next Best Offer",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
+    "/predictions/{session_id}/offer/{customer_id}/message": {
+      "post": {
+        "operationId": "offer_message_predictions__session_id__offer__customer_id__message_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "customer_id",
+            "required": true,
+            "schema": {
+              "title": "Customer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferMessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Offer Message",
+        "tags": [
+          "offers"
         ]
       }
     },

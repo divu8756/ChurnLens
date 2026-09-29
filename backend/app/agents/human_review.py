@@ -21,6 +21,7 @@ def human_review_node(state: ChurnState) -> dict[str, Any]:
         "target_confirmed": True,
         "id_columns": confirmed.get("id_columns", []),
         "time_column": confirmed.get("time_column"),
+        "offer_columns": confirmed.get("offer_columns"),
         "progress": [ProgressEntry(node="human_review", status="done",
                                    detail="schema confirmed")],
     }

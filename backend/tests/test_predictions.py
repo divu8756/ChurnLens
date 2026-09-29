@@ -270,3 +270,21 @@ def test_a_malformed_results_key_is_omitted_not_fatal():
     result = validated_payload(payload)
     assert result.data_health is None and result.target_column == "Churn"
     assert result.errors[-1].message == "'data_health' had an unexpected shape and was omitted."
+
+
+def test_next_best_offer_columns_are_joined_without_reordering(tmp_path):
+    from app.api.predictions import filtered
+    preds = pd.DataFrame({"customer_id": ["C3", "C1", "C2"],
+                          "churn_probability": [0.9, 0.5, 0.1],
+                          "risk_band": ["High", "Medium", "Low"], "actual_churn": [1, 0, 0]})
+    nbo = pd.DataFrame({"customer_id": ["C1", "C3"], "best_offer": ["Cashback", "No offer"],
+                        "expected_value": [12.5, 0.0], "runner_up": [None, None],
+                        "runner_up_value": [None, None], "p_churn": [0.5, 0.9]})
+    preds.to_parquet(tmp_path / "p.parquet", index=False)
+    nbo.to_parquet(tmp_path / "n.parquet", index=False)
+    table = filtered(tmp_path / "p.parquet", None, None, tmp_path / "n.parquet")
+    assert table["customer_id"].tolist() == ["C3", "C1", "C2"]  # highest risk first, kept
+    assert table["best_offer"].tolist()[:2] == ["No offer", "Cashback"]
+    assert pd.isna(table["best_offer"].iloc[2])  # Low risk: not scored
+    assert "p_churn" not in table.columns  # only the display columns are joined
+    assert "best_offer" not in filtered(tmp_path / "p.parquet", None, None).columns

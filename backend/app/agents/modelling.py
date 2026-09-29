@@ -8,6 +8,7 @@ import pandas as pd
 from app.config import get_settings
 from app.graph.errors import FatalNodeError
 from app.graph.state import ChurnState, ErrorEntry, ProgressEntry
+from app.schema_validation import offer_column_names
 from app.stats.explain import driver_impact, odds_ratios, shap_summary
 from app.stats.modelling import LeakageError, save_artifacts, train_and_evaluate
 from app.stats.predictions import score_customers
@@ -18,8 +19,7 @@ PREDICTIONS_FILE = "predictions.parquet"
 
 def treatment_columns(state: ChurnState) -> list[str]:
     """Offer/campaign columns confirmed in Phase 5b are treatments, not traits."""
-    offers = state.offer_columns or {}
-    return [str(v) for v in offers.values() if isinstance(v, str)]
+    return offer_column_names(state.offer_columns)
 
 
 def modelling_node(state: ChurnState) -> dict[str, Any]:

@@ -8,6 +8,7 @@ import {
   draftFromProposal,
   draftProblems,
   labelValues,
+  offerColumnNames,
   toConfirmed,
   withColumnType,
   withTarget,
@@ -15,6 +16,7 @@ import {
   type SemanticType,
 } from "@/lib/schema-form";
 
+import { SchemaOffers } from "./schema-offers";
 import { Alert, Button, Card, Spinner } from "./ui";
 
 const selectClass =
@@ -35,6 +37,7 @@ export function SchemaConfirmation({
   const localProblems = draftProblems(draft);
   const names = draft.columns.map((c) => c.name);
   const values = draft.target_column ? labelValues(proposal, draft.target_column) : null;
+  const offerCols = offerColumnNames(draft.offer_columns);
   const numericNames = draft.columns.filter((c) => c.semantic_type === "numeric").map((c) => c.name);
 
   const submit = async () => {
@@ -141,6 +144,8 @@ export function SchemaConfirmation({
           </label>
         </div>
 
+        <SchemaOffers draft={draft} names={names} onChange={setDraft} />
+
         <div className="max-h-96 overflow-auto rounded-lg border border-gray-200 dark:border-gray-800">
           <table className="w-full text-left text-sm">
             <thead className="sticky top-0 bg-gray-50 dark:bg-gray-900">
@@ -156,6 +161,7 @@ export function SchemaConfirmation({
                   <td className="px-3 py-1.5 break-all">
                     {c.name}
                     {c.name === draft.target_column ? <span className="ml-2 text-xs text-blue-600">target</span> : null}
+                    {offerCols.includes(c.name) ? <span className="ml-2 text-xs text-orange-600">offer</span> : null}
                   </td>
                   <td className="px-3 py-1.5">
                     <select
