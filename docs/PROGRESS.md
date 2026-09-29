@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T3.2
+T3.3
 
 ## Next step
-T3.2: segmentation node (K-means k=2..8 by silhouette).
+T3.3: survival node (Kaplan-Meier, log-rank) with lifelines.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -82,6 +82,12 @@ T3.2: segmentation node (K-means k=2..8 by silhouette).
   retained, histograms), churn rate by level with n (sorted, > 20 levels
   folded into Other), Pearson correlation on numerics + with target, tenure
   bands when a time column exists; strict-JSON output. 115 tests.
+- T3.2: stats/segmentation.py + segmentation_node: numeric features (no id,
+  target, time, constant columns), median impute + scale, K-means k=2..8
+  (n_init 10, seed 42) chosen by silhouette (<= 5,000-row sample), profiles
+  (size, % of base, churn rate and lift, means, z-scores), auto labels from
+  top-2 features; per-customer labels saved to segments.parquet (not state);
+  skip path under 2 features. 123 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
