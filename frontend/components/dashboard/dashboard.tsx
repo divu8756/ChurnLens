@@ -6,6 +6,7 @@ import type { ResultsPayload } from "@/lib/results";
 
 import { DataHealthView } from "../data-health";
 import { DriversTab } from "../drivers/drivers-tab";
+import { ExperimentsTab } from "../experiments/experiments-tab";
 import { HypothesisTab } from "../hypothesis/hypothesis-tab";
 import { InsightsTab } from "../insights/insights-tab";
 import { PredictionsTab } from "../predictions/predictions-tab";
@@ -23,6 +24,7 @@ const TABS: Tab[] = [
   { id: "hypothesis", label: "Hypothesis Testing", render: (r) => <HypothesisTab results={r} /> },
   { id: "predictions", label: "Risk Predictions", render: (r, id) => <PredictionsTab results={r} sessionId={id} /> },
   { id: "recommendations", label: "Recommendations", render: (r) => <RecommendationsTab results={r} /> },
+  { id: "experiments", label: "Experiments", render: (r, id) => <ExperimentsTab results={r} sessionId={id} /> },
   {
     id: "health",
     label: "Data Health",

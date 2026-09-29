@@ -13,13 +13,31 @@ import { Alert, Card } from "../ui";
 
 type Effectiveness = components["schemas"]["OfferEffectiveness"];
 type Offer = components["schemas"]["OfferRow"];
+type Evidence = components["schemas"]["OfferEvidenceInfo"];
 
-function OfferCard({ offer, auc }: { offer: Offer; auc: number | null | undefined }) {
+export function EvidenceBadge({ label }: { label: Evidence["label"] }) {
+  const proven = label === "experiment-proven";
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+        proven
+          ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200"
+          : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+      }`}
+      title={proven ? "Effect measured in a decided A/B test" : "Effect estimated from past offer data (association)"}
+    >
+      {proven ? "Experiment-proven" : "Observational"}
+    </span>
+  );
+}
+
+function OfferCard({ offer, auc, evidence }: { offer: Offer; auc: number | null | undefined; evidence?: Evidence }) {
   return (
     <article className="flex flex-col gap-2 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="font-semibold">{offer.offer}</h3>
         {offer.test ? <SignificanceBadge significant={offer.test.significant} /> : null}
+        <EvidenceBadge label={evidence?.label ?? "observational"} />
       </div>
       <dl className="grid grid-cols-3 gap-2 text-sm">
         <div>
@@ -42,6 +60,13 @@ function OfferCard({ offer, auc }: { offer: Offer; auc: number | null | undefine
         {offer.test ? `${offer.test.test_name}, adjusted p ${formatP(offer.test.p_adjusted)}.` : "Too few customers to test."}
         {auc != null ? ` Acceptance model ROC-AUC ${auc.toFixed(2)}.` : " Acceptance from segment rates (low data)."}
       </p>
+      {evidence?.label === "experiment-proven" && evidence.itt_difference != null ? (
+        <p className="text-xs text-green-800 dark:text-green-200">
+          Experiment {evidence.experiment_id}: churn changed by {formatPercent(evidence.itt_difference, 1)} (95% CI{" "}
+          {formatPercent(evidence.ci_low, 1)} to {formatPercent(evidence.ci_high, 1)}); next best offer uses this measured
+          effect.
+        </p>
+      ) : null}
     </article>
   );
 }
@@ -104,7 +129,7 @@ export function OfferPerformance({ effectiveness }: { effectiveness: Effectivene
 
       <div className="grid gap-4 lg:grid-cols-2">
         {offers.map((o) => (
-          <OfferCard key={o.offer} offer={o} auc={nbo?.offer_models?.[o.offer]?.roc_auc} />
+          <OfferCard key={o.offer} offer={o} auc={nbo?.offer_models?.[o.offer]?.roc_auc} evidence={nbo?.offer_evidence?.[o.offer]} />
         ))}
       </div>
 

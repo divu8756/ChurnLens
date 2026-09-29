@@ -26,6 +26,7 @@ from app.experiments.schemas import (
     AnalysisAssumptions,
     ApproveRequest,
     DecideRequest,
+    DesignInputs,
     ExperimentCreate,
     ExperimentDesignFields,
     ExperimentUpdate,
@@ -75,7 +76,7 @@ def _segment(customers: pd.DataFrame, segment: Any) -> pd.DataFrame:
         raise ServiceError(422, str(exc)) from None
 
 
-def build_design(fields: ExperimentDesignFields, load: ValuesLoader) -> dict[str, Any]:
+def build_design(fields: DesignInputs, load: ValuesLoader) -> dict[str, Any]:
     """Sample size for the design, measured against the session's customers if given."""
     n_available: int | None = None
     measured: float | None = None
@@ -445,3 +446,32 @@ def summary(db: Session, exp: Experiment) -> dict[str, Any]:
     exp.analysis = {**exp.analysis, "summary": result}
     audit(db, exp, "system", "summary_generated", details={"source": result["source"]})
     return result
+
+
+MAX_LEVELS = 30
+SKIP_COLUMNS = ("customer_id", "actual_churn")
+
+
+def segment_options(values: dict[str, Any]) -> list[dict[str, Any]]:
+    """Columns a segment filter can use, with levels / ranges for the filter builder."""
+    customers, _ = _customers(values)
+    schema = values.get("confirmed_schema") or {}
+    hidden = {*SKIP_COLUMNS, schema.get("target_column"), *schema.get("id_columns", [])}
+    options: list[dict[str, Any]] = []
+    for col in customers.columns:
+        if col in hidden:
+            continue
+        series = customers[col]
+        if pd.api.types.is_numeric_dtype(series) and not pd.api.types.is_bool_dtype(series) \
+                and series.nunique(dropna=True) > 2:
+            options.append({"column": str(col), "kind": "numeric",
+                            "min": _finite(series.min()), "max": _finite(series.max())})
+        else:
+            levels = series.dropna().astype(str).value_counts().index[:MAX_LEVELS].tolist()
+            options.append({"column": str(col), "kind": "categorical", "levels": levels})
+    return options
+
+
+def _finite(value: Any) -> float | None:
+    number = float(value) if pd.notna(value) else None
+    return number if number is not None and abs(number) != float("inf") else None

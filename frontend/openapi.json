@@ -39,6 +39,97 @@
         "title": "AnalysisAssumptions",
         "type": "object"
       },
+      "AnalysisOut": {
+        "properties": {
+          "assumption_inputs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisAssumptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/app__experiments__schemas__Assumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "decision_helper": {
+            "$ref": "#/components/schemas/DecisionHelperOut"
+          },
+          "guardrails": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GuardrailOut"
+            },
+            "title": "Guardrails",
+            "type": "object"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/ImpactOut"
+          },
+          "itt": {
+            "$ref": "#/components/schemas/IttOut"
+          },
+          "per_protocol": {
+            "$ref": "#/components/schemas/PerProtocolOut"
+          },
+          "segments": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SegmentsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "srm": {
+            "$ref": "#/components/schemas/SrmOut"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentSummaryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "upload": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UploadInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "srm",
+          "itt",
+          "impact",
+          "per_protocol",
+          "guardrails",
+          "assumptions",
+          "decision_helper"
+        ],
+        "title": "AnalysisOut",
+        "type": "object"
+      },
       "ApproveRequest": {
         "properties": {
           "approver": {
@@ -69,6 +160,107 @@
           "cost_and_eligibility_reviewed"
         ],
         "title": "ApproveRequest",
+        "type": "object"
+      },
+      "ArmCounts": {
+        "properties": {
+          "control": {
+            "title": "Control",
+            "type": "integer"
+          },
+          "treatment": {
+            "title": "Treatment",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "treatment",
+          "control"
+        ],
+        "title": "ArmCounts",
+        "type": "object"
+      },
+      "ArmMeans": {
+        "properties": {
+          "control": {
+            "$ref": "#/components/schemas/MeanCI"
+          },
+          "treatment": {
+            "$ref": "#/components/schemas/MeanCI"
+          }
+        },
+        "required": [
+          "treatment",
+          "control"
+        ],
+        "title": "ArmMeans",
+        "type": "object"
+      },
+      "ArmRate": {
+        "properties": {
+          "churned": {
+            "title": "Churned",
+            "type": "integer"
+          },
+          "ci_high": {
+            "title": "Ci High",
+            "type": "number"
+          },
+          "ci_low": {
+            "title": "Ci Low",
+            "type": "number"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "rate": {
+            "title": "Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "n",
+          "churned",
+          "rate",
+          "ci_low",
+          "ci_high"
+        ],
+        "title": "ArmRate",
+        "type": "object"
+      },
+      "ArmRates": {
+        "properties": {
+          "control": {
+            "$ref": "#/components/schemas/ArmRate"
+          },
+          "treatment": {
+            "$ref": "#/components/schemas/ArmRate"
+          }
+        },
+        "required": [
+          "treatment",
+          "control"
+        ],
+        "title": "ArmRates",
+        "type": "object"
+      },
+      "ArmShares": {
+        "properties": {
+          "control": {
+            "title": "Control",
+            "type": "number"
+          },
+          "treatment": {
+            "title": "Treatment",
+            "type": "number"
+          }
+        },
+        "required": [
+          "treatment",
+          "control"
+        ],
+        "title": "ArmShares",
         "type": "object"
       },
       "AssignRequest": {
@@ -166,29 +358,6 @@
           "warnings"
         ],
         "title": "AssignmentSummaryOut",
-        "type": "object"
-      },
-      "Assumption": {
-        "properties": {
-          "detail": {
-            "title": "Detail",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "result": {
-            "title": "Result",
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "name",
-          "result",
-          "detail"
-        ],
-        "title": "Assumption",
         "type": "object"
       },
       "AuditEntryOut": {
@@ -952,6 +1121,373 @@
         "title": "DecideRequest",
         "type": "object"
       },
+      "DecisionHelperOut": {
+        "properties": {
+          "extra_sample_needed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "guardrails_breached": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Guardrails Breached",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "verdict": {
+            "enum": [
+              "ship",
+              "dont_ship",
+              "inconclusive",
+              "untrustworthy"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "reasons",
+          "guardrails_breached",
+          "extra_sample_needed",
+          "note"
+        ],
+        "title": "DecisionHelperOut",
+        "type": "object"
+      },
+      "DesignInputs": {
+        "description": "What the sample size depends on; POST /experiments/design previews it live.",
+        "properties": {
+          "alpha": {
+            "default": 0.05,
+            "title": "Alpha",
+            "type": "number"
+          },
+          "baseline_rate": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Rate"
+          },
+          "control_share": {
+            "default": 0.5,
+            "title": "Control Share",
+            "type": "number"
+          },
+          "mde": {
+            "exclusiveMinimum": 0.0,
+            "title": "Mde",
+            "type": "number"
+          },
+          "mde_type": {
+            "default": "absolute",
+            "enum": [
+              "absolute",
+              "relative"
+            ],
+            "title": "Mde Type",
+            "type": "string"
+          },
+          "monthly_volume": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Volume"
+          },
+          "power": {
+            "default": 0.8,
+            "title": "Power",
+            "type": "number"
+          },
+          "preregistered_segments": {
+            "items": {
+              "$ref": "#/components/schemas/NamedSegment"
+            },
+            "maxItems": 10,
+            "title": "Preregistered Segments",
+            "type": "array"
+          },
+          "segment_definition": {
+            "$ref": "#/components/schemas/SegmentDefinition"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "source_recommendation_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Recommendation Id"
+          }
+        },
+        "required": [
+          "mde"
+        ],
+        "title": "DesignInputs",
+        "type": "object"
+      },
+      "DesignInputsEcho": {
+        "properties": {
+          "alpha": {
+            "title": "Alpha",
+            "type": "number"
+          },
+          "alternative": {
+            "title": "Alternative",
+            "type": "string"
+          },
+          "baseline_rate": {
+            "title": "Baseline Rate",
+            "type": "number"
+          },
+          "control_share": {
+            "title": "Control Share",
+            "type": "number"
+          },
+          "mde": {
+            "title": "Mde",
+            "type": "number"
+          },
+          "mde_type": {
+            "enum": [
+              "absolute",
+              "relative"
+            ],
+            "title": "Mde Type",
+            "type": "string"
+          },
+          "monthly_volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Volume"
+          },
+          "n_available": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Available"
+          },
+          "power": {
+            "title": "Power",
+            "type": "number"
+          }
+        },
+        "required": [
+          "baseline_rate",
+          "mde",
+          "mde_type",
+          "alpha",
+          "power",
+          "control_share",
+          "alternative"
+        ],
+        "title": "DesignInputsEcho",
+        "type": "object"
+      },
+      "DesignOut": {
+        "properties": {
+          "absolute_mde": {
+            "title": "Absolute Mde",
+            "type": "number"
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/app__experiments__schemas__Assumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "detectable_with_available": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DetectableEffect"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "duration_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Days"
+          },
+          "duration_months": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Months"
+          },
+          "effect_size_h": {
+            "title": "Effect Size H",
+            "type": "number"
+          },
+          "feasible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feasible"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/DesignInputsEcho"
+          },
+          "measured_segment_churn": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Segment Churn"
+          },
+          "n_control": {
+            "title": "N Control",
+            "type": "integer"
+          },
+          "n_total": {
+            "title": "N Total",
+            "type": "integer"
+          },
+          "n_treatment": {
+            "title": "N Treatment",
+            "type": "integer"
+          },
+          "relative_mde": {
+            "title": "Relative Mde",
+            "type": "number"
+          },
+          "treatment_rate": {
+            "title": "Treatment Rate",
+            "type": "number"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "inputs",
+          "treatment_rate",
+          "absolute_mde",
+          "relative_mde",
+          "effect_size_h",
+          "n_treatment",
+          "n_control",
+          "n_total",
+          "formula"
+        ],
+        "title": "DesignOut",
+        "type": "object"
+      },
+      "DetectableEffect": {
+        "properties": {
+          "absolute": {
+            "title": "Absolute",
+            "type": "number"
+          },
+          "effect_size_h": {
+            "title": "Effect Size H",
+            "type": "number"
+          },
+          "relative": {
+            "title": "Relative",
+            "type": "number"
+          },
+          "treatment_rate": {
+            "title": "Treatment Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "treatment_rate",
+          "absolute",
+          "relative",
+          "effect_size_h"
+        ],
+        "title": "DetectableEffect",
+        "type": "object"
+      },
       "DoneEvent": {
         "properties": {
           "final_error": {
@@ -1388,10 +1924,10 @@
           }
         },
         "required": [
+          "mde",
           "name",
           "hypothesis",
           "offer",
-          "mde",
           "created_by"
         ],
         "title": "ExperimentCreate",
@@ -1406,14 +1942,12 @@
           "analysis": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "$ref": "#/components/schemas/AnalysisOut"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Analysis"
+            ]
           },
           "approved_at": {
             "anyOf": [
@@ -1508,14 +2042,12 @@
           "design": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "$ref": "#/components/schemas/DesignOut"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Design"
+            ]
           },
           "guardrail_metrics": {
             "items": {
@@ -2161,6 +2693,47 @@
         "title": "GroupSummary",
         "type": "object"
       },
+      "GuardrailOut": {
+        "properties": {
+          "arms": {
+            "$ref": "#/components/schemas/ArmMeans"
+          },
+          "bad_direction": {
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Bad Direction",
+            "type": "string"
+          },
+          "breached": {
+            "title": "Breached",
+            "type": "boolean"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeanDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tolerance": {
+            "title": "Tolerance",
+            "type": "number"
+          }
+        },
+        "required": [
+          "arms",
+          "bad_direction",
+          "tolerance",
+          "breached"
+        ],
+        "title": "GuardrailOut",
+        "type": "object"
+      },
       "HTTPErrorOut": {
         "properties": {
           "detail": {
@@ -2446,7 +3019,7 @@
         "properties": {
           "assumptions": {
             "items": {
-              "$ref": "#/components/schemas/Assumption"
+              "$ref": "#/components/schemas/app__api__contract__Assumption"
             },
             "title": "Assumptions",
             "type": "array"
@@ -2687,6 +3260,131 @@
         "title": "ImpactGroup",
         "type": "object"
       },
+      "ImpactOut": {
+        "properties": {
+          "acceptance_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance Rate"
+          },
+          "acceptors": {
+            "title": "Acceptors",
+            "type": "integer"
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/app__experiments__schemas__Assumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "customer_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Value"
+          },
+          "customers_saved": {
+            "title": "Customers Saved",
+            "type": "number"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "net_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value"
+          },
+          "net_value_ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value Ci High"
+          },
+          "net_value_ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value Ci Low"
+          },
+          "offer_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Cost"
+          },
+          "saved_ci_high": {
+            "title": "Saved Ci High",
+            "type": "number"
+          },
+          "saved_ci_low": {
+            "title": "Saved Ci Low",
+            "type": "number"
+          },
+          "total_offer_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Offer Cost"
+          }
+        },
+        "required": [
+          "customers_saved",
+          "saved_ci_low",
+          "saved_ci_high",
+          "acceptors",
+          "acceptance_rate",
+          "customer_value",
+          "offer_cost",
+          "total_offer_cost",
+          "net_value",
+          "net_value_ci_low",
+          "net_value_ci_high",
+          "formula",
+          "assumptions"
+        ],
+        "title": "ImpactOut",
+        "type": "object"
+      },
       "Insight": {
         "properties": {
           "causality_note": {
@@ -2725,6 +3423,88 @@
           "significant"
         ],
         "title": "Insight",
+        "type": "object"
+      },
+      "IttOut": {
+        "properties": {
+          "achieved_power": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Achieved Power"
+          },
+          "arms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmRates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RateDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "relative_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Lift"
+          },
+          "significant": {
+            "default": false,
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "IttOut",
         "type": "object"
       },
       "KmSummary": {
@@ -2929,6 +3709,92 @@
           }
         },
         "title": "LogRank",
+        "type": "object"
+      },
+      "MeanCI": {
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "n",
+          "mean",
+          "ci_low",
+          "ci_high"
+        ],
+        "title": "MeanCI",
+        "type": "object"
+      },
+      "MeanDifference": {
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "ci_low",
+          "ci_high"
+        ],
+        "title": "MeanDifference",
         "type": "object"
       },
       "ModelMetrics": {
@@ -4192,6 +5058,82 @@
         "title": "OutlierCounts",
         "type": "object"
       },
+      "PerProtocolOut": {
+        "properties": {
+          "arms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmRates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RateDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "relative_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Lift"
+          },
+          "significant": {
+            "default": false,
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          }
+        },
+        "required": [
+          "label",
+          "available"
+        ],
+        "title": "PerProtocolOut",
+        "type": "object"
+      },
       "PermutationItem": {
         "properties": {
           "feature": {
@@ -4480,6 +5422,39 @@
           "confidence"
         ],
         "title": "ProposedColumn",
+        "type": "object"
+      },
+      "RateDifference": {
+        "properties": {
+          "ci_high": {
+            "title": "Ci High",
+            "type": "number"
+          },
+          "ci_level": {
+            "title": "Ci Level",
+            "type": "number"
+          },
+          "ci_low": {
+            "title": "Ci Low",
+            "type": "number"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "ci_low",
+          "ci_high",
+          "method",
+          "ci_level"
+        ],
+        "title": "RateDifference",
         "type": "object"
       },
       "ReanalyseRequest": {
@@ -5098,6 +6073,57 @@
         "title": "Segment",
         "type": "object"
       },
+      "SegmentColumn": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "numeric",
+              "categorical"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "levels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          }
+        },
+        "required": [
+          "column",
+          "kind"
+        ],
+        "title": "SegmentColumn",
+        "type": "object"
+      },
       "SegmentDefinition": {
         "properties": {
           "description": {
@@ -5185,6 +6211,99 @@
         "title": "SegmentFilter",
         "type": "object"
       },
+      "SegmentResultOut": {
+        "properties": {
+          "arms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmRates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RateDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "p_adjusted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Adjusted"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "relative_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Lift"
+          },
+          "significant": {
+            "default": false,
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "skipped": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skipped"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "title": "SegmentResultOut",
+        "type": "object"
+      },
       "Segments": {
         "additionalProperties": true,
         "properties": {
@@ -5244,6 +6363,32 @@
           "skipped"
         ],
         "title": "Segments",
+        "type": "object"
+      },
+      "SegmentsOut": {
+        "properties": {
+          "items": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SegmentResultOut"
+            },
+            "title": "Items",
+            "type": "object"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "method",
+          "items"
+        ],
+        "title": "SegmentsOut",
         "type": "object"
       },
       "ShapFeature": {
@@ -5409,6 +6554,59 @@
           "reason"
         ],
         "title": "SkippedTest",
+        "type": "object"
+      },
+      "SrmOut": {
+        "properties": {
+          "chi2": {
+            "title": "Chi2",
+            "type": "number"
+          },
+          "expected": {
+            "$ref": "#/components/schemas/ArmShares"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "boolean"
+          },
+          "observed": {
+            "$ref": "#/components/schemas/ArmCounts"
+          },
+          "observed_control_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Control Share"
+          },
+          "p_value": {
+            "title": "P Value",
+            "type": "number"
+          },
+          "planned_control_share": {
+            "title": "Planned Control Share",
+            "type": "number"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "observed",
+          "expected",
+          "planned_control_share",
+          "observed_control_share",
+          "chi2",
+          "p_value",
+          "threshold",
+          "failed"
+        ],
+        "title": "SrmOut",
         "type": "object"
       },
       "StreamEvents": {
@@ -5668,6 +6866,42 @@
         "title": "TenureBands",
         "type": "object"
       },
+      "UploadInfo": {
+        "properties": {
+          "early_look": {
+            "title": "Early Look",
+            "type": "boolean"
+          },
+          "file_sha256": {
+            "title": "File Sha256",
+            "type": "string"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "uploaded_by": {
+            "title": "Uploaded By",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "file_sha256",
+          "uploaded_by",
+          "early_look",
+          "warnings"
+        ],
+        "title": "UploadInfo",
+        "type": "object"
+      },
       "UploadResponse": {
         "properties": {
           "columns": {
@@ -5813,6 +7047,64 @@
           "final"
         ],
         "title": "ValidationReport",
+        "type": "object"
+      },
+      "app__api__contract__Assumption": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "result": {
+            "title": "Result",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "result",
+          "detail"
+        ],
+        "title": "Assumption",
+        "type": "object"
+      },
+      "app__experiments__schemas__Assumption": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "default",
+              "user",
+              "data"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "source"
+        ],
+        "title": "Assumption",
         "type": "object"
       }
     }
@@ -6061,6 +7353,88 @@
         ]
       }
     },
+    "/experiments/design": {
+      "post": {
+        "description": "Sample size for a design without saving it (live feedback in the wizard).",
+        "operationId": "preview_design_experiments_design_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignInputs"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Design",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
     "/experiments/offer-evidence": {
       "get": {
         "description": "Measured offer effects from decided experiments (used by next best offer).",
@@ -6082,6 +7456,92 @@
           }
         },
         "summary": "List Offer Evidence",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/segment-options/{session_id}": {
+      "get": {
+        "operationId": "segment_options_experiments_segment_options__session_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SegmentColumn"
+                  },
+                  "title": "Response Segment Options Experiments Segment Options  Session Id  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Segment Options",
         "tags": [
           "experiments"
         ]

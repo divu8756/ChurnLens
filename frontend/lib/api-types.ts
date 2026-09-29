@@ -56,6 +56,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/experiments/design": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Design
+         * @description Sample size for a design without saving it (live feedback in the wizard).
+         */
+        post: operations["preview_design_experiments_design_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/experiments/offer-evidence": {
         parameters: {
             query?: never;
@@ -68,6 +88,23 @@ export interface paths {
          * @description Measured offer effects from decided experiments (used by next best offer).
          */
         get: operations["list_offer_evidence_experiments_offer_evidence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/experiments/segment-options/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Segment Options */
+        get: operations["segment_options_experiments_segment_options__session_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -403,6 +440,26 @@ export interface components {
             /** Offer Cost */
             offer_cost?: number | null;
         };
+        /** AnalysisOut */
+        AnalysisOut: {
+            assumption_inputs?: components["schemas"]["AnalysisAssumptions"] | null;
+            /** Assumptions */
+            assumptions: components["schemas"]["app__experiments__schemas__Assumption"][];
+            decision_helper: components["schemas"]["DecisionHelperOut"];
+            /** Guardrails */
+            guardrails: {
+                [key: string]: components["schemas"]["GuardrailOut"];
+            };
+            impact: components["schemas"]["ImpactOut"];
+            itt: components["schemas"]["IttOut"];
+            per_protocol: components["schemas"]["PerProtocolOut"];
+            segments?: components["schemas"]["SegmentsOut"] | null;
+            srm: components["schemas"]["SrmOut"];
+            summary?: components["schemas"]["ExperimentSummaryOut"] | null;
+            upload?: components["schemas"]["UploadInfo"] | null;
+            /** Warnings */
+            warnings?: string[];
+        };
         /** ApproveRequest */
         ApproveRequest: {
             /** Approver */
@@ -411,6 +468,43 @@ export interface components {
             cost_and_eligibility_reviewed: boolean;
             /** Note */
             note?: string | null;
+        };
+        /** ArmCounts */
+        ArmCounts: {
+            /** Control */
+            control: number;
+            /** Treatment */
+            treatment: number;
+        };
+        /** ArmMeans */
+        ArmMeans: {
+            control: components["schemas"]["MeanCI"];
+            treatment: components["schemas"]["MeanCI"];
+        };
+        /** ArmRate */
+        ArmRate: {
+            /** Churned */
+            churned: number;
+            /** Ci High */
+            ci_high: number;
+            /** Ci Low */
+            ci_low: number;
+            /** N */
+            n: number;
+            /** Rate */
+            rate: number;
+        };
+        /** ArmRates */
+        ArmRates: {
+            control: components["schemas"]["ArmRate"];
+            treatment: components["schemas"]["ArmRate"];
+        };
+        /** ArmShares */
+        ArmShares: {
+            /** Control */
+            control: number;
+            /** Treatment */
+            treatment: number;
         };
         /** AssignRequest */
         AssignRequest: {
@@ -444,15 +538,6 @@ export interface components {
             segment_customers: number;
             /** Warnings */
             warnings: string[];
-        };
-        /** Assumption */
-        Assumption: {
-            /** Detail */
-            detail: string;
-            /** Name */
-            name: string;
-            /** Result */
-            result: boolean;
         };
         /** AuditEntryOut */
         AuditEntryOut: {
@@ -693,6 +778,129 @@ export interface components {
             /** Note */
             note: string;
         };
+        /** DecisionHelperOut */
+        DecisionHelperOut: {
+            extra_sample_needed: components["schemas"]["ArmCounts"] | null;
+            /** Guardrails Breached */
+            guardrails_breached: string[];
+            /** Note */
+            note: string;
+            /** Reasons */
+            reasons: string[];
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "ship" | "dont_ship" | "inconclusive" | "untrustworthy";
+        };
+        /**
+         * DesignInputs
+         * @description What the sample size depends on; POST /experiments/design previews it live.
+         */
+        DesignInputs: {
+            /**
+             * Alpha
+             * @default 0.05
+             */
+            alpha: number;
+            /** Baseline Rate */
+            baseline_rate?: number | null;
+            /**
+             * Control Share
+             * @default 0.5
+             */
+            control_share: number;
+            /** Mde */
+            mde: number;
+            /**
+             * Mde Type
+             * @default absolute
+             * @enum {string}
+             */
+            mde_type: "absolute" | "relative";
+            /** Monthly Volume */
+            monthly_volume?: number | null;
+            /**
+             * Power
+             * @default 0.8
+             */
+            power: number;
+            /** Preregistered Segments */
+            preregistered_segments?: components["schemas"]["NamedSegment"][];
+            segment_definition?: components["schemas"]["SegmentDefinition"];
+            /** Session Id */
+            session_id?: string | null;
+            /** Source Recommendation Id */
+            source_recommendation_id?: string | null;
+        };
+        /** DesignInputsEcho */
+        DesignInputsEcho: {
+            /** Alpha */
+            alpha: number;
+            /** Alternative */
+            alternative: string;
+            /** Baseline Rate */
+            baseline_rate: number;
+            /** Control Share */
+            control_share: number;
+            /** Mde */
+            mde: number;
+            /**
+             * Mde Type
+             * @enum {string}
+             */
+            mde_type: "absolute" | "relative";
+            /** Monthly Volume */
+            monthly_volume?: number | null;
+            /** N Available */
+            n_available?: number | null;
+            /** Power */
+            power: number;
+        };
+        /** DesignOut */
+        DesignOut: {
+            /** Absolute Mde */
+            absolute_mde: number;
+            /** Assumptions */
+            assumptions?: components["schemas"]["app__experiments__schemas__Assumption"][];
+            detectable_with_available?: components["schemas"]["DetectableEffect"] | null;
+            /** Duration Days */
+            duration_days?: number | null;
+            /** Duration Months */
+            duration_months?: number | null;
+            /** Effect Size H */
+            effect_size_h: number;
+            /** Feasible */
+            feasible?: boolean | null;
+            /** Formula */
+            formula: string;
+            inputs: components["schemas"]["DesignInputsEcho"];
+            /** Measured Segment Churn */
+            measured_segment_churn?: number | null;
+            /** N Control */
+            n_control: number;
+            /** N Total */
+            n_total: number;
+            /** N Treatment */
+            n_treatment: number;
+            /** Relative Mde */
+            relative_mde: number;
+            /** Treatment Rate */
+            treatment_rate: number;
+            /** Warnings */
+            warnings?: string[];
+        };
+        /** DetectableEffect */
+        DetectableEffect: {
+            /** Absolute */
+            absolute: number;
+            /** Effect Size H */
+            effect_size_h: number;
+            /** Relative */
+            relative: number;
+            /** Treatment Rate */
+            treatment_rate: number;
+        };
         /** DoneEvent */
         DoneEvent: {
             /** Final Error */
@@ -832,10 +1040,7 @@ export interface components {
         ExperimentOut: {
             /** Alpha */
             alpha: number;
-            /** Analysis */
-            analysis: {
-                [key: string]: unknown;
-            } | null;
+            analysis: components["schemas"]["AnalysisOut"] | null;
             /** Approved At */
             approved_at: string | null;
             /** Approved By */
@@ -860,10 +1065,7 @@ export interface components {
             decision: string | null;
             /** Decision Note */
             decision_note: string | null;
-            /** Design */
-            design: {
-                [key: string]: unknown;
-            } | null;
+            design: components["schemas"]["DesignOut"] | null;
             /** Guardrail Metrics */
             guardrail_metrics: string[];
             /** Hypothesis */
@@ -1027,6 +1229,20 @@ export interface components {
             /** Std */
             std?: number | null;
         };
+        /** GuardrailOut */
+        GuardrailOut: {
+            arms: components["schemas"]["ArmMeans"];
+            /**
+             * Bad Direction
+             * @enum {string}
+             */
+            bad_direction: "up" | "down";
+            /** Breached */
+            breached: boolean;
+            difference?: components["schemas"]["MeanDifference"] | null;
+            /** Tolerance */
+            tolerance: number;
+        };
         /** HTTPErrorOut */
         HTTPErrorOut: {
             /** Detail */
@@ -1105,7 +1321,7 @@ export interface components {
         /** HypothesisTest */
         HypothesisTest: {
             /** Assumptions */
-            assumptions?: components["schemas"]["Assumption"][];
+            assumptions?: components["schemas"]["app__api__contract__Assumption"][];
             /** Conclusion */
             conclusion: string;
             /** Df */
@@ -1182,6 +1398,35 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ImpactOut */
+        ImpactOut: {
+            /** Acceptance Rate */
+            acceptance_rate: number | null;
+            /** Acceptors */
+            acceptors: number;
+            /** Assumptions */
+            assumptions: components["schemas"]["app__experiments__schemas__Assumption"][];
+            /** Customer Value */
+            customer_value: number | null;
+            /** Customers Saved */
+            customers_saved: number;
+            /** Formula */
+            formula: string;
+            /** Net Value */
+            net_value: number | null;
+            /** Net Value Ci High */
+            net_value_ci_high: number | null;
+            /** Net Value Ci Low */
+            net_value_ci_low: number | null;
+            /** Offer Cost */
+            offer_cost: number | null;
+            /** Saved Ci High */
+            saved_ci_high: number;
+            /** Saved Ci Low */
+            saved_ci_low: number;
+            /** Total Offer Cost */
+            total_offer_cost: number | null;
+        };
         /** Insight */
         Insight: {
             /**
@@ -1199,6 +1444,26 @@ export interface components {
             text: string;
             /** Title */
             title: string;
+        };
+        /** IttOut */
+        IttOut: {
+            /** Achieved Power */
+            achieved_power?: number | null;
+            arms?: components["schemas"]["ArmRates"] | null;
+            difference?: components["schemas"]["RateDifference"] | null;
+            /** Label */
+            label: string;
+            /** P Value */
+            p_value?: number | null;
+            /** Relative Lift */
+            relative_lift?: number | null;
+            /**
+             * Significant
+             * @default false
+             */
+            significant: boolean;
+            /** Z */
+            z?: number | null;
         };
         /** KmSummary */
         KmSummary: {
@@ -1264,6 +1529,26 @@ export interface components {
             p_value?: number | null;
             /** Statistic */
             statistic?: number | null;
+        };
+        /** MeanCI */
+        MeanCI: {
+            /** Ci High */
+            ci_high: number | null;
+            /** Ci Low */
+            ci_low: number | null;
+            /** Mean */
+            mean: number | null;
+            /** N */
+            n: number;
+        };
+        /** MeanDifference */
+        MeanDifference: {
+            /** Ci High */
+            ci_high: number | null;
+            /** Ci Low */
+            ci_low: number | null;
+            /** Value */
+            value: number;
         };
         /** ModelMetrics */
         ModelMetrics: {
@@ -1659,6 +1944,26 @@ export interface components {
             /** Zscore */
             zscore: number;
         };
+        /** PerProtocolOut */
+        PerProtocolOut: {
+            arms?: components["schemas"]["ArmRates"] | null;
+            /** Available */
+            available: boolean;
+            difference?: components["schemas"]["RateDifference"] | null;
+            /** Label */
+            label: string;
+            /** P Value */
+            p_value?: number | null;
+            /** Relative Lift */
+            relative_lift?: number | null;
+            /**
+             * Significant
+             * @default false
+             */
+            significant: boolean;
+            /** Z */
+            z?: number | null;
+        };
         /** PermutationItem */
         PermutationItem: {
             /** Feature */
@@ -1745,6 +2050,19 @@ export interface components {
              * @enum {string}
              */
             semantic_type: "id" | "numeric" | "categorical" | "binary" | "datetime" | "text";
+        };
+        /** RateDifference */
+        RateDifference: {
+            /** Ci High */
+            ci_high: number;
+            /** Ci Level */
+            ci_level: number;
+            /** Ci Low */
+            ci_low: number;
+            /** Method */
+            method: string;
+            /** Value */
+            value: number;
         };
         /** ReanalyseRequest */
         ReanalyseRequest: {
@@ -1923,6 +2241,22 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** SegmentColumn */
+        SegmentColumn: {
+            /** Column */
+            column: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "numeric" | "categorical";
+            /** Levels */
+            levels?: string[];
+            /** Max */
+            max?: number | null;
+            /** Min */
+            min?: number | null;
+        };
         /** SegmentDefinition */
         SegmentDefinition: {
             /**
@@ -1945,6 +2279,28 @@ export interface components {
             /** Value */
             value: string | number | boolean | (string | number | boolean)[];
         };
+        /** SegmentResultOut */
+        SegmentResultOut: {
+            arms?: components["schemas"]["ArmRates"] | null;
+            difference?: components["schemas"]["RateDifference"] | null;
+            /** N */
+            n: number;
+            /** P Adjusted */
+            p_adjusted?: number | null;
+            /** P Value */
+            p_value?: number | null;
+            /** Relative Lift */
+            relative_lift?: number | null;
+            /**
+             * Significant
+             * @default false
+             */
+            significant: boolean;
+            /** Skipped */
+            skipped?: string | null;
+            /** Z */
+            z?: number | null;
+        };
         /** Segments */
         Segments: {
             /** Features */
@@ -1961,6 +2317,17 @@ export interface components {
             skipped: boolean;
         } & {
             [key: string]: unknown;
+        };
+        /** SegmentsOut */
+        SegmentsOut: {
+            /** Items */
+            items: {
+                [key: string]: components["schemas"]["SegmentResultOut"];
+            };
+            /** Label */
+            label: string;
+            /** Method */
+            method: string;
         };
         /** ShapFeature */
         ShapFeature: {
@@ -2010,6 +2377,23 @@ export interface components {
             reason: string;
             /** Variable */
             variable: string;
+        };
+        /** SrmOut */
+        SrmOut: {
+            /** Chi2 */
+            chi2: number;
+            expected: components["schemas"]["ArmShares"];
+            /** Failed */
+            failed: boolean;
+            observed: components["schemas"]["ArmCounts"];
+            /** Observed Control Share */
+            observed_control_share: number | null;
+            /** P Value */
+            p_value: number;
+            /** Planned Control Share */
+            planned_control_share: number;
+            /** Threshold */
+            threshold: number;
         };
         /**
          * StreamEvents
@@ -2094,6 +2478,19 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** UploadInfo */
+        UploadInfo: {
+            /** Early Look */
+            early_look: boolean;
+            /** File Sha256 */
+            file_sha256: string;
+            /** Rows */
+            rows: number;
+            /** Uploaded By */
+            uploaded_by: string;
+            /** Warnings */
+            warnings: string[];
+        };
         /** UploadResponse */
         UploadResponse: {
             /**
@@ -2152,6 +2549,27 @@ export interface components {
             passed: number;
         } & {
             [key: string]: unknown;
+        };
+        /** Assumption */
+        app__api__contract__Assumption: {
+            /** Detail */
+            detail: string;
+            /** Name */
+            name: string;
+            /** Result */
+            result: boolean;
+        };
+        /** Assumption */
+        app__experiments__schemas__Assumption: {
+            /** Name */
+            name: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "default" | "user" | "data";
+            /** Value */
+            value: number | null;
         };
     };
     responses: never;
@@ -2353,6 +2771,75 @@ export interface operations {
             };
         };
     };
+    preview_design_experiments_design_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesignInputs"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesignOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_offer_evidence_experiments_offer_evidence_get: {
         parameters: {
             query?: never;
@@ -2369,6 +2856,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OfferEvidenceOut"][];
+                };
+            };
+        };
+    };
+    segment_options_experiments_segment_options__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SegmentColumn"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

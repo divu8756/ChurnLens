@@ -19,6 +19,8 @@ from app.experiments.schemas import (
     AssignRequest,
     AuditEntryOut,
     DecideRequest,
+    DesignInputs,
+    DesignOut,
     ExperimentCreate,
     ExperimentOut,
     ExperimentSummary,
@@ -26,6 +28,7 @@ from app.experiments.schemas import (
     ExperimentUpdate,
     OfferEvidenceOut,
     ReanalyseRequest,
+    SegmentColumn,
 )
 
 router = APIRouter(prefix="/experiments", tags=["experiments"])
@@ -77,6 +80,19 @@ def create_experiment(payload: ExperimentCreate, request: Request,
 def list_experiments(db: DB) -> list[ExperimentSummary]:
     rows = db.scalars(select(Experiment).order_by(Experiment.id.desc()))
     return [ExperimentSummary.model_validate(e) for e in rows]
+
+
+@router.post("/design", response_model=DesignOut, responses=ERRORS)
+def preview_design(body: DesignInputs, request: Request) -> DesignOut:
+    """Sample size for a design without saving it (live feedback in the wizard)."""
+    return DesignOut(**_call(service.build_design, body, values_loader(request)))
+
+
+@router.get("/segment-options/{session_id}", response_model=list[SegmentColumn],
+            responses=ERRORS)
+def segment_options(session_id: str, request: Request) -> list[SegmentColumn]:
+    values = _call(values_loader(request), session_id)
+    return [SegmentColumn(**o) for o in _call(service.segment_options, values)]
 
 
 @router.get("/offer-evidence", response_model=list[OfferEvidenceOut])

@@ -65,6 +65,38 @@ def test_valid_summary_is_accepted(fake):
     assert len(fake_llm.calls) == 1
 
 
+def test_a_drop_may_be_written_as_its_size():
+    a = _analysis()
+    d = a["itt"]["difference"]["value"]
+    assert d < 0
+    summary = _good_summary(a)
+    summary["sentences"][1] = f"Churn fell by {abs(d) * 100:.1f} percentage points."
+    summary["figures"].append({"source_key": "itt.difference.value", "value": d,
+                               "display": f"{abs(d) * 100:.1f}%"})
+    assert sm.validate_summary(summary, a) == []
+    # A wrong size is still caught.
+    summary["figures"][-1]["display"] = "9.9%"
+    assert sm.validate_summary(summary, a)
+
+
+def test_the_confidence_level_is_a_declarable_figure():
+    a = _analysis()
+    summary = _good_summary(a)
+    summary["sentences"][1] = "The 95% confidence interval of the difference excludes zero."
+    assert sm.validate_summary(summary, a)  # undeclared
+    summary["figures"].append({"source_key": "itt.difference.ci_level", "value": 0.95,
+                               "display": "95%"})
+    assert sm.validate_summary(summary, a) == []
+
+
+def test_numbers_in_the_offer_name_are_allowed():
+    a = _analysis()
+    summary = _good_summary(a)
+    summary["sentences"][0] += " The offer was 1 month free on annual plan."
+    assert sm.validate_summary(summary, a, "1 month free on annual plan") == []
+    assert sm.validate_summary(summary, a, "Annual discount")
+
+
 def test_invented_number_is_retried_then_template(fake):
     a = _analysis()
     bad = _good_summary(a)

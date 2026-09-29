@@ -3,24 +3,12 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5c.4 (Summary, decision gate, feedback loop, UI)
+T5c.5 (Prove it works with a known answer)
 
 ## Next step
-T5c.4 backend is DONE (backend 343 tests green, types regenerated), but was
-NOT yet committed when the session paused: first run check_secrets.py and
-commit it ("feat(experiments): validated summary, decision gate, offer
-evidence feedback (T5c.4 backend)"). Built: prompts/experiment_summary.v1.md
-+ app/experiments/summary.py (5 validated sentences, retry, template),
-POST /experiments/{id}/summary (cached in analysis), POST /experiments/{id}/decide
-(ship blocked on SRM; extend -> running; ship/dont_ship write offer_evidence
-unless SRM failed), GET /experiments/offer-evidence, migration 0004,
-NboConfig.evidence + "evidence" label per NBO row and summary.offer_evidence.
-Remaining for T5c.4: the frontend Experiments tab (list with status chips,
-design wizard with live sample size as MDE/power sliders move -> needs a
-stateless POST /experiments/design preview endpoint, approval screen, results
-view with per-arm bars + CI whiskers, forest plot, SRM/balance/guardrail
-strip, validated summary, verdict, decision form, audit trail) and the
-"experiment-proven" / "observational" label on offer cards; then T5c.5.
+T5c.5: scripts/simulate_experiment.py (seed 42; scenarios real effect / no
+effect / broken 60/40 delivery), tests on the three scenarios, and add the
+real-effect scenario to "Try sample data". Then the Phase 5c gate.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -408,6 +396,28 @@ strip, validated summary, verdict, decision form, audit trail) and the
   /experiments/{id}/analysis (recompute with new assumptions). Migration
   0003 (experiment_outcomes, preregistered_segments, analysis,
   segments per assignment). Backend 334 (17 new).
+- T5c.4: prompts/experiment_summary.v1.md + app/experiments/summary.py
+  (5 sentences; every figure checked against the analysis; may not go beyond
+  the verdict; a negative figure may be written as its size; numbers in the
+  offer name and the 95% level are allowed; retry, then template), cached per
+  analysis. POST /experiments/{id}/decide (ship blocked on SRM; extend returns
+  to running; ship / dont_ship write offer_evidence unless SRM failed). NBO
+  uses the experiment's per-acceptor lift (ITT drop / acceptance rate) for
+  proven offers and labels every offer experiment-proven or observational.
+  Stateless POST /experiments/design (live wizard feedback), GET
+  /experiments/segment-options/{session_id}, typed DesignOut / AnalysisOut
+  contract, migration 0004. Frontend Experiments tab: list with status chips,
+  design wizard (recommendation prefill, segment builder, MDE / power /
+  split sliders with live sample size, pre-registered segments), approval,
+  assignment with balance table and CSV link, results upload, results view
+  (trust strip, per-arm bars with Wilson whiskers, forest plot, decision
+  helper, validated summary, impact with editable assumptions recomputed on
+  the server, guardrails, per-protocol caveat, decision form), audit trail;
+  evidence badges on offer cards and the offer panel. AI requests get a
+  150 s client timeout. Checked in a browser against a live backend: full
+  lifecycle on Telco, live Gemini summary validated (source ai), and after
+  "ship" a rerun labelled the offer experiment-proven. Backend 347,
+  frontend 100.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

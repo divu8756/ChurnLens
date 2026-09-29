@@ -16,7 +16,8 @@ Write exactly 5 short sentences, in this order:
  "figures": {source_key: {"label": what it is, "value": number}}, "warnings": [...],
  "guardrails_breached": [...]}
 Rates and differences are fractions (0.21 = 21%). A negative difference means the
-offer LOWERED churn.
+offer LOWERED churn; you may write it as a drop ("churn fell by 13.2 percentage
+points" for -0.132), declaring the figure with its source_key as usual.
 
 # Output schema
 {"sentences": [5 strings], "figures": [{"source_key": a key from figures,
@@ -29,6 +30,7 @@ offer LOWERED churn.
   suggest rolling out, launching or shipping the offer. The verdict is a suggestion;
   a person makes the decision.
 - Per-protocol and segment results are secondary; do not present them as the result.
+- Never name a currency or add a currency symbol: the data's currency is unknown.
 - Plain English, no jargon beyond "confidence interval". No emojis.
 {{feedback}}
 

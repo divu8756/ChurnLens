@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from app import llm
 from app.graph.paths import PathNotFound, resolve
 from app.prompts.loader import render_prompt
-from app.validation import check_figure, check_text
+from app.validation import check_figure, check_text, numbers_in
 
 PROMPT = ("experiment_summary", 1)
 TIMEOUT_S = 30
@@ -28,6 +28,7 @@ FIGURES = {
     "itt.difference.value": "difference in churn rate (treatment - control)",
     "itt.difference.ci_low": "95% CI of the difference, lower bound",
     "itt.difference.ci_high": "95% CI of the difference, upper bound",
+    "itt.difference.ci_level": "confidence level of the interval (0.95 = 95%)",
     "itt.relative_lift": "relative change in churn",
     "itt.p_value": "p-value (two-proportion z-test)",
     "itt.achieved_power": "power to detect the planned effect",
@@ -71,9 +72,31 @@ def facts(analysis: dict[str, Any], offer: str) -> dict[str, Any]:
             "guardrails_breached": helper["guardrails_breached"]}
 
 
-def validate_summary(summary: dict[str, Any], analysis: dict[str, Any]) -> list[str]:
+def _check(analysis: dict[str, Any], figure: dict[str, Any]) -> list[str]:
+    """check_figure, but a drop may be written as its size ("fell by 13.2%" for -0.132):
+    the magnitude of a stored number is not a new number."""
+    problems = check_figure(analysis, figure)
+    if not problems:
+        return []
+    try:
+        actual = resolve(analysis, figure.get("source_key", ""))
+    except PathNotFound:
+        return problems
+    if isinstance(actual, int | float) and not isinstance(actual, bool) and actual < 0:
+        claimed = figure.get("value")
+        flipped = {**figure, "value": abs(claimed) if isinstance(claimed, int | float) else claimed,
+                   "source_key": "magnitude"}
+        if not check_figure({"magnitude": abs(actual)}, flipped):
+            return []
+    return problems
+
+
+def validate_summary(summary: dict[str, Any], analysis: dict[str, Any], offer: str = ""
+                     ) -> list[str]:
     figures = summary.get("figures", [])
-    problems = [p for fig in figures for p in check_figure(analysis, fig)
+    # Numbers written in the offer name ("1 month free") are part of its name.
+    allowed = [*figures, *({"value": n, "display": ""} for n, _ in numbers_in(offer))]
+    problems = [p for fig in figures for p in _check(analysis, fig)
                 if fig.get("source_key") in FIGURES] + [
         f"source_key {fig.get('source_key')!r} is not one of the allowed figures"
         for fig in figures if fig.get("source_key") not in FIGURES]
@@ -81,7 +104,7 @@ def validate_summary(summary: dict[str, Any], analysis: dict[str, Any]) -> list[
     if len(sentences) != SENTENCES:
         problems.append(f"write exactly {SENTENCES} sentences")
     for i, sentence in enumerate(sentences, 1):
-        problems += [f"sentence {i}: {p}" for p in check_text(sentence, figures)]
+        problems += [f"sentence {i}: {p}" for p in check_text(sentence, allowed)]
         verdict = analysis["decision_helper"]["verdict"]
         if verdict != "ship" and NOT_SHIP.search(sentence):
             problems.append(f"sentence {i} goes beyond the verdict ({verdict}): do not suggest "
@@ -126,7 +149,7 @@ def generate(analysis: dict[str, Any], offer: str) -> dict[str, Any]:
         except llm.LLMUnavailable as exc:
             return {**template_summary(analysis, offer), "problems": [f"AI unavailable: {exc}"]}
         summary = result.model_dump()
-        problems = validate_summary(summary, analysis)
+        problems = validate_summary(summary, analysis, offer)
         if not problems:
             return {**summary, "source": "ai",
                     "verdict": analysis["decision_helper"]["verdict"], "problems": []}

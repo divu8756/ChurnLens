@@ -345,3 +345,22 @@ def test_srm_is_flagged_on_upload(api):
     assert analysis["decision_helper"]["verdict"] == "untrustworthy"
     assert analysis["warnings"][0].startswith("Sample ratio mismatch")
     assert any("missing from the file" in w for w in analysis["warnings"])
+
+
+def test_design_preview_and_segment_options(api):
+    client, store = api
+    body = {"session_id": SID, "segment_definition": MTM, "mde": 0.05, "power": 0.9}
+    res = client.post("/experiments/design", json=body)
+    assert res.status_code == 200, res.text
+    preview = res.json()
+    assert preview["n_treatment"] > 0 and preview["inputs"]["power"] == 0.9
+    assert client.get("/experiments").json() == []  # nothing saved
+    assert client.post("/experiments/design", json={**body, "mde": 0.9}).status_code == 422
+
+    options = {o["column"]: o for o in client.get(f"/experiments/segment-options/{SID}").json()}
+    assert options["Contract"]["kind"] == "categorical"
+    assert set(options["Contract"]["levels"]) == {"Month-to-month", "One year"}
+    assert options["tenure"]["kind"] == "numeric" and options["tenure"]["min"] >= 1
+    assert "risk_band" in options and "churn_probability" in options
+    assert "customerID" not in options and "Churn" not in options
+    assert client.get(f"/experiments/segment-options/{'e' * 32}").status_code == 410

@@ -20,9 +20,27 @@ export type OfferMessage = Schemas["OfferMessageResponse"];
 export type NodeFinishEvent = Schemas["NodeFinishEvent"];
 export type ErrorEvent = Schemas["ErrorEvent"];
 export type DoneEvent = Schemas["DoneEvent"];
+export type Experiment = Schemas["ExperimentOut"];
+export type ExperimentListItem = Schemas["ExperimentSummary"];
+/** Settings the server defaults (alpha 0.05, power 0.8, control share 0.5); omit to keep the default. */
+type Defaulted = "alpha" | "power" | "control_share";
+type WithDefaults<T extends Record<Defaulted, unknown>> = Omit<T, Defaulted> & Partial<Pick<T, Defaulted>>;
+export type ExperimentCreate = WithDefaults<Schemas["ExperimentCreate"]>;
+export type ExperimentUpdate = Schemas["ExperimentUpdate"];
+export type DesignInputs = WithDefaults<Schemas["DesignInputs"]>;
+export type Design = Schemas["DesignOut"];
+export type Analysis = Schemas["AnalysisOut"];
+export type AnalysisAssumptions = Schemas["AnalysisAssumptions"];
+export type ExperimentSummaryText = Schemas["ExperimentSummaryOut"];
+export type SegmentColumn = Schemas["SegmentColumn"];
+export type SegmentFilter = Schemas["SegmentFilter"];
+export type DecideRequest = Schemas["DecideRequest"];
+export type OfferEvidence = Schemas["OfferEvidenceOut"];
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 export const REQUEST_TIMEOUT_MS = 30_000;
+/** AI-written text: the server may retry a slow model before falling back to a template. */
+export const AI_TIMEOUT_MS = 150_000;
 
 export type ApiErrorKind =
   | "expired" // 410: the session is gone; the user must upload again
@@ -92,10 +110,17 @@ export async function toApiError(response: Response): Promise<ApiError> {
   return new ApiError(kindForStatus(response.status), message, response.status, problems);
 }
 
-type RequestOptions = { method?: "GET" | "POST"; body?: BodyInit; json?: unknown; signal?: AbortSignal };
+type RequestOptions = {
+  method?: "GET" | "POST" | "PATCH";
+  body?: BodyInit;
+  json?: unknown;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+};
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
+  const timeout = AbortSignal.timeout(timeoutMs);
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
   const headers: Record<string, string> = {};
   let body = options.body;
@@ -115,7 +140,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   } catch (error) {
     if (options.signal?.aborted) throw error; // the caller cancelled; not an API failure
     if (timeout.aborted) {
-      throw new ApiError("timeout", `The server did not answer within ${REQUEST_TIMEOUT_MS / 1000} s.`);
+      throw new ApiError("timeout", `The server did not answer within ${timeoutMs / 1000} s.`);
     }
     throw new ApiError("network", "Could not reach the server. Check your connection and try again.");
   }
@@ -194,6 +219,7 @@ export function generateOfferMessage(sessionId: string, customerId: string, sign
   return request<OfferMessage>(`/predictions/${enc(sessionId)}/offer/${enc(customerId)}/message`, {
     method: "POST",
     signal,
+    timeoutMs: AI_TIMEOUT_MS,
   });
 }
 
@@ -207,4 +233,90 @@ export function predictionsCsvUrl(sessionId: string, options: Omit<PredictionsQu
 export function streamUrl(sessionId: string, after = 0): string {
   const query = after > 0 ? `?after=${after}` : "";
   return `${API_URL}/stream/${enc(sessionId)}${query}`;
+}
+
+// ---------------------------------------------------------------- experiments (Phase 5c)
+
+export function listExperiments(signal?: AbortSignal): Promise<ExperimentListItem[]> {
+  return request<ExperimentListItem[]>("/experiments", { signal });
+}
+
+export function getExperiment(id: number, signal?: AbortSignal): Promise<Experiment> {
+  return request<Experiment>(`/experiments/${id}`, { signal });
+}
+
+/** Sample size for a design without saving it (live feedback in the wizard). */
+export function previewDesign(inputs: DesignInputs, signal?: AbortSignal): Promise<Design> {
+  return request<Design>("/experiments/design", { method: "POST", json: inputs, signal });
+}
+
+export function getSegmentOptions(sessionId: string, signal?: AbortSignal): Promise<SegmentColumn[]> {
+  return request<SegmentColumn[]>(`/experiments/segment-options/${enc(sessionId)}`, { signal });
+}
+
+export function createExperiment(body: ExperimentCreate, signal?: AbortSignal): Promise<Experiment> {
+  return request<Experiment>("/experiments", { method: "POST", json: body, signal });
+}
+
+export function updateExperiment(id: number, body: ExperimentUpdate, signal?: AbortSignal): Promise<Experiment> {
+  return request<Experiment>(`/experiments/${id}`, { method: "PATCH", json: body, signal });
+}
+
+export function approveExperiment(
+  id: number,
+  body: { approver: string; cost_and_eligibility_reviewed: boolean; note?: string | null },
+  signal?: AbortSignal,
+): Promise<Experiment> {
+  return request<Experiment>(`/experiments/${id}/approve`, { method: "POST", json: body, signal });
+}
+
+export function assignExperiment(id: number, sessionId: string, actor: string, signal?: AbortSignal): Promise<Experiment> {
+  return request<Experiment>(`/experiments/${id}/assign`, {
+    method: "POST",
+    json: { session_id: sessionId, actor },
+    signal,
+  });
+}
+
+export function assignmentCsvUrl(id: number): string {
+  return `${API_URL}/experiments/${id}/assignment.csv`;
+}
+
+export function uploadExperimentResults(
+  id: number,
+  file: File,
+  uploadedBy: string,
+  assumptions: { customer_value?: number | null; offer_cost?: number | null; arpu_tolerance?: number | null },
+  signal?: AbortSignal,
+): Promise<Experiment> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("uploaded_by", uploadedBy);
+  for (const [key, value] of Object.entries(assumptions)) {
+    if (value != null) form.append(key, String(value));
+  }
+  return request<Experiment>(`/experiments/${id}/results`, { method: "POST", body: form, signal });
+}
+
+/** Recompute the analysis with new money / guardrail assumptions (never in the browser). */
+export function reanalyseExperiment(
+  id: number,
+  actor: string,
+  assumptions: AnalysisAssumptions,
+  signal?: AbortSignal,
+): Promise<Experiment> {
+  return request<Experiment>(`/experiments/${id}/analysis`, { method: "POST", json: { actor, assumptions }, signal });
+}
+
+/** The validated plain-English summary (written once per analysis, then cached). */
+export function getExperimentSummary(id: number, signal?: AbortSignal): Promise<ExperimentSummaryText> {
+  return request<ExperimentSummaryText>(`/experiments/${id}/summary`, { method: "POST", signal, timeoutMs: AI_TIMEOUT_MS });
+}
+
+export function decideExperiment(id: number, body: DecideRequest, signal?: AbortSignal): Promise<Experiment> {
+  return request<Experiment>(`/experiments/${id}/decide`, { method: "POST", json: body, signal });
+}
+
+export function listOfferEvidence(signal?: AbortSignal): Promise<OfferEvidence[]> {
+  return request<OfferEvidence[]>("/experiments/offer-evidence", { signal });
 }
