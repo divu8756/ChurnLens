@@ -9,6 +9,8 @@ SAMPLE_VALUES = 5
 MAX_SAMPLE_CHARS = 60
 ID_UNIQUE_RATIO = 0.95
 TARGET_NAME = re.compile(r"churn|exited|attrition|\bleft\b|cancel", re.I)
+REVENUE_NAME = re.compile(r"monthly_?charges?|arpu|monthly_?(revenue|fee|bill|spend)|"
+                          r"mrr|monthly_?amount", re.I)
 TIME_NAME = re.compile(r"tenure|months?_?(as|with)?_?customer|lifetime|duration", re.I)
 ID_NAME = re.compile(r"(^|_|\b)(id|uuid|guid|key|row_?number|index)$", re.I)
 POSITIVE_WORDS = ("yes", "true", "1", "churned", "churn", "exited", "left", "cancelled", "y")
@@ -95,6 +97,14 @@ def likely_time_column(frame: pd.DataFrame) -> str | None:
     return None
 
 
+def likely_revenue_column(frame: pd.DataFrame) -> str | None:
+    """A numeric column that looks like monthly revenue per customer (ARPU)."""
+    for col in frame.columns:
+        if REVENUE_NAME.search(str(col)) and _numeric_share(frame[col]) > 0.95:
+            return str(col)
+    return None
+
+
 def heuristic_type(series: pd.Series, is_id: bool) -> str:
     if is_id:
         return "id"
@@ -137,5 +147,6 @@ def heuristic_schema(frame: pd.DataFrame) -> dict[str, Any]:
         "positive_label": positive,
         "id_columns": ids,
         "time_column": likely_time_column(frame),
+        "revenue_column": likely_revenue_column(frame),
         "reasoning": "Proposed by rules (column names, distinct values and types).",
     }

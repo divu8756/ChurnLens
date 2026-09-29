@@ -91,6 +91,7 @@ def merge(frame: pd.DataFrame, heur: dict[str, Any], proposal: SchemaProposal) -
         "positive_label": positive,
         "id_columns": id_columns,
         "time_column": time_column,
+        "revenue_column": heur.get("revenue_column"),
         "reasoning": " ".join([proposal.reasoning, *notes]).strip(),
         "source": "ai+rules",
     }

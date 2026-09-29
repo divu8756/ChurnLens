@@ -222,3 +222,16 @@ def test_stream_for_unknown_or_unstarted_session_is_410(client):
     assert client.get(f"/stream/{'b' * 32}").status_code == 410
     session_id = upload(client)
     assert client.get(f"/stream/{session_id}").status_code == 410
+
+
+def test_revenue_column_is_validated(client):
+    session_id = upload(client)
+    started(session_id, client)
+    wait_for(client, session_id, "awaiting_confirmation")
+    bad = client.post(f"/confirm-schema/{session_id}",
+                      json={**valid_schema(), "revenue_column": "Contract"})
+    assert bad.status_code == 422
+    assert any("must be numeric" in p for p in bad.json()["detail"]["problems"])
+    good = client.post(f"/confirm-schema/{session_id}",
+                       json={**valid_schema(), "revenue_column": "MonthlyCharges"})
+    assert good.status_code == 200

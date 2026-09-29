@@ -18,7 +18,7 @@ RESULT_KEYS = (
     "cleaning_log", "data_health", "eda_results", "segments", "survival_results",
     "hypothesis_results", "model_metrics", "feature_importance", "shap_summary",
     "odds_ratios", "impact_estimates", "offer_effectiveness", "insights", "recommendations",
-    "validation_report", "final_error",
+    "final_insights", "final_recommendations", "validation_report", "final_error",
 )
 
 
