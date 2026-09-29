@@ -67,6 +67,8 @@ def main() -> None:
         "SchemaProposal": TimeoutError("fake: the schema comes from the rules"),
         "InsightList": {"insights": [INSIGHT]},
         "RecommendationList": {"recommendations": [RECOMMENDATION]},
+        # Offer messages use the fixed template (the fallback path), so the text is known.
+        "OfferMessage": TimeoutError("fake: use the template message"),
     }))
     uvicorn.run(create_app(), host="127.0.0.1", port=args.port, log_level="warning")
 

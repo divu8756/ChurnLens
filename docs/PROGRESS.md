@@ -3,15 +3,11 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5b.4 (offer message, validation, UI)
+Phase 5b gate (review, PR)
 
 ## Next step
-T5b.4 on branch phase-5b (T5b.1-T5b.3 committed): prompts/offer_message.v1.md
-+ on-demand POST endpoint with a per-customer cache, validator check on the
-message numbers, Risk Predictions "Next best offer" / "Expected value"
-columns and a "Why this offer" panel (KaTeX formula with inputs), Offer
-performance cards in Recommendations, offer warnings on Data Health, README
-limitations line. Then the Phase 5b gate.
+Phase 5b gate: strict review of git diff main...phase-5b, fix High/Medium,
+push, open the PR; the human merges it. Then Phase 5c (A/B testing).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -342,6 +338,24 @@ limitations line. Then the Phase 5b gate.
   Telco: 4,136 customers scored in 0.5 s; offer model CV ROC-AUC 0.48-0.64
   (weak signal); loyalty discount 1,793, 10GB booster 1,267, OTT 894,
   annual-plan month 128, no offer 54. Backend 255 (+ lift test).
+- T5b.4: prompts/offer_message.v1.md + app/agents/offer_message.py: the fast
+  model gets one customer's offer name and top 3 reasons only; every number
+  in the message and SMS must come from the offer name, the name must appear
+  unchanged, SMS <= 160; one retry with feedback, then a fixed template.
+  Cached per customer and offer in the session folder (offer_messages.json).
+  Endpoints: GET /predictions/{id}/offer/{customer} (all inputs, formula,
+  assumptions), POST .../message (on demand). Contract types
+  offer_effectiveness (offers, cells, tests, next_best_offer summary).
+  UI: Risk Predictions "Next best offer" / "Expected value" columns; the
+  offer opens a "Why this offer" panel (KaTeX formula with the customer's
+  inputs, low-data flag, assumptions with source, Generate message);
+  Recommendations "Offer performance" (accepted vs declined churn chart,
+  cards with n and significance, warnings, next-best-offer summary, shown
+  even when no AI recommendation passed); Data Health shows offer warnings.
+  README limitations added. E2E covers the offer flow (template path).
+  Live Gemini: 2 of 2 messages passed validation first try (SMS 146/145
+  chars); prompt gained a rule against inventing customer history after
+  one called a 4-month customer "long-standing". Backend 262, frontend 91.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

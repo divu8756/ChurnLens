@@ -15,6 +15,7 @@ import { PredictionsTable } from "./predictions-table";
 
 export function PredictionsTab({ results, sessionId }: { results: ResultsPayload; sessionId: string }) {
   const bands = results.model_metrics?.risk_bands ?? null;
+  const valueUnit = results.offer_effectiveness?.next_best_offer?.value_unit ?? null;
   const [band, setBand] = useState<RiskBand | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -75,7 +76,7 @@ export function PredictionsTab({ results, sessionId }: { results: ResultsPayload
         {data ? (
           <div className={loading ? "opacity-60 transition-opacity" : undefined} aria-busy={loading}>
             {data.items.length ? (
-              <PredictionsTable rows={data.items} />
+              <PredictionsTable rows={data.items} sessionId={sessionId} valueUnit={valueUnit} />
             ) : (
               <EmptyState>{q ? `No customer ID contains “${q}”.` : "No customers in this band."}</EmptyState>
             )}

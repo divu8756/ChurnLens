@@ -57,10 +57,20 @@ test("Telco sample runs end to end and every tab renders", async ({ page }) => {
   await expect(panel.getByRole("link", { name: "Download CSV" })).toHaveAttribute("href", /\/predictions\/[0-9a-f]{32}\/csv$/);
   await panel.getByRole("button", { name: /^High/ }).click();
   await expect(panel.locator("tbody tr").first()).toContainText("High");
+  // Next best offer: open the first customer's offer, see why, and write a message.
+  await expect(panel.getByRole("columnheader", { name: "Next best offer" })).toBeVisible();
+  await panel.locator("tbody tr").first().getByRole("button").click();
+  await expect(panel.getByText("Why this offer")).toBeVisible();
+  await expect(panel.locator(".katex").first()).toBeVisible();
+  await panel.getByRole("button", { name: "Generate message" }).click();
+  await expect(panel.getByText(/^SMS \(\d+\/160\)/)).toBeVisible();
+  await expect(panel.getByText(/Standard wording/)).toBeVisible();
 
   await openTab(page, "Recommendations");
   await expect(panel.getByText("Offer month-to-month customers a discounted annual plan.")).toBeVisible();
   await expect(panel.getByText("153.7 fewer churners")).toBeVisible();
+  await expect(panel.getByRole("heading", { name: /Offer performance/ })).toBeVisible();
+  await expect(panel.getByText(/riskier to begin with/)).toBeVisible();
 
   await openTab(page, "Data Health");
   await expect(panel.getByText("Health score", { exact: true })).toBeVisible();

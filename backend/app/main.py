@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__, sessions
+from app.api import offers as offers_api
 from app.api import predictions as predictions_api
 from app.api import results as results_api
 from app.api import runs as runs_api
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(runs_api.router)
     app.include_router(results_api.router)
     app.include_router(predictions_api.router)
+    app.include_router(offers_api.router)
     return app
 
 

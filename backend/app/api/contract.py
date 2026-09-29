@@ -487,6 +487,82 @@ class SurvivalResults(Passthrough):
     by_group: list[SurvivalGroup] = Field(default_factory=list)
 
 
+class OfferAssumption(BaseModel):
+    name: str
+    value: float | int | None = None
+    source: Literal["default", "user", "data"]
+    text: str
+
+
+class ChurnCell(BaseModel):
+    n: int
+    churned: int
+    churn_rate: float | None = None
+
+
+class OfferTestRef(BaseModel):
+    test_name: str
+    variable: str
+    p_value: float | None = None
+    p_adjusted: float | None = None
+    significant: bool
+
+
+class OfferSegmentRow(BaseModel):
+    segment: int
+    label: str
+    shown: int
+    accepted: int
+    acceptance_rate: float | None = None
+    acceptors: ChurnCell
+    decliners: ChurnCell
+
+
+class OfferRow(BaseModel):
+    offer: str
+    shown: int
+    accepted: int
+    acceptance_rate: float | None = None
+    acceptors: ChurnCell
+    decliners: ChurnCell
+    test: OfferTestRef | None = None
+    segments: list[OfferSegmentRow] | None = None
+
+
+class OfferModelInfo(BaseModel):
+    shown: int
+    accepted: int
+    low_data: bool
+    method: str
+    roc_auc: float | None = None
+
+
+class OfferValue(BaseModel):
+    offer: str
+    customers: int
+    expected_value: float
+
+
+class NboSummary(Passthrough):
+    customers_scored: int
+    value_unit: Literal["revenue", "customers"]
+    total_expected_value: float
+    by_offer: list[OfferValue] = Field(default_factory=list)
+    offer_models: dict[str, OfferModelInfo] = Field(default_factory=dict)
+    excluded_by_discount: list[str] = Field(default_factory=list)
+    formula: str
+    assumptions: list[OfferAssumption] = Field(default_factory=list)
+
+
+class OfferEffectiveness(Passthrough):
+    offers: list[OfferRow] = Field(default_factory=list)
+    never_offered: ChurnCell
+    offered: ChurnCell
+    warnings: list[str] = Field(default_factory=list)
+    note: str = ""
+    next_best_offer: NboSummary | None = None
+
+
 class ResultsPayload(BaseModel):
     """Keys the dashboard reads are typed; the rest pass through until their tab is built."""
 
@@ -505,6 +581,7 @@ class ResultsPayload(BaseModel):
     eda_results: EdaResults | None = None
     segments: Segments | None = None
     survival_results: SurvivalResults | None = None
+    offer_effectiveness: OfferEffectiveness | None = None
     final_insights: list[Insight] | None = None
     final_recommendations: list[Recommendation] | None = None
     validation_report: ValidationReport | None = None
@@ -535,6 +612,41 @@ class PredictionsResponse(BaseModel):
     band: RiskBand | None = None
     q: str | None = None
     items: list[PredictionRow]
+
+
+class NextBestOffer(BaseModel):
+    """GET /predictions/{id}/offer/{customer_id}: why this offer, with every input."""
+
+    customer_id: str
+    risk_band: RiskBand
+    reasons: list[str]
+    best_offer: str
+    expected_value: float
+    runner_up: str | None = None
+    runner_up_value: float | None = None
+    p_churn: float
+    p_accept: float | None = None
+    p_stay_if_accepted: float | None = None
+    p_stay_if_declined: float | None = None
+    retention_lift: float | None = None
+    customer_value: float
+    offer_cost: float | None = None
+    low_data: bool
+    eligible_offers: int
+    no_offer_reason: str | None = None
+    value_unit: Literal["revenue", "customers"]
+    formula: str
+    assumptions: list[OfferAssumption]
+
+
+class OfferMessageResponse(BaseModel):
+    customer_id: str
+    offer: str
+    message: str
+    sms: str
+    source: Literal["ai", "template"]
+    cached: bool
+    problems: list[str] = Field(default_factory=list)
 
 
 class ResultsResponse(BaseModel):
