@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 2 gate (PR open)
+T3.2
 
 ## Next step
-Merge the Phase 2 PR when CI is green, then T3.1 (EDA node).
+T3.2: segmentation node (K-means k=2..8 by silhouette).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -77,6 +77,11 @@ Merge the Phase 2 PR when CI is green, then T3.1 (EDA node).
   2.6 s). End-to-end on a live server: sample -> analyze -> paused with
   AI proposal (ai+rules, ~50 s Gemini latency) -> confirm -> cleaning (7,000
   rows, health 81) -> stubs -> done. Backend 105 tests.
+- Phase 2 merged to main (PR #2, CI green).
+- T3.1: stats/eda.py + eda_node: overview, numeric summaries (churned vs
+  retained, histograms), churn rate by level with n (sorted, > 20 levels
+  folded into Other), Pearson correlation on numerics + with target, tenure
+  bands when a time column exists; strict-JSON output. 115 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
