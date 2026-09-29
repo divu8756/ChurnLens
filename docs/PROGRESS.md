@@ -3,12 +3,11 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5c.5 (Prove it works with a known answer)
+Phase 5c gate (review, PR)
 
 ## Next step
-T5c.5: scripts/simulate_experiment.py (seed 42; scenarios real effect / no
-effect / broken 60/40 delivery), tests on the three scenarios, and add the
-real-effect scenario to "Try sample data". Then the Phase 5c gate.
+Phase 5c gate: strict review of git diff main...phase-5c, fix High/Medium,
+push, open the PR and get CI green. Then Phase 5d (metrics layer, T5d.0).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -418,6 +417,18 @@ real-effect scenario to "Try sample data". Then the Phase 5c gate.
   lifecycle on Telco, live Gemini summary validated (source ai), and after
   "ship" a rerun labelled the offer experiment-proven. Backend 347,
   frontend 100.
+- T5c.5: app/experiments/simulate.py + scripts/simulate_experiment.py
+  (seed 42; real_effect 26% vs 21% with 45% acceptance, no_effect,
+  broken_delivery 60/40 of a 50/50 plan; reads an assignment CSV or fetches
+  it from the API). Tests: scenario 1 CI contains the true -5 points,
+  scenario 2 is inconclusive or don't ship, scenario 3 is untrustworthy
+  (SRM). POST /experiments/demo (sample data only, marked by meta.sample
+  from POST /sample; ResultsResponse.sample tells the UI) creates a demo
+  experiment with scenario 1 results; demo experiments (migration 0005)
+  never block real ones and never write offer evidence. "Load demo
+  experiment" button on the Experiments tab; the E2E walk-through now loads
+  the demo, writes the (template) summary and records a decision.
+  Backend 353, frontend 101, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

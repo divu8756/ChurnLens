@@ -245,6 +245,11 @@ export function getExperiment(id: number, signal?: AbortSignal): Promise<Experim
   return request<Experiment>(`/experiments/${id}`, { signal });
 }
 
+/** Sample data only: a worked example with a simulated results file (known effect). */
+export function createDemoExperiment(sessionId: string, signal?: AbortSignal): Promise<Experiment> {
+  return request<Experiment>("/experiments/demo", { method: "POST", json: { session_id: sessionId }, signal });
+}
+
 /** Sample size for a design without saving it (live feedback in the wizard). */
 export function previewDesign(inputs: DesignInputs, signal?: AbortSignal): Promise<Design> {
   return request<Design>("/experiments/design", { method: "POST", json: inputs, signal });

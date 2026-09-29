@@ -1172,6 +1172,20 @@
         "title": "DecisionHelperOut",
         "type": "object"
       },
+      "DemoRequest": {
+        "properties": {
+          "session_id": {
+            "pattern": "^[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "title": "DemoRequest",
+        "type": "object"
+      },
       "DesignInputs": {
         "description": "What the sample size depends on; POST /experiments/design previews it live.",
         "properties": {
@@ -2039,6 +2053,11 @@
             ],
             "title": "Decision Note"
           },
+          "demo": {
+            "default": false,
+            "title": "Demo",
+            "type": "boolean"
+          },
           "design": {
             "anyOf": [
               {
@@ -2239,6 +2258,11 @@
               }
             ],
             "title": "Decision"
+          },
+          "demo": {
+            "default": false,
+            "title": "Demo",
+            "type": "boolean"
           },
           "id": {
             "title": "Id",
@@ -5764,6 +5788,11 @@
           "results": {
             "$ref": "#/components/schemas/ResultsPayload"
           },
+          "sample": {
+            "default": false,
+            "title": "Sample",
+            "type": "boolean"
+          },
           "session_id": {
             "title": "Session Id",
             "type": "string"
@@ -7348,6 +7377,88 @@
           }
         },
         "summary": "Create Experiment",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/demo": {
+      "post": {
+        "description": "Sample data only: a worked example with a simulated, known-effect results file.",
+        "operationId": "create_demo_experiments_demo_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Demo",
         "tags": [
           "experiments"
         ]

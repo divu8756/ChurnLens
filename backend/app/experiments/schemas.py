@@ -103,6 +103,10 @@ class ApproveRequest(BaseModel):
     note: str | None = Field(default=None, max_length=2000)
 
 
+class DemoRequest(BaseModel):
+    session_id: str = Field(pattern=SESSION_ID)
+
+
 class AssignRequest(BaseModel):
     session_id: str = Field(pattern=SESSION_ID)
     actor: str = Field(min_length=1, max_length=100)
@@ -215,6 +219,7 @@ class ExperimentSummary(BaseModel):
     created_by: str
     created_at: datetime
     decision: str | None
+    demo: bool = False
 
 
 class ExperimentOut(ExperimentSummary):

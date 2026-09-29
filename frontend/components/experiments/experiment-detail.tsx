@@ -286,6 +286,12 @@ export function ExperimentDetail({
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">Next: {info.next}</p>
       </div>
+      {exp.demo ? (
+        <Alert tone="info" title="Demo experiment">
+          The results file was simulated with a known effect (control 26%, treatment 21% churn). Its decision never
+          feeds next best offer and its customers stay available for real experiments.
+        </Alert>
+      ) : null}
       {exp.analysis ? <ResultsView exp={exp} actor={actor} onChange={onChange} /> : null}
       <DesignCard exp={exp} />
       {exp.status === "draft" ? <ApproveCard exp={exp} actor={actor} onChange={onChange} /> : null}

@@ -72,6 +72,22 @@ test("Telco sample runs end to end and every tab renders", async ({ page }) => {
   await expect(panel.getByRole("heading", { name: /Offer performance/ })).toBeVisible();
   await expect(panel.getByText(/riskier to begin with/)).toBeVisible();
 
+  // Experiments: the demo on the sample data has a simulated results file with a known effect.
+  await openTab(page, "Experiments");
+  await panel.getByRole("button", { name: "Load demo experiment" }).click();
+  await expect(panel.getByText("Demo experiment", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(panel.getByRole("heading", { name: "Primary result: churn" })).toBeVisible();
+  await expect(panel.getByRole("img", { name: /^Treatment \(offer\):/ })).toBeVisible();
+  await expect(panel.getByRole("img", { name: /^All assigned \(ITT\):/ })).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "Decision helper" })).toBeVisible();
+  await panel.getByRole("button", { name: "Write summary" }).click();
+  await expect(panel.getByText(/Standard wording/)).toBeVisible();
+  await panel.getByRole("textbox", { name: /Your name/ }).fill("E2E tester");
+  await panel.getByRole("radio", { name: "Extend" }).check();
+  await panel.getByRole("textbox", { name: /Note \(required\)/ }).fill("Demo walk-through");
+  await panel.getByRole("button", { name: "Record decision" }).click();
+  await expect(panel.getByText(/decided extend by E2E tester/)).toBeVisible();
+
   await openTab(page, "Data Health");
   await expect(panel.getByText("Health score", { exact: true })).toBeVisible();
 

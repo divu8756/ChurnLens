@@ -19,6 +19,7 @@ from app.experiments.schemas import (
     AssignRequest,
     AuditEntryOut,
     DecideRequest,
+    DemoRequest,
     DesignInputs,
     DesignOut,
     ExperimentCreate,
@@ -80,6 +81,16 @@ def create_experiment(payload: ExperimentCreate, request: Request,
 def list_experiments(db: DB) -> list[ExperimentSummary]:
     rows = db.scalars(select(Experiment).order_by(Experiment.id.desc()))
     return [ExperimentSummary.model_validate(e) for e in rows]
+
+
+@router.post("/demo", response_model=ExperimentOut, status_code=201, responses=ERRORS)
+def create_demo(body: DemoRequest, request: Request, db: DB) -> ExperimentOut:
+    """Sample data only: a worked example with a simulated, known-effect results file."""
+    load = values_loader(request)
+    _call(load, body.session_id)  # 410 when the session expired
+    is_sample = bool(sessions.read_meta(body.session_id).get("sample"))
+    exp = _call(lambda: service.create_demo(db, body.session_id, load, is_sample=is_sample))
+    return _out(db, exp)
 
 
 @router.post("/design", response_model=DesignOut, responses=ERRORS)

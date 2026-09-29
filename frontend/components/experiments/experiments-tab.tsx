@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { ApiError, getExperiment, listExperiments, type Experiment, type ExperimentListItem } from "@/lib/api";
+import {
+  ApiError,
+  createDemoExperiment,
+  getExperiment,
+  listExperiments,
+  type Experiment,
+  type ExperimentListItem,
+} from "@/lib/api";
 import type { ResultsPayload } from "@/lib/results";
 
 import { Alert, Button, Card, EmptyState, Spinner } from "../ui";
@@ -29,7 +36,15 @@ function saveName(name: string) {
 
 type View = { kind: "list" } | { kind: "new" } | { kind: "detail"; id: number };
 
-export function ExperimentsTab({ results, sessionId }: { results: ResultsPayload; sessionId: string }) {
+export function ExperimentsTab({
+  results,
+  sessionId,
+  sample = false,
+}: {
+  results: ResultsPayload;
+  sessionId: string;
+  sample?: boolean;
+}) {
   // This tab only renders in the browser (after the results load), so storage is available.
   const [actor, setActor] = useState(readName);
   const [items, setItems] = useState<ExperimentListItem[] | null>(null);
@@ -69,6 +84,23 @@ export function ExperimentsTab({ results, sessionId }: { results: ResultsPayload
       });
     return () => controller.abort();
   }, [detailId]);
+
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+  const loadDemo = async () => {
+    setDemoBusy(true);
+    setDemoError(null);
+    try {
+      const exp = await createDemoExperiment(sessionId);
+      setDetail(exp);
+      setView({ kind: "detail", id: exp.id });
+      refresh();
+    } catch (e) {
+      setDemoError(e instanceof ApiError ? e.message : "Could not create the demo experiment.");
+    } finally {
+      setDemoBusy(false);
+    }
+  };
 
   const onChange = (exp: Experiment) => {
     setDetail(exp);
@@ -116,6 +148,15 @@ export function ExperimentsTab({ results, sessionId }: { results: ResultsPayload
             {listError ? <Alert tone="error" title={listError} /> : null}
             {items === null && !listError ? <Spinner label="Loading..." /> : null}
             {items?.length === 0 ? <EmptyState>No experiments yet.</EmptyState> : null}
+            {sample ? (
+              <div className="mb-3 flex flex-col gap-2 rounded-lg bg-blue-50 p-3 text-xs text-blue-900 dark:bg-blue-950 dark:text-blue-100">
+                <p>See a finished test on the sample data: its results file is simulated with a known effect (26% vs 21% churn).</p>
+                <Button variant="secondary" onClick={() => void loadDemo()} disabled={demoBusy}>
+                  {demoBusy ? "Creating..." : "Load demo experiment"}
+                </Button>
+                {demoError ? <p className="text-red-700 dark:text-red-300">{demoError}</p> : null}
+              </div>
+            ) : null}
             <ul className="flex flex-col gap-1">
               {items?.map((e) => (
                 <li key={e.id}>
@@ -127,7 +168,10 @@ export function ExperimentsTab({ results, sessionId }: { results: ResultsPayload
                       detailId === e.id ? "bg-gray-100 dark:bg-gray-900" : ""
                     }`}
                   >
-                    <span className="font-medium">{e.name}</span>
+                    <span className="font-medium">
+                      {e.name}
+                      {e.demo ? <span className="ml-1 text-xs font-normal text-gray-500">(simulated)</span> : null}
+                    </span>
                     <span className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                       <StatusChip status={e.status} /> {e.offer}
                     </span>

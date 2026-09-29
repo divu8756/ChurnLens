@@ -95,3 +95,18 @@ describe("ResultsView", () => {
     expect(screen.getByText(": Go", { exact: false })).toBeTruthy();
   });
 });
+
+describe("ExperimentsTab demo", () => {
+  it("offers the demo only on the sample data", async () => {
+    const { vi } = await import("vitest");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("[]", { status: 200, headers: { "Content-Type": "application/json" } })));
+    const { ExperimentsTab } = await import("./experiments-tab");
+    const results = {} as Parameters<typeof ExperimentsTab>[0]["results"];
+    const { unmount } = render(<ExperimentsTab results={results} sessionId={"a".repeat(32)} sample />);
+    expect(screen.getByRole("button", { name: "Load demo experiment" })).toBeTruthy();
+    unmount();
+    render(<ExperimentsTab results={results} sessionId={"a".repeat(32)} />);
+    expect(screen.queryByRole("button", { name: "Load demo experiment" })).toBeNull();
+    vi.unstubAllGlobals();
+  });
+});

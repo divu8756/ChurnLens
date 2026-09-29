@@ -14,7 +14,7 @@ import { RecommendationsTab } from "../recommendations/recommendations-tab";
 import { OverviewTab } from "../overview/overview-tab";
 import { EmptyState } from "../ui";
 
-type Tab = { id: string; label: string; render: (results: ResultsPayload, sessionId: string) => ReactNode };
+type Tab = { id: string; label: string; render: (results: ResultsPayload, sessionId: string, sample: boolean) => ReactNode };
 
 // Each dashboard tab registers here (later tabs are added by their own tasks).
 const TABS: Tab[] = [
@@ -24,7 +24,7 @@ const TABS: Tab[] = [
   { id: "hypothesis", label: "Hypothesis Testing", render: (r) => <HypothesisTab results={r} /> },
   { id: "predictions", label: "Risk Predictions", render: (r, id) => <PredictionsTab results={r} sessionId={id} /> },
   { id: "recommendations", label: "Recommendations", render: (r) => <RecommendationsTab results={r} /> },
-  { id: "experiments", label: "Experiments", render: (r, id) => <ExperimentsTab results={r} sessionId={id} /> },
+  { id: "experiments", label: "Experiments", render: (r, id, sample) => <ExperimentsTab results={r} sessionId={id} sample={sample} /> },
   {
     id: "health",
     label: "Data Health",
@@ -37,7 +37,7 @@ const TABS: Tab[] = [
   },
 ];
 
-export function Dashboard({ results, sessionId }: { results: ResultsPayload; sessionId: string }) {
+export function Dashboard({ results, sessionId, sample = false }: { results: ResultsPayload; sessionId: string; sample?: boolean }) {
   const [active, setActive] = useState(TABS[0].id);
   const base = useId();
 
@@ -81,7 +81,7 @@ export function Dashboard({ results, sessionId }: { results: ResultsPayload; ses
         ))}
       </div>
       <div role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${tab.id}`}>
-        {tab.render(results, sessionId)}
+        {tab.render(results, sessionId, sample)}
       </div>
     </div>
   );

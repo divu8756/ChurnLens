@@ -4,7 +4,7 @@ Raises ServiceError with an HTTP status; the router turns it into a response."""
 import hashlib
 import io
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pandas as pd
@@ -32,6 +32,7 @@ from app.experiments.schemas import (
     ExperimentUpdate,
 )
 from app.experiments.segments import SegmentError, apply_segment
+from app.experiments.simulate import simulate_results
 from app.experiments.summary import generate as generate_summary
 from app.stats.common import jsonable
 from app.stats.experiment_analysis import analyse
@@ -203,7 +204,8 @@ def busy_customers(db: Session, experiment_id: int) -> set[str]:
     """Customers already assigned to another experiment that is still running."""
     rows = db.scalars(
         select(Assignment.customer_id).join(Experiment, Experiment.id == Assignment.experiment_id)
-        .where(Experiment.status.in_(ACTIVE), Experiment.id != experiment_id))
+        .where(Experiment.status.in_(ACTIVE), Experiment.id != experiment_id,
+               Experiment.demo.is_(False)))
     return set(rows)
 
 
@@ -424,7 +426,7 @@ def decide(db: Session, exp: Experiment, request: DecideRequest) -> Experiment:
                   note=request.note, details=details)
     # Feedback loop: a measured effect beats an observational one in next best offer.
     # SRM-failed results never become evidence.
-    if not exp.analysis["srm"]["failed"]:
+    if not exp.analysis["srm"]["failed"] and not exp.demo:
         db.add(_evidence(exp))
     return exp
 
@@ -475,3 +477,54 @@ def segment_options(values: dict[str, Any]) -> list[dict[str, Any]]:
 def _finite(value: Any) -> float | None:
     number = float(value) if pd.notna(value) else None
     return number if number is not None and abs(number) != float("inf") else None
+
+
+DEMO_OFFER_FALLBACK = "Retention offer"
+DEMO_ACTOR = "demo"
+DEMO_ASSUMPTIONS = AnalysisAssumptions(offer_cost=20.0)
+
+
+def create_demo(db: Session, session_id: str, load: ValuesLoader, *, is_sample: bool
+                ) -> Experiment:
+    """A worked example on the sample data: designed, approved, assigned and given a
+    simulated results file with a known effect (control 26% vs treatment 21% churn).
+    Left at "results uploaded" so the user makes the decision. Not real evidence: demo
+    experiments never feed next best offer and never block real experiments."""
+    if not is_sample:
+        raise ServiceError(409, "Demo experiments are only available for the sample data.")
+    values = load(session_id)
+    catalog = [o.get("offer") for o in
+               ((values.get("offer_effectiveness") or {}).get("offers") or [])]
+    offer = next((o for o in catalog if o), DEMO_OFFER_FALLBACK)
+    today = datetime.now(UTC).date()
+    fields = ExperimentDesignFields(
+        name=f"Demo: {offer} for month-to-month customers",
+        hypothesis=f"Offering {offer} lowers 90-day churn among month-to-month customers. "
+                   "(Demo: the results file is simulated with a known effect.)",
+        session_id=session_id,
+        segment_definition={"description": "Contract = Month-to-month", "filters": [
+            {"column": "Contract", "op": "eq", "value": "Month-to-month"}]},
+        offer=offer, mde=0.05, outcome_window_days=90,
+        planned_start=today - timedelta(days=120), planned_end=today - timedelta(days=30),
+        preregistered_segments=[{"name": "New customers (tenure <= 12)", "filters": [
+            {"column": "tenure", "op": "lte", "value": 12}]}],
+    )
+    try:
+        design = build_design(fields, load)
+    except ServiceError as exc:
+        raise ServiceError(409, f"The demo needs the sample data's columns: {exc.detail}"
+                           ) from None
+    exp = Experiment(created_by=DEMO_ACTOR, status="draft", primary_metric="churn", demo=True)
+    _apply_design(exp, fields, design)
+    db.add(exp)
+    db.flush()
+    audit(db, exp, DEMO_ACTOR, "created", to_status="draft", note="demo experiment")
+    approve(db, exp, ApproveRequest(approver=DEMO_ACTOR, cost_and_eligibility_reviewed=True,
+                                    note="demo"))
+    assign(db, exp, session_id, DEMO_ACTOR, lambda _: values)
+    rows = db.execute(select(Assignment.customer_id, Assignment.arm)
+                      .where(Assignment.experiment_id == exp.id)).all()
+    assignment = pd.DataFrame(rows, columns=["customer_id", "group"])
+    results = simulate_results(assignment, "real_effect")
+    upload_results(db, exp, results.to_csv(index=False).encode(), DEMO_ACTOR, DEMO_ASSUMPTIONS)
+    return exp

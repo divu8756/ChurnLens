@@ -131,7 +131,7 @@ export function AnalysisView({ sessionId }: { sessionId: string }) {
 
       {progress.done?.ok ? (
         results && finishedResults ? (
-          <Dashboard results={results.results} sessionId={sessionId} />
+          <Dashboard results={results.results} sessionId={sessionId} sample={results.sample ?? false} />
         ) : resultsError ? (
           <Alert tone="error" title={resultsError} />
         ) : (

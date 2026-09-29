@@ -56,6 +56,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/experiments/demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Demo
+         * @description Sample data only: a worked example with a simulated, known-effect results file.
+         */
+        post: operations["create_demo_experiments_demo_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/experiments/design": {
         parameters: {
             query?: never;
@@ -793,6 +813,11 @@ export interface components {
              */
             verdict: "ship" | "dont_ship" | "inconclusive" | "untrustworthy";
         };
+        /** DemoRequest */
+        DemoRequest: {
+            /** Session Id */
+            session_id: string;
+        };
         /**
          * DesignInputs
          * @description What the sample size depends on; POST /experiments/design previews it live.
@@ -1065,6 +1090,11 @@ export interface components {
             decision: string | null;
             /** Decision Note */
             decision_note: string | null;
+            /**
+             * Demo
+             * @default false
+             */
+            demo: boolean;
             design: components["schemas"]["DesignOut"] | null;
             /** Guardrail Metrics */
             guardrail_metrics: string[];
@@ -1117,6 +1147,11 @@ export interface components {
             created_by: string;
             /** Decision */
             decision: string | null;
+            /**
+             * Demo
+             * @default false
+             */
+            demo: boolean;
             /** Id */
             id: number;
             /** Name */
@@ -2135,6 +2170,11 @@ export interface components {
         ResultsResponse: {
             predictions: components["schemas"]["PredictionsPage"];
             results: components["schemas"]["ResultsPayload"];
+            /**
+             * Sample
+             * @default false
+             */
+            sample: boolean;
             /** Session Id */
             session_id: string;
             /**
@@ -2712,6 +2752,75 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ExperimentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_demo_experiments_demo_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DemoRequest"];
             };
         };
         responses: {

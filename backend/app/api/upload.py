@@ -50,7 +50,8 @@ async def _read_limited(file: UploadFile, max_mb: int) -> bytes:
     return data
 
 
-def _finish(session_id: str, path: Path, filename: str, parsed: ParsedUpload) -> UploadResponse:
+def _finish(session_id: str, path: Path, filename: str, parsed: ParsedUpload,
+            sample: bool = False) -> UploadResponse:
     sessions.save_raw(path, parsed.frame)
     columns = [str(c) for c in parsed.frame.columns]
     sessions.write_meta(path, {
@@ -63,6 +64,8 @@ def _finish(session_id: str, path: Path, filename: str, parsed: ParsedUpload) ->
         "columns": columns,
         "warnings": parsed.warnings,
         "created_at": datetime.now(UTC).isoformat(),
+        # The built-in sample (unlocks the demo experiment); never set for uploads.
+        "sample": sample,
     })
     (path / PENDING_XLSX).unlink(missing_ok=True)
     return UploadResponse(
@@ -132,4 +135,4 @@ def load_sample() -> UploadResponse:
     except UploadRejected as exc:
         raise _reject(exc) from None
     session_id, path = sessions.create_session()
-    return _finish(session_id, path, SAMPLE_FILE.name, parsed)
+    return _finish(session_id, path, SAMPLE_FILE.name, parsed, sample=True)

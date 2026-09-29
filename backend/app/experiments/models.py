@@ -5,6 +5,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -15,6 +16,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
+    false,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -79,6 +81,8 @@ class Experiment(Base):
     # Latest results analysis (stats/experiment_analysis.analyse) and upload checks.
     analysis: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     results_uploaded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Demo experiments (simulated results on the sample data) never block real ones.
+    demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
 
 class Assignment(Base):

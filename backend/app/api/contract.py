@@ -669,6 +669,7 @@ class OfferMessageResponse(BaseModel):
 class ResultsResponse(BaseModel):
     session_id: str
     status: RunStatus
+    sample: bool = False  # the built-in sample data (unlocks the demo experiment)
     results: ResultsPayload
     predictions: PredictionsPage
 
