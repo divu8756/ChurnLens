@@ -1,10 +1,12 @@
 """GET /results/{id}: all computed results, with paginated predictions."""
 
+import logging
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import ValidationError
 
 from app import sessions
 from app.api.contract import HTTPErrorOut, PredictionsPage, ResultsPayload, ResultsResponse
@@ -12,6 +14,7 @@ from app.graph.state import ErrorEntry, ProgressEntry
 from app.stats.common import jsonable
 
 router = APIRouter(tags=["results"])
+logger = logging.getLogger("churnlens.results")
 
 PAGE_SIZE = 100
 RESULT_KEYS = (
@@ -56,6 +59,23 @@ def predictions_page(path: str | None, page: int, band: str | None) -> dict[str,
             "items": jsonable(items.to_dict(orient="records"))}
 
 
+def validated_payload(payload: dict[str, Any]) -> ResultsPayload:
+    """Validate against the contract; a key with an unexpected shape becomes null (with an
+    error entry) instead of failing the whole response, so the other tabs still load."""
+    try:
+        return ResultsPayload(**payload)
+    except ValidationError as exc:
+        bad = sorted({str(err["loc"][0]) for err in exc.errors() if err["loc"]} - {"errors"})
+        if not bad:
+            raise
+        logger.error("results keys failed the contract and were omitted: %s", bad)
+        cleaned = {**payload, **dict.fromkeys(bad)}
+        cleaned["errors"] = [*payload.get("errors", []), *(
+            {"node": "results", "message": f"'{key}' had an unexpected shape and was omitted.",
+             "fatal": False} for key in bad)]
+        return ResultsPayload(**cleaned)
+
+
 @router.get("/results/{session_id}", response_model=ResultsResponse,
             responses={409: {"model": HTTPErrorOut}, 410: {"model": HTTPErrorOut}})
 def results(
@@ -81,7 +101,7 @@ def results(
     return ResultsResponse(
         session_id=session_id,
         status=status,
-        results=ResultsPayload(**payload),
+        results=validated_payload(payload),
         predictions=PredictionsPage(**predictions_page(values.get("predictions_path"), page,
                                                        band)),
     )

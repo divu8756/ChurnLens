@@ -260,3 +260,13 @@ def test_csv_safe_neutralises_formulas():
     assert csv_safe("=HYPERLINK(1)") == "'=HYPERLINK(1)"
     assert csv_safe("+1") == "'+1" and csv_safe("@x") == "'@x" and csv_safe("-2") == "'-2"
     assert csv_safe("C00001") == "C00001" and csv_safe(0.5) == 0.5
+
+
+
+def test_a_malformed_results_key_is_omitted_not_fatal():
+    from app.api.results import validated_payload
+    payload = {"data_health": {"health_score": "not a number"},
+               "model_metrics": None, "target_column": "Churn", "errors": []}
+    result = validated_payload(payload)
+    assert result.data_health is None and result.target_column == "Churn"
+    assert result.errors[-1].message == "'data_health' had an unexpected shape and was omitted."

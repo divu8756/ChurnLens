@@ -283,6 +283,11 @@ push, open the PR; the human merges it (merges need their approval).
   KaTeX, band filter, CSV link, recommendation impact) -> no console
   errors. ~20 s locally. New CI job `e2e` on PRs to main (report uploaded
   on failure). @playwright/test 1.63 added (runbook).
+- Phase 6 gate review: fixed (Medium) /results validated the whole payload
+  in one go, so one result key with an unexpected shape would 500 the entire
+  dashboard; now a bad key is omitted with an error entry and the rest
+  loads (tested). No High issues. Low items added to Known issues. Backend
+  228, frontend 82 unit tests, E2E 1 (all green locally).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -432,6 +437,10 @@ flowchart TD
   retry despite feedback; those items are then dropped (by design).
 - Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
   yet; planned for Phase 8 hardening.
+
+- Phase 6 (Low): the 30 s client timeout can be short for a 10 MB upload on a
+  slow connection; /results sends the whole state on every call (~300 KB on
+  Telco); /predictions is not rate-limited yet (Phase 8 hardening).
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).
