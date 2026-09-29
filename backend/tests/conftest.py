@@ -12,6 +12,8 @@ TEST_ENV = {
     "GEMINI_MODEL_FALLBACK": "",
     "GEMINI_RPM": "600",
     "FRONTEND_ORIGIN": "http://localhost:3000",
+    # Fail on any checkpoint type that is not registered in CHECKPOINT_TYPES.
+    "LANGGRAPH_STRICT_MSGPACK": "true",
 }
 os.environ.update(TEST_ENV)
 

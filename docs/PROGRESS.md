@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T2.4
+T2.5
 
 ## Next step
-T2.4: human_review interrupt, POST /confirm-schema, background run, SSE /stream.
+T2.5: cleaning_node + data health (stats/cleaning.py).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -53,6 +53,15 @@ T2.4: human_review interrupt, POST /confirm-schema, background run, SSE /stream.
   and positive label only accepted if valid for the data; falls back to rules
   on LLM failure). Heuristics alone get Telco fully right (customerID id,
   Churn/Yes target, tenure time column, TotalCharges numeric). Backend 73 tests.
+- T2.4: human_review node (interrupt only, no side effects before it),
+  schema validation (binary target, positive label, id/time columns),
+  RunManager (background thread per session, events with ids), POST
+  /analyze/{id} (added: explicit, idempotent run start), POST
+  /confirm-schema/{id} (422 with problem list, 409 if not paused or resumed
+  twice, 410 unknown), GET /stream/{id} SSE (node_start/finish, error,
+  awaiting_confirmation, resumed, done, 15 s heartbeat, Last-Event-ID
+  reconnect). Checkpoint serializer registers state types; tests run with
+  LANGGRAPH_STRICT_MSGPACK. pytest-timeout added (60 s). Backend 87 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -75,6 +84,8 @@ T2.4: human_review interrupt, POST /confirm-schema, background run, SSE /stream.
   (schema_agent) and confirmed_schema (human_review): one producer per key,
   and "schema" would shadow a Pydantic BaseModel attribute. Fatal errors are
   ErrorEntry(fatal=True) in the shared errors list rather than a separate key.
+- Runs live in memory in one API process (RunManager). A restart loses them
+  and /stream answers 410 "Session expired"; fine for one Render instance.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).

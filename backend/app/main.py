@@ -9,8 +9,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__, sessions
+from app.api import runs as runs_api
 from app.api import upload
 from app.config import get_settings
+from app.graph.builder import build_graph
+from app.graph.checkpointer import create_checkpointer
+from app.graph.nodes import default_nodes
+from app.runs import RunManager
 
 logger = logging.getLogger("churnlens")
 CLEANUP_INTERVAL_S = 10 * 60
@@ -52,7 +57,11 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
 
+    app.state.runs = RunManager(
+        lambda: build_graph(nodes=default_nodes(), checkpointer=create_checkpointer())
+    )
     app.include_router(upload.router)
+    app.include_router(runs_api.router)
     return app
 
 

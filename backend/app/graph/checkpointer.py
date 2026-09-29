@@ -4,8 +4,19 @@ import sqlite3
 from pathlib import Path
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
 from app.config import Settings, get_settings
+
+# State classes stored inside checkpoints; LangGraph only restores listed types.
+CHECKPOINT_TYPES = [
+    ("app.graph.state", "ErrorEntry"),
+    ("app.graph.state", "ProgressEntry"),
+]
+
+
+def make_serde() -> JsonPlusSerializer:
+    return JsonPlusSerializer(allowed_msgpack_modules=CHECKPOINT_TYPES)
 
 
 def create_checkpointer(settings: Settings | None = None) -> BaseCheckpointSaver:
@@ -22,7 +33,7 @@ def _sqlite(path: Path) -> BaseCheckpointSaver:
     # The API runs the graph in background threads, so allow cross-thread use;
     # SqliteSaver serialises access with its own lock.
     conn = sqlite3.connect(path, check_same_thread=False)
-    saver = SqliteSaver(conn)
+    saver = SqliteSaver(conn, serde=make_serde())
     saver.setup()
     return saver
 
@@ -38,6 +49,6 @@ def _postgres(url: str) -> BaseCheckpointSaver:
             "Install langgraph-checkpoint-postgres and psycopg[binary]."
         ) from exc
     conn = Connection.connect(url, autocommit=True, prepare_threshold=0, row_factory=dict_row)
-    saver = PostgresSaver(conn)
+    saver = PostgresSaver(conn, serde=make_serde())
     saver.setup()
     return saver
