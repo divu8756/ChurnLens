@@ -217,3 +217,11 @@ def test_ingest_node_records_shape(client):
 def test_ingest_node_fails_for_missing_session():
     with pytest.raises(FatalNodeError, match="expired"):
         ingest_node(ChurnState(session_id="f" * 32))
+
+
+def test_xlsx_zip_bomb_is_rejected(client, monkeypatch):
+    from app import ingest
+
+    monkeypatch.setattr(ingest, "MAX_XLSX_UNPACKED_BYTES", 1000)
+    response = post(client, "book.xlsx", xlsx_bytes({"A": frame(150)}))
+    assert response.status_code == 413 and "expands" in response.json()["detail"]

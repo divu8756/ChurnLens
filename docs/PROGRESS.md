@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 2 gate
+Phase 2 gate (PR open)
 
 ## Next step
-Phase 2 gate: review, end-to-end API check, PR, CI, merge. Then T3.1.
+Merge the Phase 2 PR when CI is green, then T3.1 (EDA node).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -69,6 +69,14 @@ Phase 2 gate: review, end-to-end API check, PR, CI, merge. Then T3.1.
   flags (never changed), data_health with documented 0-100 score, fatal on
   one class or < MIN_ROWS. Telco: 11 TotalCharges blanks, 14 duplicates,
   7,000 rows, InternetService case fixed, 5 negative call minutes. 103 tests.
+- Phase 2 gate review: fixed (Medium) exact duplicates were removed even
+  without an ID column, where identical rows can be different customers;
+  now only flagged. Fixed (Medium) .xlsx zip bomb: workbooks that unpack to
+  > 200 MB are rejected. Clearer "too few rows" message. Edge cases checked:
+  one column, all-null column, non-English headers, 100k rows (cleaning
+  2.6 s). End-to-end on a live server: sample -> analyze -> paused with
+  AI proposal (ai+rules, ~50 s Gemini latency) -> confirm -> cleaning (7,000
+  rows, health 81) -> stubs -> done. Backend 105 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

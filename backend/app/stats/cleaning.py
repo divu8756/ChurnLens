@@ -165,11 +165,17 @@ def clean(frame: pd.DataFrame, schema: dict[str, Any], min_rows: int) -> Cleanin
             _log(log, "trim_whitespace", col, ws, "Trimmed or collapsed spaces.")
             _log(log, "unify_case", col, case, "Merged spellings that differ only in case.")
 
-    # 2. Duplicates
+    # 2. Duplicates. Without an ID column, identical rows may be different
+    # customers, so they are only flagged.
     dup_mask = df.duplicated(keep="first")
-    dups = int(dup_mask.sum())
-    df = df.loc[~dup_mask]
-    _log(log, "drop_duplicates", None, dups, "Removed exact duplicate rows.")
+    has_ids = any(col in df.columns for col in schema.get("id_columns", []))
+    dups = int(dup_mask.sum()) if has_ids else 0
+    if has_ids:
+        df = df.loc[~dup_mask]
+        _log(log, "drop_duplicates", None, dups, "Removed exact duplicate rows.")
+    else:
+        _log(log, "possible_duplicates", None, int(dup_mask.sum()),
+             "Identical rows kept: without an ID column they may be different customers.")
     for id_col in schema.get("id_columns", []):
         if id_col in df.columns:
             repeated = int(df[id_col].duplicated(keep=False).sum())
@@ -215,8 +221,10 @@ def clean(frame: pd.DataFrame, schema: dict[str, Any], min_rows: int) -> Cleanin
 
     # 5. Fatal checks
     if len(df) < min_rows:
+        removed = rows_before - len(df)
         raise CleaningFatal(
-            f"Only {len(df)} rows remain after cleaning; at least {min_rows} are needed."
+            f"Only {len(df)} rows remain after cleaning ({removed} removed as duplicates or "
+            f"missing target); at least {min_rows} are needed."
         )
     positives = int(df[target].sum())
     negatives = len(df) - positives

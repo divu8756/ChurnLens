@@ -128,7 +128,7 @@ def test_single_class_target_is_fatal():
 
 def test_too_few_rows_after_cleaning_is_fatal():
     df = pd.concat([base(60)] * 2, ignore_index=True)  # 60 unique rows
-    with pytest.raises(c.CleaningFatal, match="Only 60 rows"):
+    with pytest.raises(c.CleaningFatal, match=r"Only 60 rows remain after cleaning \(60 removed"):
         c.clean(df, schema(), min_rows=100)
 
 
@@ -195,3 +195,11 @@ def test_cleaning_node_routes_fatal(tmp_path):
     df.to_parquet(path, index=False)
     with pytest.raises(FatalNodeError, match="only one class"):
         cleaning_node(ChurnState(session_id="s", raw_path=str(path), confirmed_schema=schema()))
+
+
+def test_duplicates_kept_without_id_column():
+    df = pd.concat([base(), base().iloc[:5]], ignore_index=True).drop(columns="id")
+    result = c.clean(df, schema(ids=()), min_rows=100)
+    assert len(result.frame) == 125
+    assert steps(result, "possible_duplicates") == {None: int(df.duplicated().sum())}
+    assert result.health["duplicates_removed"] == 0

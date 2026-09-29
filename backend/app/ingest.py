@@ -10,6 +10,8 @@ import pandas as pd
 
 ALLOWED_EXTENSIONS = (".csv", ".xlsx")
 CSV_ENCODINGS = ("utf-8-sig", "cp1252", "latin-1")
+# Guards against "zip bombs": a small .xlsx that unpacks to gigabytes.
+MAX_XLSX_UNPACKED_BYTES = 200 * 1024 * 1024
 
 
 class UploadRejected(ValueError):
@@ -55,9 +57,17 @@ def _looks_like_xlsx(data: bytes) -> bool:
         return False
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
-            return "xl/workbook.xml" in archive.namelist()
+            if "xl/workbook.xml" not in archive.namelist():
+                return False
+            unpacked = sum(info.file_size for info in archive.infolist())
     except zipfile.BadZipFile:
         return False
+    if unpacked > MAX_XLSX_UNPACKED_BYTES:
+        raise UploadRejected(
+            "The workbook expands to more than 200 MB. Save the sheet you need as .csv.",
+            status_code=413,
+        )
+    return True
 
 
 def _looks_like_text(data: bytes) -> bool:
