@@ -3,11 +3,11 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 5b gate (review, PR)
+T5c.2 (Approval gate + randomised assignment)
 
 ## Next step
-Phase 5b gate: strict review of git diff main...phase-5b, fix High/Medium,
-push, open the PR; the human merges it. Then Phase 5c (A/B testing).
+T5c.2: experiment endpoints (create draft, edit while draft, approve, assign,
+get), SHA-256 assignment, overlap exclusion, balance check (SMD), CSV export.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -360,6 +360,15 @@ push, open the PR; the human merges it. Then Phase 5c (A/B testing).
   confirmed offer columns with every cell blank (no crash; everyone gets
   "No offer: no eligible offers"). Low items in Known issues. Backend 263,
   frontend 91, E2E 1 (offer flow included).
+- T5c.1: app/stats/experiment_design.py (sample size per arm via statsmodels
+  Cohen's h + NormalIndPower with ratio; absolute or relative MDE; smallest
+  detectable effect for the available customers; duration from monthly
+  volume; plain "Segment too small" warning with the detectable MDE; LaTeX
+  formula). app/experiments/ (SQLAlchemy models Experiment + AuditLog,
+  db.py SQLite/Postgres engine, lifecycle.py transitions that always audit),
+  Alembic migration 0001 packaged under app/experiments/migrations and run by
+  init_db(); the audit log is append-only in the ORM and via DB triggers
+  (SQLite and Postgres). Backend 296 tests (33 new).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -493,6 +502,17 @@ flowchart TD
    side effects, large state). Mitigation: one key per producer, reducers on
    shared lists, human_review does nothing before interrupt(), files for
    large data, tests for fan-out merge and resume.
+- T5c.1 dependencies: sqlalchemy 2.1.1 + alembic 1.20.0 (the v1.2 spec
+  requires SQLAlchemy + Alembic for experiments) and psycopg[binary] 3.3.2
+  (driver so DATABASE_URL=postgres... works; postgres:// URLs are rewritten
+  to postgresql+psycopg://).
+- T5c.1: MDE accepts mde_type absolute (runbook T5c.1, default) or relative
+  (v1.3 spec for the 5d A/B plan), one shared function. The treatment is
+  expected to lower churn (p2 = p1 - mde); the test is still two-sided.
+  Experiment stores n_required_treatment and n_required_control instead of a
+  single n_required_per_arm (unequal splits need different sizes), plus
+  outcome_window_days for "churn within N days". Power must be in [0.5, 1),
+  control share in [0.05, 0.95].
 
 ## Checkpoints for the human
 - S6 (end of Phase 6, MVP): run the app locally and click through all tabs:
