@@ -216,3 +216,132 @@ def test_unknown_experiment_is_404(api):
     client, _ = api
     assert client.get("/experiments/999").status_code == 404
     assert client.get("/experiments/999/assignment.csv").status_code == 404
+
+
+# ---------------------------------------------------------------- results (T5c.3)
+
+
+def _running(client, **overrides) -> tuple[dict, pd.DataFrame]:
+    exp = _draft(client, **overrides)
+    _approve(client, exp["id"])
+    res = client.post(f"/experiments/{exp['id']}/assign", json={"session_id": SID,
+                                                                "actor": "ops"})
+    assert res.status_code == 200, res.text
+    csv = client.get(f"/experiments/{exp['id']}/assignment.csv").text
+    return res.json(), pd.read_csv(io.StringIO(csv), dtype=str, keep_default_na=False)
+
+
+def _results(assignment: pd.DataFrame, p_t=0.10, p_c=0.40, seed=42) -> pd.DataFrame:
+    rng = np.random.default_rng(seed)
+    treat = assignment.group == "treatment"
+    return pd.DataFrame({
+        "customer_id": assignment.customer_id, "group": assignment.group,
+        "offer_accepted": np.where(treat, (rng.random(len(assignment)) < 0.5).astype(int), ""),
+        "churned": (rng.random(len(assignment)) < np.where(treat, p_t, p_c)).astype(int),
+        "revenue": rng.normal(60, 10, len(assignment)).round(2),
+        # Same complaint pattern in both arms, so the guardrail is never breached by chance.
+        "complaints": (np.arange(len(assignment)) % 10 == 0).astype(int),
+    })
+
+
+def _upload(client, exp_id, frame, **form):
+    data = {"uploaded_by": "analyst", **form}
+    return client.post(f"/experiments/{exp_id}/results", data=data,
+                       files={"file": ("results.csv", frame.to_csv(index=False), "text/csv")})
+
+
+PREREG = [{"name": "New customers", "filters": [{"column": "tenure", "op": "lte", "value": 12}]}]
+
+
+def test_results_upload_analyses_and_audits(api):
+    client, _ = api
+    exp, assignment = _running(client, preregistered_segments=PREREG,
+                               planned_start="2020-01-01", planned_end="2020-04-01")
+    assert exp["assignment_summary"]["customer_value_estimate"] > 0
+    res = _upload(client, exp["id"], _results(assignment), offer_cost="20")
+    assert res.status_code == 200, res.text
+    body = res.json()
+    analysis = body["analysis"]
+    assert body["status"] == "results_uploaded"
+    assert not analysis["srm"]["failed"]
+    assert analysis["itt"]["difference"]["ci_high"] < 0
+    assert analysis["impact"]["assumptions"][0]["source"] == "data"
+    assert analysis["segments"]["items"]["New customers"]["n"] > 0
+    assert analysis["decision_helper"]["verdict"] == "ship", analysis["decision_helper"]
+    assert analysis["upload"]["early_look"] is False
+    assert body["audit"][-1]["action"] == "results_uploaded"
+
+    # Assumption edits are recomputed in Python (never in the browser).
+    res = client.post(f"/experiments/{exp['id']}/analysis", json={
+        "actor": "analyst", "assumptions": {"customer_value": 1.0, "offer_cost": 500.0}})
+    assert res.status_code == 200
+    again = res.json()["analysis"]
+    assert again["impact"]["net_value"] < 0
+    assert again["decision_helper"]["verdict"] == "dont_ship"
+    assert again["impact"]["assumptions"][0]["source"] == "user"
+
+
+def test_mismatched_results_are_reported(api):
+    client, _ = api
+    exp, assignment = _running(client)
+    results = _results(assignment)
+    results.loc[0, "customer_id"] = "stranger"
+    results.loc[1, "group"] = "control" if results.loc[1, "group"] == "treatment" \
+        else "treatment"
+    res = _upload(client, exp["id"], results)
+    assert res.status_code == 422
+    detail = res.json()["detail"]
+    assert "never assigned: stranger" in detail
+    assert "different group" in detail
+
+    dupes = pd.concat([_results(assignment), _results(assignment).head(1)])
+    assert "duplicate" in _upload(client, exp["id"], dupes).json()["detail"]
+    bad = _results(assignment)
+    bad["churned"] = bad["churned"].astype(str)
+    bad.loc[3, "churned"] = "maybe"
+    assert "churned must be 0 or 1" in _upload(client, exp["id"], bad).json()["detail"]
+    missing = _results(assignment).drop(columns="churned")
+    assert "Missing required columns" in _upload(client, exp["id"], missing).json()["detail"]
+    assert client.get(f"/experiments/{exp['id']}").json()["status"] == "running"
+
+
+def test_early_look_and_status_checks(api):
+    client, _ = api
+    draft = _draft(client)
+    assert _upload(client, draft["id"], pd.DataFrame({"customer_id": ["x"], "group": ["control"],
+                                                      "churned": [0]})).status_code == 409
+    exp, assignment = _running(client, name="Early", planned_start="2020-01-01",
+                               planned_end="2999-01-01", segment_definition={"filters": [
+                                   {"column": "Contract", "op": "eq", "value": "One year"}]})
+    body = _upload(client, exp["id"], _results(assignment)).json()
+    assert body["analysis"]["upload"]["early_look"] is True
+    assert body["analysis"]["warnings"][0].startswith("Early look")
+    # Net value unknown without an offer cost, so the helper cannot say "ship".
+    assert body["analysis"]["decision_helper"]["verdict"] == "inconclusive"
+
+
+def test_churn_dates_outside_window_rejected(api):
+    client, _ = api
+    exp, assignment = _running(client, planned_start="2020-01-01", outcome_window_days=30)
+    results = _results(assignment)
+    results["churn_date"] = np.where(results.churned == 1, "2020-01-15", "")
+    assert _upload(client, exp["id"], results).status_code == 200
+    first_churner = results.index[results.churned == 1][0]
+    results.loc[first_churner, "churn_date"] = "2020-06-01"
+    res = _upload(client, exp["id"], results)
+    assert res.status_code == 422 and "outside the outcome window" in res.json()["detail"]
+
+
+def test_srm_is_flagged_on_upload(api):
+    client, _ = api
+    exp, assignment = _running(client, segment_definition={"filters": []})
+    # Broken delivery: a third of the control group was lost, so the file splits ~60/40.
+    results = _results(assignment)
+    control = results.index[results.group == "control"]
+    results = results.drop(control[: len(control) // 3])
+    body = _upload(client, exp["id"], results, offer_cost="5").json()
+    analysis = body["analysis"]
+    assert analysis["srm"]["failed"] is True
+    assert analysis["decision_helper"]["verdict"] == "untrustworthy"
+    assert analysis["warnings"][0].startswith("Sample ratio mismatch")
+    assert any("missing from the file" in w for w in analysis["warnings"])

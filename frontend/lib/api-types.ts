@@ -74,6 +74,23 @@ export interface paths {
         patch: operations["update_experiment_experiments__experiment_id__patch"];
         trace?: never;
     };
+    "/experiments/{experiment_id}/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reanalyse */
+        post: operations["reanalyse_experiments__experiment_id__analysis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/experiments/{experiment_id}/approve": {
         parameters: {
             query?: never;
@@ -119,6 +136,23 @@ export interface paths {
         get: operations["export_assignment_experiments__experiment_id__assignment_csv_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/experiments/{experiment_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Results */
+        post: operations["upload_results_experiments__experiment_id__results_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -299,6 +333,22 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AnalysisAssumptions
+         * @description Money and guardrail assumptions for the results analysis. customer_value
+         *     defaults to the data estimate made at assignment (mean monthly revenue x horizon).
+         */
+        AnalysisAssumptions: {
+            /**
+             * Arpu Tolerance
+             * @default 0.05
+             */
+            arpu_tolerance: number;
+            /** Customer Value */
+            customer_value?: number | null;
+            /** Offer Cost */
+            offer_cost?: number | null;
+        };
         /** ApproveRequest */
         ApproveRequest: {
             /** Approver */
@@ -320,6 +370,8 @@ export interface components {
             /** Assigned */
             assigned: number;
             balance: components["schemas"]["BalanceOut"];
+            /** Customer Value Estimate */
+            customer_value_estimate?: number | null;
             /** Data Snapshot Hash */
             data_snapshot_hash: string;
             /** Excluded Other Experiments */
@@ -408,6 +460,22 @@ export interface components {
         Body_choose_sheet_upload__session_id__sheet_post: {
             /** Sheet Name */
             sheet_name: string;
+        };
+        /** Body_upload_results_experiments__experiment_id__results_post */
+        Body_upload_results_experiments__experiment_id__results_post: {
+            /** Arpu Tolerance */
+            arpu_tolerance?: number | null;
+            /** Customer Value */
+            customer_value?: number | null;
+            /**
+             * File
+             * @description Results CSV
+             */
+            file: string;
+            /** Offer Cost */
+            offer_cost?: number | null;
+            /** Uploaded By */
+            uploaded_by: string;
         };
         /** Body_upload_upload_post */
         Body_upload_upload_post: {
@@ -684,6 +752,8 @@ export interface components {
              * @default 0.8
              */
             power: number;
+            /** Preregistered Segments */
+            preregistered_segments?: components["schemas"]["NamedSegment"][];
             segment_definition?: components["schemas"]["SegmentDefinition"];
             /** Session Id */
             session_id?: string | null;
@@ -694,6 +764,10 @@ export interface components {
         ExperimentOut: {
             /** Alpha */
             alpha: number;
+            /** Analysis */
+            analysis: {
+                [key: string]: unknown;
+            } | null;
             /** Approved At */
             approved_at: string | null;
             /** Approved By */
@@ -748,8 +822,12 @@ export interface components {
             planned_start: string | null;
             /** Power */
             power: number;
+            /** Preregistered Segments */
+            preregistered_segments: components["schemas"]["NamedSegment"][] | null;
             /** Primary Metric */
             primary_metric: string;
+            /** Results Uploaded At */
+            results_uploaded_at: string | null;
             segment_definition: components["schemas"]["SegmentDefinition"];
             /** Source Recommendation Id */
             source_recommendation_id: string | null;
@@ -813,6 +891,8 @@ export interface components {
             planned_start?: string | null;
             /** Power */
             power?: number | null;
+            /** Preregistered Segments */
+            preregistered_segments?: components["schemas"]["NamedSegment"][] | null;
             segment_definition?: components["schemas"]["SegmentDefinition"] | null;
             /** Session Id */
             session_id?: string | null;
@@ -1123,6 +1203,16 @@ export interface components {
             test: components["schemas"]["HeldOutMetrics"];
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * NamedSegment
+         * @description A segment registered before approval, analysed separately (exploratory).
+         */
+        NamedSegment: {
+            /** Filters */
+            filters: components["schemas"]["SegmentFilter"][];
+            /** Name */
+            name: string;
         };
         /** NboSummary */
         NboSummary: {
@@ -1508,6 +1598,12 @@ export interface components {
              * @enum {string}
              */
             semantic_type: "id" | "numeric" | "categorical" | "binary" | "datetime" | "text";
+        };
+        /** ReanalyseRequest */
+        ReanalyseRequest: {
+            /** Actor */
+            actor: string;
+            assumptions: components["schemas"]["AnalysisAssumptions"];
         };
         /** Recommendation */
         Recommendation: {
@@ -2081,6 +2177,15 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPErrorOut"];
                 };
             };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2132,6 +2237,15 @@ export interface operations {
             };
             /** @description Gone */
             410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2201,6 +2315,86 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPErrorOut"];
                 };
             };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reanalyse_experiments__experiment_id__analysis_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReanalyseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2256,6 +2450,15 @@ export interface operations {
             };
             /** @description Gone */
             410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2325,6 +2528,15 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPErrorOut"];
                 };
             };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2377,6 +2589,86 @@ export interface operations {
             };
             /** @description Gone */
             410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_results_experiments__experiment_id__results_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_results_experiments__experiment_id__results_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };

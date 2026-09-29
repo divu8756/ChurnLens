@@ -1,6 +1,44 @@
 {
   "components": {
     "schemas": {
+      "AnalysisAssumptions": {
+        "description": "Money and guardrail assumptions for the results analysis. customer_value\ndefaults to the data estimate made at assignment (mean monthly revenue x horizon).",
+        "properties": {
+          "arpu_tolerance": {
+            "default": 0.05,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Arpu Tolerance",
+            "type": "number"
+          },
+          "customer_value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Value"
+          },
+          "offer_cost": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Cost"
+          }
+        },
+        "title": "AnalysisAssumptions",
+        "type": "object"
+      },
       "ApproveRequest": {
         "properties": {
           "approver": {
@@ -62,6 +100,17 @@
           },
           "balance": {
             "$ref": "#/components/schemas/BalanceOut"
+          },
+          "customer_value_estimate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Value Estimate"
           },
           "data_snapshot_hash": {
             "title": "Data Snapshot Hash",
@@ -352,6 +401,65 @@
           "sheet_name"
         ],
         "title": "Body_choose_sheet_upload__session_id__sheet_post",
+        "type": "object"
+      },
+      "Body_upload_results_experiments__experiment_id__results_post": {
+        "properties": {
+          "arpu_tolerance": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arpu Tolerance"
+          },
+          "customer_value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Value"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "Results CSV",
+            "title": "File",
+            "type": "string"
+          },
+          "offer_cost": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Cost"
+          },
+          "uploaded_by": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Uploaded By",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "uploaded_by"
+        ],
+        "title": "Body_upload_results_experiments__experiment_id__results_post",
         "type": "object"
       },
       "Body_upload_upload_post": {
@@ -1199,6 +1307,14 @@
             "title": "Power",
             "type": "number"
           },
+          "preregistered_segments": {
+            "items": {
+              "$ref": "#/components/schemas/NamedSegment"
+            },
+            "maxItems": 10,
+            "title": "Preregistered Segments",
+            "type": "array"
+          },
           "segment_definition": {
             "$ref": "#/components/schemas/SegmentDefinition"
           },
@@ -1242,6 +1358,18 @@
           "alpha": {
             "title": "Alpha",
             "type": "number"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis"
           },
           "approved_at": {
             "anyOf": [
@@ -1416,9 +1544,35 @@
             "title": "Power",
             "type": "number"
           },
+          "preregistered_segments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/NamedSegment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preregistered Segments"
+          },
           "primary_metric": {
             "title": "Primary Metric",
             "type": "string"
+          },
+          "results_uploaded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results Uploaded At"
           },
           "segment_definition": {
             "$ref": "#/components/schemas/SegmentDefinition"
@@ -1480,6 +1634,9 @@
           "decision_note",
           "data_snapshot_hash",
           "design",
+          "preregistered_segments",
+          "analysis",
+          "results_uploaded_at",
           "assignment_summary"
         ],
         "title": "ExperimentOut",
@@ -1712,6 +1869,20 @@
               }
             ],
             "title": "Power"
+          },
+          "preregistered_segments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/NamedSegment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preregistered Segments"
           },
           "segment_definition": {
             "anyOf": [
@@ -2736,6 +2907,32 @@
           "n_test"
         ],
         "title": "ModelMetrics",
+        "type": "object"
+      },
+      "NamedSegment": {
+        "description": "A segment registered before approval, analysed separately (exploratory).",
+        "properties": {
+          "filters": {
+            "items": {
+              "$ref": "#/components/schemas/SegmentFilter"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Filters",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "filters"
+        ],
+        "title": "NamedSegment",
         "type": "object"
       },
       "NboSummary": {
@@ -3987,6 +4184,25 @@
           "confidence"
         ],
         "title": "ProposedColumn",
+        "type": "object"
+      },
+      "ReanalyseRequest": {
+        "properties": {
+          "actor": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
+          "assumptions": {
+            "$ref": "#/components/schemas/AnalysisAssumptions"
+          }
+        },
+        "required": [
+          "actor",
+          "assumptions"
+        ],
+        "title": "ReanalyseRequest",
         "type": "object"
       },
       "Recommendation": {
@@ -5499,6 +5715,16 @@
             },
             "description": "Gone"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -5570,6 +5796,16 @@
               }
             },
             "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
           },
           "422": {
             "content": {
@@ -5651,6 +5887,16 @@
             },
             "description": "Gone"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -5663,6 +5909,98 @@
           }
         },
         "summary": "Update Experiment",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/analysis": {
+      "post": {
+        "operationId": "reanalyse_experiments__experiment_id__analysis_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReanalyseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reanalyse",
         "tags": [
           "experiments"
         ]
@@ -5732,6 +6070,16 @@
               }
             },
             "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
           },
           "422": {
             "content": {
@@ -5815,6 +6163,16 @@
             },
             "description": "Gone"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -5886,6 +6244,16 @@
             },
             "description": "Gone"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -5898,6 +6266,98 @@
           }
         },
         "summary": "Export Assignment",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/results": {
+      "post": {
+        "operationId": "upload_results_experiments__experiment_id__results_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_results_experiments__experiment_id__results_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Results",
         "tags": [
           "experiments"
         ]

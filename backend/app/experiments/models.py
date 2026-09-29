@@ -74,6 +74,11 @@ class Experiment(Base):
     design: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     # Balance check and assignment counts from the assign step.
     assignment_summary: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    # [{"name", "filters"}]: segments analysed separately, fixed before approval.
+    preregistered_segments: Mapped[list[Any] | None] = mapped_column(JSON)
+    # Latest results analysis (stats/experiment_analysis.analyse) and upload checks.
+    analysis: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    results_uploaded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Assignment(Base):
@@ -89,6 +94,8 @@ class Assignment(Base):
     arm: Mapped[str] = mapped_column(String(10))
     offer: Mapped[str | None] = mapped_column(String(200))
     message: Mapped[str | None] = mapped_column(Text)
+    # Names of the pre-registered segments this customer belonged to at assignment.
+    segments: Mapped[list[Any] | None] = mapped_column(JSON)
     assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
@@ -120,3 +127,21 @@ def _block_update(mapper: Any, connection: Any, target: AuditLog) -> None:
 @event.listens_for(AuditLog, "before_delete")
 def _block_delete(mapper: Any, connection: Any, target: AuditLog) -> None:
     raise AppendOnlyError("Audit log rows cannot be deleted.")
+
+
+class Outcome(Base):
+    """One row per assigned customer from the latest results upload (replaced on re-upload)."""
+
+    __tablename__ = "experiment_outcomes"
+    __table_args__ = (
+        UniqueConstraint("experiment_id", "customer_id", name="uq_outcome_customer"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    experiment_id: Mapped[int] = mapped_column(ForeignKey("experiments.id"), index=True)
+    customer_id: Mapped[str] = mapped_column(String(200))
+    arm: Mapped[str] = mapped_column(String(10))
+    offer_accepted: Mapped[int | None] = mapped_column(Integer)
+    churned: Mapped[int] = mapped_column(Integer)
+    revenue: Mapped[float | None] = mapped_column(Float)
+    complaints: Mapped[float | None] = mapped_column(Float)

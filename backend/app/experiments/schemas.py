@@ -5,10 +5,17 @@ from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.experiments.segments import SegmentDefinition
+from app.experiments.segments import SegmentDefinition, SegmentFilter
 
 Guardrail = Literal["complaints", "arpu"]
 SESSION_ID = r"^[0-9a-f]{32}$"
+
+
+class NamedSegment(BaseModel):
+    """A segment registered before approval, analysed separately (exploratory)."""
+
+    name: str = Field(min_length=1, max_length=100)
+    filters: list[SegmentFilter] = Field(min_length=1, max_length=20)
 
 
 class ExperimentDesignFields(BaseModel):
@@ -30,9 +37,13 @@ class ExperimentDesignFields(BaseModel):
     monthly_volume: int | None = Field(default=None, gt=0)
     planned_start: date | None = None
     planned_end: date | None = None
+    preregistered_segments: list[NamedSegment] = Field(default_factory=list, max_length=10)
 
     @model_validator(mode="after")
     def _check(self) -> Self:
+        names = [s.name for s in self.preregistered_segments]
+        if len(names) != len(set(names)):
+            raise ValueError("Pre-registered segment names must be unique.")
         if self.planned_start and self.planned_end and self.planned_end < self.planned_start:
             raise ValueError("planned_end must be on or after planned_start.")
         if self.baseline_rate is None and self.session_id is None:
@@ -66,6 +77,7 @@ class ExperimentUpdate(BaseModel):
     monthly_volume: int | None = None
     planned_start: date | None = None
     planned_end: date | None = None
+    preregistered_segments: list[NamedSegment] | None = None
 
 
 class ApproveRequest(BaseModel):
@@ -77,6 +89,20 @@ class ApproveRequest(BaseModel):
 class AssignRequest(BaseModel):
     session_id: str = Field(pattern=SESSION_ID)
     actor: str = Field(min_length=1, max_length=100)
+
+
+class AnalysisAssumptions(BaseModel):
+    """Money and guardrail assumptions for the results analysis. customer_value
+    defaults to the data estimate made at assignment (mean monthly revenue x horizon)."""
+
+    customer_value: float | None = Field(default=None, ge=0)
+    offer_cost: float | None = Field(default=None, ge=0)
+    arpu_tolerance: float = Field(default=0.05, ge=0, le=1)
+
+
+class ReanalyseRequest(BaseModel):
+    actor: str = Field(min_length=1, max_length=100)
+    assumptions: AnalysisAssumptions
 
 
 class AuditEntryOut(BaseModel):
@@ -117,6 +143,7 @@ class AssignmentSummaryOut(BaseModel):
     required_treatment: int
     required_control: int
     messages_attached: int
+    customer_value_estimate: float | None = None
     data_snapshot_hash: str
     balance: BalanceOut
     warnings: list[str]
@@ -156,5 +183,8 @@ class ExperimentOut(ExperimentSummary):
     decision_note: str | None
     data_snapshot_hash: str | None
     design: dict[str, Any] | None
+    preregistered_segments: list[NamedSegment] | None
+    analysis: dict[str, Any] | None
+    results_uploaded_at: datetime | None
     assignment_summary: AssignmentSummaryOut | None
     audit: list[AuditEntryOut] = Field(default_factory=list)

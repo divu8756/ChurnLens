@@ -1,26 +1,37 @@
 """Experiment use cases: create / edit a draft, approve, assign, export (runbook T5c.2).
 Raises ServiceError with an HTTP status; the router turns it into a response."""
 
+import hashlib
 import io
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
 import pandas as pd
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.experiments.assignment import assign_groups, balance_check, snapshot_hash
 from app.experiments.data import NotAnalysed, cached_messages, session_customers
 from app.experiments.lifecycle import audit, change_status
-from app.experiments.models import Assignment, AuditLog, Experiment
+from app.experiments.models import Assignment, AuditLog, Experiment, Outcome
+from app.experiments.results import (
+    ResultsInvalid,
+    early_look_warning,
+    outcome_rows,
+    parse_results,
+)
 from app.experiments.schemas import (
+    AnalysisAssumptions,
     ApproveRequest,
     ExperimentCreate,
     ExperimentDesignFields,
     ExperimentUpdate,
 )
 from app.experiments.segments import SegmentError, apply_segment
+from app.stats.common import jsonable
+from app.stats.experiment_analysis import analyse
 from app.stats.experiment_design import DesignError, sample_size
 
 # Loads the analysed graph state of a session; raises ServiceError(410) when it expired.
@@ -72,6 +83,8 @@ def build_design(fields: ExperimentDesignFields, load: ValuesLoader) -> dict[str
         if segment.empty:
             raise ServiceError(422, "No customers match this segment.")
         n_available = len(segment)
+        for named in fields.preregistered_segments:
+            _segment(segment, {"filters": [f.model_dump() for f in named.filters]})
         measured = float(segment["actual_churn"].mean())
         rec_id = fields.source_recommendation_id
         if rec_id and rec_id not in {r.get("id") for r in values.get("final_recommendations")
@@ -112,6 +125,7 @@ def _apply_design(exp: Experiment, fields: ExperimentDesignFields, design: dict[
     exp.n_required_treatment = design["n_treatment"]
     exp.n_required_control = design["n_control"]
     exp.planned_start, exp.planned_end = fields.planned_start, fields.planned_end
+    exp.preregistered_segments = [seg.model_dump() for seg in fields.preregistered_segments]
     exp.design = design
 
 
@@ -143,6 +157,7 @@ def _current_fields(exp: Experiment) -> dict[str, Any]:
         "control_share": exp.control_share,
         "monthly_volume": (design.get("inputs") or {}).get("monthly_volume"),
         "planned_start": exp.planned_start, "planned_end": exp.planned_end,
+        "preregistered_segments": exp.preregistered_segments or [],
     }
 
 
@@ -189,12 +204,28 @@ def busy_customers(db: Session, experiment_id: int) -> set[str]:
     return set(rows)
 
 
+def _memberships(frame: pd.DataFrame, segments: list[dict[str, Any]]) -> list[list[str]]:
+    member_ids = {seg["name"]: set(_segment(frame, seg)["customer_id"]) for seg in segments}
+    return [[name for name, ids in member_ids.items() if cid in ids]
+            for cid in frame["customer_id"]]
+
+
+def _customer_value(values: dict[str, Any], frame: pd.DataFrame) -> float | None:
+    """Mean monthly revenue of the assigned customers x the NBO horizon (Phase 5b)."""
+    col = (values.get("confirmed_schema") or {}).get("revenue_column")
+    if not col or col not in frame.columns:
+        return None
+    revenue = pd.to_numeric(frame[col], errors="coerce").dropna()
+    return float(revenue.mean() * get_settings().NBO_HORIZON_MONTHS) if len(revenue) else None
+
+
 def assign(db: Session, exp: Experiment, session_id: str, actor: str, load: ValuesLoader
            ) -> Experiment:
     if exp.status != "approved":
         raise ServiceError(409, f"Only approved experiments can be assigned; this one is "
                                 f"{exp.status}.")
-    customers, covariates = _customers(load(session_id))
+    values = load(session_id)
+    customers, covariates = _customers(values)
     segment = _segment(customers, exp.segment_definition)
     busy = busy_customers(db, exp.id)
     eligible = segment[~segment["customer_id"].isin(busy)].reset_index(drop=True)
@@ -209,11 +240,14 @@ def assign(db: Session, exp: Experiment, session_id: str, actor: str, load: Valu
     balance = balance_check(eligible, covariates)
     snapshot = snapshot_hash(eligible[["customer_id", *covariates]])
     messages = cached_messages(session_id, exp.offer)
+    memberships = _memberships(eligible, exp.preregistered_segments or [])
 
+    now = datetime.now(UTC)
     rows = [{"experiment_id": exp.id, "customer_id": cid, "arm": arm,
              "offer": exp.offer if arm == "treatment" else None,
              "message": messages.get(cid) if arm == "treatment" else None,
-             "assigned_at": datetime.now(UTC)} for cid, arm in zip(ids, arms, strict=True)]
+             "segments": member, "assigned_at": now}
+            for cid, arm, member in zip(ids, arms, memberships, strict=True)]
     db.execute(insert(Assignment), rows)
 
     n_treat, n_ctrl = arms.count("treatment"), arms.count("control")
@@ -234,6 +268,7 @@ def assign(db: Session, exp: Experiment, session_id: str, actor: str, load: Valu
         "required_treatment": exp.n_required_treatment,
         "required_control": exp.n_required_control,
         "messages_attached": sum(1 for r in rows if r["message"]),
+        "customer_value_estimate": _customer_value(values, eligible),
         "data_snapshot_hash": snapshot, "balance": balance, "warnings": warnings,
     }
     exp.data_snapshot_hash = snapshot
@@ -255,3 +290,96 @@ def assignment_csv(db: Session, exp: Experiment) -> str:
     buffer = io.StringIO()
     frame.to_csv(buffer, index=False)
     return buffer.getvalue()
+
+
+def _design_inputs(exp: Experiment) -> dict[str, Any]:
+    return {"control_share": exp.control_share, "alpha": exp.alpha, "power": exp.power,
+            "baseline_rate": exp.baseline_rate, "mde": exp.mde, "mde_type": exp.mde_type,
+            "guardrail_metrics": exp.guardrail_metrics}
+
+
+def _analysis_assumptions(exp: Experiment, given: AnalysisAssumptions) -> dict[str, Any]:
+    estimate = (exp.assignment_summary or {}).get("customer_value_estimate")
+    user_value = given.customer_value is not None
+    return {
+        "customer_value": given.customer_value if user_value else estimate,
+        "customer_value_source": "user" if user_value else "data",
+        "offer_cost": given.offer_cost, "offer_cost_source": "user",
+        "arpu_tolerance": given.arpu_tolerance,
+        "arpu_tolerance_source": "user" if "arpu_tolerance" in given.model_fields_set
+        else "default",
+    }
+
+
+def _outcomes_frame(db: Session, exp: Experiment) -> pd.DataFrame:
+    rows = db.execute(
+        select(Outcome.customer_id, Outcome.arm, Outcome.offer_accepted, Outcome.churned,
+               Outcome.revenue, Outcome.complaints, Assignment.segments)
+        .join(Assignment, (Assignment.experiment_id == Outcome.experiment_id)
+              & (Assignment.customer_id == Outcome.customer_id))
+        .where(Outcome.experiment_id == exp.id)).all()
+    frame = pd.DataFrame(rows, columns=["customer_id", "arm", "offer_accepted", "churned",
+                                        "revenue", "complaints", "segments"])
+    for col in ("revenue", "complaints"):
+        frame[col] = pd.to_numeric(frame[col], errors="coerce")
+    return frame
+
+
+def _run_analysis(db: Session, exp: Experiment, assumptions: AnalysisAssumptions,
+                  upload: dict[str, Any]) -> dict[str, Any]:
+    names = [seg["name"] for seg in exp.preregistered_segments or []]
+    result = analyse(_outcomes_frame(db, exp), _design_inputs(exp),
+                     _analysis_assumptions(exp, assumptions), names)
+    result["upload"] = upload
+    result["warnings"] = list(upload.get("warnings", []))
+    if result["srm"]["failed"]:
+        result["warnings"].insert(0, "Sample ratio mismatch: results not trustworthy.")
+    result["assumption_inputs"] = assumptions.model_dump()
+    return jsonable(result)
+
+
+def upload_results(db: Session, exp: Experiment, content: bytes, uploaded_by: str,
+                   assumptions: AnalysisAssumptions) -> Experiment:
+    if exp.status not in ACTIVE:
+        raise ServiceError(409, f"Results can be uploaded only for a running experiment; "
+                                f"this one is {exp.status}.")
+    if len(content) > get_settings().MAX_UPLOAD_MB * 1024 * 1024:
+        raise ServiceError(413, f"The file is larger than {get_settings().MAX_UPLOAD_MB} MB.")
+    assignment = dict(db.execute(select(Assignment.customer_id, Assignment.arm)
+                                 .where(Assignment.experiment_id == exp.id)).all())
+    try:
+        outcomes, warnings = parse_results(content, assignment, planned_start=exp.planned_start,
+                                           window_days=exp.outcome_window_days)
+    except ResultsInvalid as exc:
+        raise ServiceError(422, "Results do not match the assignment: " + str(exc)) from None
+    early = early_look_warning(datetime.now(UTC).date(), exp.planned_start, exp.planned_end,
+                               exp.outcome_window_days)
+    if early:
+        warnings.insert(0, early)
+
+    db.execute(delete(Outcome).where(Outcome.experiment_id == exp.id))
+    db.execute(insert(Outcome), outcome_rows(exp.id, outcomes))
+    db.flush()
+    upload = {"rows": len(outcomes), "file_sha256": hashlib.sha256(content).hexdigest(),
+              "uploaded_by": uploaded_by, "early_look": early is not None,
+              "warnings": warnings}
+    exp.analysis = _run_analysis(db, exp, assumptions, upload)
+    exp.results_uploaded_at = datetime.now(UTC)
+    change_status(db, exp, "results_uploaded", uploaded_by, action="results_uploaded",
+                  details={"rows": len(outcomes), "file_sha256": upload["file_sha256"],
+                           "early_look": upload["early_look"],
+                           "srm_failed": exp.analysis["srm"]["failed"],
+                           "verdict": exp.analysis["decision_helper"]["verdict"]})
+    return exp
+
+
+def reanalyse(db: Session, exp: Experiment, assumptions: AnalysisAssumptions, actor: str
+              ) -> Experiment:
+    """Recompute the analysis with new money / guardrail assumptions (same outcomes)."""
+    if exp.status != "results_uploaded" or not exp.analysis:
+        raise ServiceError(409, "Upload results before changing the analysis assumptions.")
+    exp.analysis = _run_analysis(db, exp, assumptions, exp.analysis.get("upload", {}))
+    audit(db, exp, actor, "reanalysed", details={"assumptions": assumptions.model_dump(),
+                                                 "verdict": exp.analysis["decision_helper"]
+                                                 ["verdict"]})
+    return exp

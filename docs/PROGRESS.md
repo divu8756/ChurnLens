@@ -3,13 +3,13 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5c.3 (Results upload + analysis)
+T5c.4 (Summary, decision gate, feedback loop, UI)
 
 ## Next step
-T5c.3: POST /experiments/{id}/results (CSV validation against the stored
-assignment), stats/experiment_analysis.py (SRM, Wilson/Newcombe, z-test,
-achieved power, business impact, per-protocol, guardrails, pre-registered
-segments with BH, decision helper), all with source_keys.
+T5c.4: prompts/experiment_summary.v1.md + validated LLM summary, POST
+/experiments/{id}/decide, offer_evidence feedback into offer_node
+("experiment-proven" vs "observational"), Experiments tab (list, design
+wizard with live sample size, approval, results view, audit trail).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -384,6 +384,19 @@ segments with BH, decision helper), all with source_keys.
   (experiment_assignments + design / assignment_summary / source_session_id).
   CORS now allows PATCH. Backend 317 (21 new), frontend unchanged (types
   regenerated).
+- T5c.3: app/stats/experiment_analysis.py (SRM chi-square p < 0.001; ITT
+  Wilson CIs, Newcombe hybrid-score CI of the difference, pooled z-test,
+  achieved power for the design MDE at the observed n; business impact with
+  CI and assumptions; per-protocol labelled biased; complaints / ARPU
+  guardrails with Welch z CIs; pre-registered segments BH-corrected and
+  labelled exploratory; decision helper ship / dont_ship / inconclusive
+  (with extra sample) / untrustworthy). app/experiments/results.py validates
+  the CSV against the assignment (unknown IDs, group mismatches, duplicates,
+  0/1 fields, churn_date inside the window; early-look warning).
+  POST /experiments/{id}/results (multipart + assumptions) and
+  /experiments/{id}/analysis (recompute with new assumptions). Migration
+  0003 (experiment_outcomes, preregistered_segments, analysis,
+  segments per assignment). Backend 334 (17 new).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -536,6 +549,19 @@ flowchart TD
   results_uploaded are excluded from new assignments. Assignment keeps
   under-powered or imbalanced groups but records warnings (the hash is
   deterministic, so re-randomising is not possible without a new experiment).
+- T5c.3: assigned customers missing from the results file are a warning
+  (with counts per arm), not an error: lost customers are what the SRM
+  check exists to catch, so rejecting them would hide a broken delivery.
+  Unknown IDs, group mismatches and duplicates are rejected (422). ITT then
+  covers the customers with outcomes. Guardrails are breached only when the
+  95% CI shows the bad direction beyond a tolerance (complaints 0, ARPU 5%
+  of the control mean, editable): a discount lowers ARPU by design. Customer
+  value defaults to the assigned customers' mean monthly revenue x
+  NBO_HORIZON_MONTHS (source data); offer cost has no default, and without
+  it the decision helper cannot say "ship". Pre-registered segments are
+  fixed in the draft and membership is stored at assignment, because the
+  session data expires before results arrive. SRM failure gives the verdict
+  "untrustworthy" (blocks ship).
 
 ## Checkpoints for the human
 - S6 (end of Phase 6, MVP): run the app locally and click through all tabs:

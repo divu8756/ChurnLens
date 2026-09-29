@@ -3,16 +3,18 @@
 from collections.abc import Iterator
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import sessions
 from app.api.contract import HTTPErrorOut
+from app.config import get_settings
 from app.experiments import service
 from app.experiments.db import session_scope
 from app.experiments.models import Experiment
 from app.experiments.schemas import (
+    AnalysisAssumptions,
     ApproveRequest,
     AssignRequest,
     AuditEntryOut,
@@ -20,11 +22,12 @@ from app.experiments.schemas import (
     ExperimentOut,
     ExperimentSummary,
     ExperimentUpdate,
+    ReanalyseRequest,
 )
 
 router = APIRouter(prefix="/experiments", tags=["experiments"])
 ERRORS: dict[int | str, dict[str, Any]] = {
-    code: {"model": HTTPErrorOut} for code in (404, 409, 410)}
+    code: {"model": HTTPErrorOut} for code in (404, 409, 410, 413)}
 
 
 def get_db() -> Iterator[Session]:
@@ -107,3 +110,28 @@ def export_assignment(experiment_id: int, db: DB) -> Response:
     csv = _call(service.assignment_csv, db, exp)
     return Response(csv, media_type="text/csv", headers={
         "Content-Disposition": f'attachment; filename="experiment_{exp.id}_assignment.csv"'})
+
+
+@router.post("/{experiment_id}/results", response_model=ExperimentOut, responses=ERRORS)
+async def upload_results(
+    experiment_id: int, db: DB,
+    file: Annotated[UploadFile, File(description="Results CSV")],
+    uploaded_by: Annotated[str, Form(min_length=1, max_length=100)],
+    customer_value: Annotated[float | None, Form(ge=0)] = None,
+    offer_cost: Annotated[float | None, Form(ge=0)] = None,
+    arpu_tolerance: Annotated[float | None, Form(ge=0, le=1)] = None,
+) -> ExperimentOut:
+    limit = get_settings().MAX_UPLOAD_MB * 1024 * 1024
+    content = await file.read(limit + 1)
+    given = {"customer_value": customer_value, "offer_cost": offer_cost}
+    if arpu_tolerance is not None:
+        given["arpu_tolerance"] = arpu_tolerance
+    assumptions = AnalysisAssumptions(**given)
+    exp = _call(service.get_experiment, db, experiment_id)
+    return _out(db, _call(service.upload_results, db, exp, content, uploaded_by, assumptions))
+
+
+@router.post("/{experiment_id}/analysis", response_model=ExperimentOut, responses=ERRORS)
+def reanalyse(experiment_id: int, body: ReanalyseRequest, db: DB) -> ExperimentOut:
+    exp = _call(service.get_experiment, db, experiment_id)
+    return _out(db, _call(service.reanalyse, db, exp, body.assumptions, body.actor))
