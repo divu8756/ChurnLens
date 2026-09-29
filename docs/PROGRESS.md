@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5d.4 (Run telemetry)
+T5d.5 (API + upload error handling)
 
 ## Next step
-T5d.4 per the Phase 5d plan below, then T5d.5-T5d.6 and the Phase 5d gate.
+T5d.5 per the Phase 5d plan below, then T5d.6 and the Phase 5d gate.
 Branch phase-5d is stacked on phase-5c (tip 9af926c); after PR #8 is
 squash-merged: git rebase --onto main 9af926c phase-5d.
 
@@ -612,6 +612,16 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   (p1 0.26, lift 0.20) per arm. business_metrics.ab_plan sizes a test for
   the customers who get an offer (p1 = their observed churn), warns when
   they are too few, with an ASSUMPTIONS block. Backend 397 (9 new).
+- T5d.4: app/graph/telemetry.py: traced() wraps every node (outside
+  safe_node, so failed runs are timed) and appends {node, started_at,
+  latency_ms, status, retries, llm_calls, input/output tokens, model} to
+  telemetry_events; tokens are tied to the node run through a context
+  variable fed by the llm usage listener (correct under the parallel
+  fan-out; no prompt text). summarise_run: validator counts and figures
+  caught, retries, schema corrections, latency per node / total / wall
+  clock, tokens per model, ESTIMATED cost from pricing.yaml. Summaries are
+  saved to the runs table (migration 0007) when a run finishes, scoped by
+  the session's workspace. Backend 406 (6 new).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -784,6 +794,9 @@ flowchart TD
   rates: experiment = retention lift per acceptor / control churn;
   observational = (churn if declined - churn if accepted) / churn if
   declined. ROI = net expected saving / expected offer cost.
+- T5d.4: schema corrections are computed from state (schema_proposal vs
+  confirmed_schema) in the run summary rather than inside /confirm-schema:
+  same inputs, one place, and nothing extra to store.
 
 ## Checkpoints for the human
 - S8 (T5d.0): Phase 5d plan written above under "Phase 5d plan" (FULL-AUTO:

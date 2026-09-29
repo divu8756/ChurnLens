@@ -15,6 +15,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 
 from app.graph.state import ErrorEntry, ProgressEntry
+from app.run_history import save_run
 
 logger = logging.getLogger("churnlens.runs")
 
@@ -126,6 +127,7 @@ class RunManager:
                 run.emit("awaiting_confirmation", value if isinstance(value, dict) else {})
                 return
             final_error = snapshot.values.get("final_error")
+            save_run(run.session_id, snapshot.values)
             run.status = "failed" if final_error else "done"
             run.emit("done", {"ok": not final_error, "final_error": final_error})
         except Exception as exc:  # the graph itself broke; tell the client and stop

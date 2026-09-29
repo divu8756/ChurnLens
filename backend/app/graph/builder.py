@@ -18,6 +18,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 from app.graph.errors import FatalNodeError
 from app.graph.state import ChurnState, ErrorEntry, ProgressEntry
+from app.graph.telemetry import traced
 
 NodeFn = Callable[[ChurnState], dict[str, Any]]
 
@@ -136,7 +137,8 @@ def build_graph(
 
     graph = StateGraph(ChurnState)
     for name in ALL_NODES:
-        graph.add_node(name, safe_node(name, impl[name]))
+        # traced is outermost so failed runs (caught by safe_node) are timed too.
+        graph.add_node(name, traced(name, safe_node(name, impl[name])))
 
     graph.add_edge(START, INGEST)
     graph.add_conditional_edges(INGEST, _next_or_error(SCHEMA_AGENT), [SCHEMA_AGENT, ERROR_NODE])
