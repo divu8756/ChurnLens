@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5.5
+Phase 5 gate (PR open)
 
 ## Next step
-T5.5: one real end-to-end Telco run with Gemini (cap 60 calls), report in docs/runs/.
+Merge the Phase 5 PR when CI is green, then Phase 6 (T6.1 typed API contract + frontend).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -166,6 +166,16 @@ T5.5: one real end-to-end Telco run with Gemini (cap 60 calls), report in docs/r
   Validator writes its own final_insights / final_recommendations (one
   producer per key). Graph loop test: bad recommendation -> retried with
   feedback -> passes. 209 tests.
+- T5.5: scripts/run_telco_live.py, report in docs/runs/phase5_telco_run.md.
+  Final run: 131 s, 11 Gemini attempts (~101k input / ~13k output tokens,
+  cost estimate 0 on the free tier), schema proposal ai+rules, validator
+  11/15 verified, 4 dropped (3 unlisted numbers, 1 group mismatch).
+  Fixes found by the live runs: validator read scientific notation
+  (1.171e-202) as "202" (fixed + prompt asks for "< 0.001"); a
+  recommendation could pair one group's customers with another group's
+  impact (validator now requires the same impact group); a failed retry
+  wiped the agent's previous answer (now kept so only bad items drop).
+  212 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -177,6 +187,11 @@ T5.5: one real end-to-end Telco run with Gemini (cap 60 calls), report in docs/r
   wheels on 3.14 (checked with a pip dry run). Dockerfile uses python:3.14-slim.
 - Tool versions: Python 3.14.5, Node v24.16.0, git 2.50.1, gh 2.101.0.
   Homebrew is not installed; nothing needed installing.
+- Gemini models now (T5.5): GEMINI_MODEL = GEMINI_MODEL_FAST =
+  gemini-3.1-flash-lite, GEMINI_MODEL_FALLBACK = gemini-3.8-flash,
+  GEMINI_RPM = 5. Reason: the free tier allows only 20 requests/day on
+  gemini-3.8-flash, which tests and runs exhausted; flash-lite answered
+  reliably in ~5 s. Change backend/.env if you enable billing.
 - Gemini models (scripts/select_gemini_models.py, newest stable, non-preview)
   first chose GEMINI_MODEL=gemini-2.5-pro, GEMINI_MODEL_FAST=gemini-3.8-flash.
   Smoke test (T1.4): gemini-2.5-pro returns 404 for this key, and every Pro
@@ -266,6 +281,10 @@ flowchart TD
 
 ## Checkpoints for the human
 - S1 (T1.1): architecture summary, graph flow and risks are under Decisions above.
+- S5 (T5.5): live Telco run with real Gemini, see docs/runs/phase5_telco_run.md
+  (11/15 AI items verified by the validator; top insight: Month-to-month
+  contracts churn at 39.81% vs 25.66% overall; top recommendation: move
+  monthly customers to annual contracts).
 - S4 (T1.4): real smoke test via the wrapper succeeded on gemini-3.8-flash
   (answer "ready", 14 input / ~200 output tokens, 19-32 s latency because the
   model "thinks"; it also returned 503 overloaded several times and the

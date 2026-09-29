@@ -81,7 +81,8 @@ def insight_agent_node(state: ChurnState) -> dict[str, Any]:
     try:
         result = llm.structured_call("pro", 0, prompt, InsightList, timeout_s=TIMEOUT_S)
     except llm.LLMUnavailable as exc:
-        return {"insights": [],
+        # On a retry, keep the previous answer so only its failing items get dropped.
+        return {"insights": state.insights,
                 "errors": [ErrorEntry(node="insight_agent", message=f"LLM unavailable: {exc}")],
                 "progress": [ProgressEntry(node="insight_agent", status="failed",
                                            detail="AI insights unavailable")]}
@@ -99,7 +100,7 @@ def recommendation_agent_node(state: ChurnState) -> dict[str, Any]:
     try:
         result = llm.structured_call("pro", 0.3, prompt, RecommendationList, timeout_s=TIMEOUT_S)
     except llm.LLMUnavailable as exc:
-        return {"recommendations": [],
+        return {"recommendations": state.recommendations,
                 "errors": [ErrorEntry(node="recommendation_agent",
                                       message=f"LLM unavailable: {exc}")],
                 "progress": [ProgressEntry(node="recommendation_agent", status="failed",

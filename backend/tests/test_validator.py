@@ -178,3 +178,26 @@ def test_router_picks_the_right_agent(first_bad):
     state = ChurnState(session_id="s", validation_report=report)
     expected = b.INSIGHT_AGENT if first_bad == "insight" else b.RECOMMENDATION_AGENT
     assert b.route_after_validator(state) == expected
+
+
+def test_scientific_notation_is_one_number():
+    assert numbers_in("adjusted p = 1.171e-202") == [(1.171e-202, False)]
+    figs = [{"source_key": P, "value": 1.2e-50, "display": "1.2e-50"}]
+    assert validate_insight(STATE, insight("Adjusted p = 1.2e-50.", figs)) == []
+
+
+def test_impact_must_belong_to_the_targeted_group():
+    state = copy.deepcopy(STATE)
+    state["impact_estimates"]["items"]["segment_0"] = {
+        "customers": 1022, "scenarios": {"reduce_10pct": {"churners_saved": 39.4}}}
+    state["segments"] = {"segments": [{"segment": 0, "size": 1022}]}
+    mismatch = rec(customers_affected={"source_key": "segments.segments.0.size",
+                                       "value": 1022, "display": "1,022"})
+    assert any("different" in p or "use the impact of the targeted group" in p
+               for p in validate_recommendation(state, mismatch))
+    matched = rec(customers_affected={"source_key": "segments.segments.0.size",
+                                      "value": 1022, "display": "1,022"},
+                  impact={"source_key": "impact_estimates.items.segment_0.scenarios."
+                                        "reduce_10pct.churners_saved",
+                          "value": 39.4, "assumption": "If churn fell 10%."})
+    assert validate_recommendation(state, matched) == []

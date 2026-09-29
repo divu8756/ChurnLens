@@ -22,7 +22,7 @@ IMPACT_PREFIX = "impact_estimates."
 NUMBER = re.compile(
     r"(?P<lt><\s*|less than\s+)?"
     r"(?<![A-Za-z0-9_.])[$₹£€]?"
-    r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
+    r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)"
     r"\s*(?P<unit>%|×|x\b)?"
     r"(?![A-Za-z0-9])",
     re.IGNORECASE,
@@ -104,6 +104,23 @@ def validate_insight(state: dict[str, Any], insight: dict[str, Any]) -> list[str
     return problems
 
 
+def impact_group(state: dict[str, Any], key: str) -> str | None:
+    """The impact_estimates item a key belongs to (segment sizes map to segment items)."""
+    items = (state.get("impact_estimates") or {}).get("items", {})
+    prefix = "impact_estimates.items."
+    if key.startswith(prefix):
+        rest = key[len(prefix):]
+        matches = [i for i in items if rest == i or rest.startswith(i + ".")]
+        return max(matches, key=len) if matches else None
+    parts = key.split(".")
+    if len(parts) == 4 and parts[:2] == ["segments", "segments"] and parts[2].isdigit():
+        segments = (state.get("segments") or {}).get("segments", [])
+        index = int(parts[2])
+        if index < len(segments):
+            return f"segment_{segments[index]['segment']}"
+    return None
+
+
 def validate_recommendation(state: dict[str, Any], rec: dict[str, Any]) -> list[str]:
     figures = list(rec.get("figures", []))
     problems = [p for fig in figures for p in check_figure(state, fig)]
@@ -111,6 +128,11 @@ def validate_recommendation(state: dict[str, Any], rec: dict[str, Any]) -> list[
     problems += check_figure(state, customers)
     impact = rec.get("impact") or {}
     problems += check_figure(state, {**impact, "display": None}, required_prefix=IMPACT_PREFIX)
+    impact_item = impact_group(state, impact.get("source_key", ""))
+    customer_item = impact_group(state, customers.get("source_key", ""))
+    if impact_item and customer_item and impact_item != customer_item:
+        problems.append(f"impact is for group {impact_item!r} but customers_affected is for "
+                        f"{customer_item!r}; use the impact of the targeted group")
     allowed = [*figures, customers, {"value": impact.get("value")}]
     for field in RECOMMENDATION_TEXT_FIELDS:
         problems += check_text(str(rec.get(field, "")), allowed)

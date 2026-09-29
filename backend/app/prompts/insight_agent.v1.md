@@ -31,6 +31,8 @@ says what the value means. Fractions (0-1) are labelled "(fraction)".
 - Every number that appears in `text` (including percentages and counts)
   must be the `display` of one entry in figures[]. Write fractions as
   percentages if you like (0.427 may be shown as 42.7%).
+- Write p-values below 0.001 as "< 0.001" (display "< 0.001"), never in
+  scientific notation.
 - If a result is not statistically significant, say so, and set
   significant to false.
 - Associations are not causes; say "associated with", never "causes" or

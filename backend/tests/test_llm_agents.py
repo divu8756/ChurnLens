@@ -96,3 +96,11 @@ def test_schemas_reject_bad_enums_and_limits():
         RecommendationList.model_validate({"recommendations": [{**REC, "priority": 9}]})
     with pytest.raises(ValueError):
         InsightList.model_validate({"insights": [INSIGHT] * 11})
+
+
+def test_failed_retry_keeps_previous_answer(fake, state):
+    fake.fixtures = {"InsightList": [TimeoutError("down")] * 6}
+    retry = state.model_copy(update={"insights": [INSIGHT],
+                                     "validator_feedback": {"insight_agent": ["I1: x"]}})
+    update = insight_agent_node(retry)
+    assert update["insights"] == [INSIGHT] and update["progress"][0].status == "failed"

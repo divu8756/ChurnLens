@@ -37,7 +37,9 @@ customers it affects, the estimated impact, the effort, a priority and a group.
   "impact_estimates."). State the assumption, for example "if churn in this
   group fell by 10%". Never invent savings.
 - customers_affected must come from the digest (an impact item's customers or
-  a segment size).
+  a segment size), and impact must be a scenario of the SAME group: for
+  "Segment 2" use impact_estimates.items.segment_2...; for "Contract =
+  Monthly" use impact_estimates.items.Contract=Monthly....
 - Priority = impact vs effort: high impact and low effort come first. Group:
   quick_win (low effort, fast), medium_term, strategic (high effort, long).
 - If a driver is not statistically significant, do not build a
