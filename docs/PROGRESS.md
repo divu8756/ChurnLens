@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5d.1 (Model metrics + calibration)
+T5d.2 (Offer catalogue + business metrics)
 
 ## Next step
-T5d.1 per the Phase 5d plan below, then T5d.2-T5d.6 and the Phase 5d gate.
+T5d.2 per the Phase 5d plan below, then T5d.3-T5d.6 and the Phase 5d gate.
 Branch phase-5d is stacked on phase-5c (tip 9af926c); after PR #8 is
 squash-merged: git rebase --onto main 9af926c phase-5d.
 
@@ -586,6 +586,16 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   200; migrations read the dialect from the context so the Postgres SQL can
   be generated offline (checked: tables, ALTERs, trigger and function).
   Low, not fixed: see Known issues. Backend 359, frontend 103, E2E 1.
+- T5d.1: app/stats/model_metrics.py (ROC-AUC, PR-AUC, precision/recall at
+  top 10% with a stable tie order, decile lift and cumulative gains, Brier,
+  10-bin calibration with counts, ROC and PR curves) on the Phase 4 test
+  split; CalibratedClassifierCV fitted on the training split only (isotonic
+  from 1,000 training rows). State key model_metrics_v2 (raw and
+  calibrated). Predictions: churn_probability is now calibrated (risk bands,
+  NBO and money metrics use it), churn_probability_raw keeps the model
+  score, SHAP reasons still explain the raw model. Telco: Brier 0.168 ->
+  0.140, ROC-AUC 0.829 unchanged, top-10% precision 70.7%; High band 2,239
+  -> 667 customers. Backend 369 (10 new).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -781,10 +791,8 @@ flowchart TD
   are correct on Telco. Consider billing / another model if this persists.
 - (Resolved in T5b.1) Campaign/offer columns are now excluded from
   segmentation, hypothesis tests and the model once confirmed.
-- Risk bands use the chosen model's raw probabilities. With class_weight=
-  "balanced" these run high (Telco: 32% High vs ~25% churn). Phase 5d adds
-  calibration (CalibratedClassifierCV on train); switch bands and money
-  metrics to calibrated probabilities there.
+- (Resolved in T5d.1) Risk bands, NBO and money metrics now use calibrated
+  probabilities (Telco High band: 2,239 -> 667 customers).
 - Hypothesis test cap (40) keeps columns in data order; with more candidates
   the last ones are skipped (Telco no longer hits it: 35 tests after T5b.1).
 - Prompt injection: column names and category values from the uploaded file

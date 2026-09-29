@@ -2018,6 +2018,8 @@ export interface components {
             best_offer?: string | null;
             /** Churn Probability */
             churn_probability: number;
+            /** Churn Probability Raw */
+            churn_probability_raw?: number | null;
             /** Customer Id */
             customer_id: string;
             /** Expected Value */

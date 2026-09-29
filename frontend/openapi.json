@@ -5207,6 +5207,17 @@
             "title": "Churn Probability",
             "type": "number"
           },
+          "churn_probability_raw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Probability Raw"
+          },
           "customer_id": {
             "title": "Customer Id",
             "type": "string"
