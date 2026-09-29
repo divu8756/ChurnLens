@@ -21,6 +21,7 @@ class ConfirmedSchema(BaseModel):
     positive_label: str
     id_columns: list[str] = Field(default_factory=list)
     time_column: str | None = None
+    revenue_column: str | None = None  # monthly revenue per customer (ARPU)
 
 
 def validate_schema(schema: ConfirmedSchema, frame: pd.DataFrame) -> list[str]:
@@ -57,6 +58,14 @@ def validate_schema(schema: ConfirmedSchema, frame: pd.DataFrame) -> list[str]:
             problems.append(f"Time column '{schema.time_column}' must be numeric.")
         if schema.time_column == target:
             problems.append("The time column cannot be the target column.")
+
+    if schema.revenue_column is not None:
+        if schema.revenue_column not in names:
+            problems.append(f"Revenue column '{schema.revenue_column}' does not exist.")
+        elif profiling.heuristic_type(frame[schema.revenue_column], False) != "numeric":
+            problems.append(f"Revenue column '{schema.revenue_column}' must be numeric.")
+        if schema.revenue_column == target:
+            problems.append("The revenue column cannot be the target column.")
 
     unknown = [c.name for c in schema.columns if c.name not in names]
     if unknown:

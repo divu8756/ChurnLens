@@ -11,6 +11,7 @@ from app.agents.analysis import (
 )
 from app.agents.cleaning import cleaning_node
 from app.agents.human_review import human_review_node
+from app.agents.impact import impact_node
 from app.agents.ingest import ingest_node
 from app.agents.modelling import modelling_node
 from app.agents.schema_agent import schema_agent_node
@@ -29,4 +30,5 @@ def default_nodes() -> dict[str, NodeFn]:
         b.SURVIVAL: survival_node,
         b.HYPOTHESIS: hypothesis_node,
         b.MODELLING: modelling_node,
+        b.IMPACT: impact_node,
     }

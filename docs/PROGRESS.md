@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 4 gate (PR open)
+T5.2
 
 ## Next step
-Merge the Phase 4 PR when CI is green, then T5.1 (results digest + impact node).
+T5.2: insight_agent.v1.md and recommendation_agent.v1.md prompt files + loader tests.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -135,6 +135,17 @@ Merge the Phase 4 PR when CI is green, then T5.1 (results digest + impact node).
   Low 2,899, /results payload 324 KB. Fixed (Medium): schema proposal took
   ~68 s when Gemini was overloaded; structured_call now takes max_attempts
   and the schema agent uses 2 (the rules fallback is good). 174 tests.
+- Phase 4 merged to main (PR #4, CI green).
+- T5.1: graph/paths.py (dot-path resolver, longest dict key wins so column
+  names with dots work), graph/results_digest.py (facts {key, value, label}
+  for data health, churn by category, segments, significant + 5 strongest
+  non-significant tests, model, drivers, survival, impact; <= 12k tokens,
+  Telco ~10.6k), stats/impact.py + impact_node (segments and high-churn
+  levels of significant categoricals: customers, churners, churn rate, lift,
+  monthly revenue at risk, 10%/25% what-if scenarios with assumption text).
+  Optional revenue_column added to the schema (heuristic: MonthlyCharges /
+  ARPU names; validated numeric). tests/pipeline.py builds a full Telco
+  state from the real nodes. 182 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
