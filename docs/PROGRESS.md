@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 1 gate
+T2.2
 
 ## Next step
-Phase 1 gate: review, PR, CI, merge. Then T2.1.
+T2.2: POST /upload, POST /sample, ingest_node, session cleanup.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -33,6 +33,13 @@ Phase 1 gate: review, PR, CI, merge. Then T2.1.
   Docker image built and checked (/health ok, runs as non-root user "app").
   Backend 29 tests. Low, not fixed: "INTERNAL" substring match in
   is_transient is broad; frontend has no unit tests yet (vitest arrives in T6.1).
+- Phase 1 merged to main (PR #1, CI green).
+- T2.1: ChurnState (Pydantic, reducers on errors/progress/telemetry_events),
+  graph builder with all 16 nodes as stubs, safe_node wrapper (FatalNodeError
+  routes to error_node, other errors are recorded and the run continues,
+  interrupt() passes through), conditional survival/offer edges, validator
+  retry routing, SQLite checkpointer factory (Postgres behind DATABASE_URL,
+  driver installed at deploy time), docs/graph.md. Backend 38 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -51,6 +58,10 @@ Phase 1 gate: review, PR, CI, merge. Then T2.1.
   Enabling billing is a paid-service decision for the human, so both tiers use
   gemini-3.8-flash for now, with GEMINI_MODEL_FALLBACK=gemini-3.5-flash for
   when 3.8-flash is overloaded (it returned 503s during testing).
+- SPEC's single "schema" state key is split into schema_proposal
+  (schema_agent) and confirmed_schema (human_review): one producer per key,
+  and "schema" would shadow a Pydantic BaseModel attribute. Fatal errors are
+  ErrorEntry(fatal=True) in the shared errors list rather than a separate key.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).
