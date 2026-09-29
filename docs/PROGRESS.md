@@ -3,12 +3,14 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T6.3c (Hypothesis Testing tab)
+T6.3d (Risk Predictions tab)
 
 ## Next step
-T6.3c on branch phase-6 (T6.1-T6.3b committed and pushed): type
-hypothesis_results in app/api/contract.py, regenerate types, add KaTeX,
-build components/hypothesis/ and register the tab in components/dashboard/dashboard.tsx.
+T6.3d on branch phase-6 (T6.1-T6.3c committed and pushed): paginated
+server-side predictions table (GET /results already pages and filters by
+band; add id search and a CSV export endpoint for the current filter),
+reasons as chips, register the tab in components/dashboard/dashboard.tsx.
+Live-check helper: scratchpad drive_run.py pattern (sample -> confirm -> wait).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -233,6 +235,18 @@ build components/hypothesis/ and register the tab in components/dashboard/dashbo
   check on Telco fixed three display bugs (ROC ticks rounded 0.25 to 0.3,
   forest axis clipped CI whiskers, long labels cut off). Backend 219,
   frontend 56 tests.
+- T6.3c: Hypothesis Testing tab (components/hypothesis/): tests sorted by
+  adjusted p, statistic + df, "< 0.001" p-values, effect size with band,
+  alpha slider (0.001-0.1) re-deriving significance as p_adjusted < alpha
+  (BH adjustment does not depend on alpha) with a live count, rows expand
+  into H0/H1, why this test, assumption checks, observed/expected tables or
+  group stats, KaTeX formulas with substituted numbers, and the conclusion
+  (server text at its alpha, explained at other alphas). katex 0.18 added
+  (CLAUDE.md stack). Contract types hypothesis_results; found and fixed
+  df typed as int (Welch df is fractional). Backend: LaTeX steps now use
+  tex() (1.171 \times 10^{-202} instead of 1.171e-202) and \text{} for
+  words. Live check: 28/40 significant at 0.05, 26/40 at 0.001, 10 KaTeX
+  blocks, no errors, no horizontal scroll. Backend 222, frontend 63 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

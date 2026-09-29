@@ -49,6 +49,15 @@ def fmt(x: float) -> str:
     return f"{x:.4g}"
 
 
+def tex(x: float) -> str:
+    """fmt() for LaTeX steps: scientific notation becomes a power of ten."""
+    text = fmt(x)
+    if "e" not in text:
+        return text
+    mantissa, exponent = text.split("e")
+    return rf"{mantissa} \times 10^{{{int(exponent)}}}"
+
+
 # ---------------------------------------------------------------- effect sizes
 
 
@@ -147,10 +156,10 @@ def categorical_test(x: pd.Series, y: pd.Series, variable: str) -> dict[str, Any
                     {"label": "Odds ratio",
                      "formula": r"OR = \frac{a \cdot d}{b \cdot c}",
                      "substituted": rf"OR = \frac{{{a} \cdot {d}}}{{{b} \cdot {c}}} = "
-                                    f"{fmt(float(odds_ratio))}"},
+                                    f"{tex(float(odds_ratio))}"},
                     {"label": "Exact p-value",
                      "formula": r"p = \sum P(\text{tables as or more extreme})",
-                     "substituted": f"p = {fmt(float(p))}"},
+                     "substituted": f"p = {tex(float(p))}"},
                 ]}
 
     chi2, p, dof, _ = stats.chi2_contingency(observed, correction=False)
@@ -169,21 +178,21 @@ def categorical_test(x: pd.Series, y: pd.Series, variable: str) -> dict[str, Any
             "steps": [
                 {"label": "Expected counts",
                  "formula": r"E_{ij} = \frac{R_i \cdot C_j}{N}",
-                 "substituted": f"N = {n}; smallest E = {fmt(min_expected)}"},
+                 "substituted": rf"N = {n};\ \text{{smallest }} E = {tex(min_expected)}"},
                 {"label": "Chi-square statistic",
                  "formula": r"\chi^2 = \sum_{i,j} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}",
-                 "substituted": rf"\chi^2 = {fmt(float(chi2))}"},
+                 "substituted": rf"\chi^2 = {tex(float(chi2))}"},
                 {"label": "Degrees of freedom",
                  "formula": r"df = (r - 1)(c - 1)",
                  "substituted": f"df = ({shape[0]} - 1)({shape[1]} - 1) = {dof}"},
                 {"label": "p-value",
                  "formula": r"p = P(\chi^2_{df} \geq \chi^2_{obs})",
-                 "substituted": rf"p = P(\chi^2_{{{dof}}} \geq {fmt(float(chi2))}) = "
-                                f"{fmt(float(p))}"},
+                 "substituted": rf"p = P(\chi^2_{{{dof}}} \geq {tex(float(chi2))}) = "
+                                f"{tex(float(p))}"},
                 {"label": "Cramér's V",
                  "formula": r"V = \sqrt{\frac{\chi^2}{N \cdot (\min(r, c) - 1)}}",
-                 "substituted": rf"V = \sqrt{{\frac{{{fmt(float(chi2))}}}{{{n} \cdot {k}}}}} = "
-                                f"{fmt(v)}"},
+                 "substituted": rf"V = \sqrt{{\frac{{{tex(float(chi2))}}}{{{n} \cdot {k}}}}} = "
+                                f"{tex(v)}"},
             ]}
 
 
@@ -242,20 +251,20 @@ def numeric_test(x: pd.Series, y: pd.Series, variable: str) -> dict[str, Any]:
                     {"label": "t statistic",
                      "formula": r"t = \frac{\bar{x}_1 - \bar{x}_2}"
                                 r"{\sqrt{s_1^2/n_1 + s_2^2/n_2}}",
-                     "substituted": rf"t = \frac{{{fmt(m1)} - {fmt(m2)}}}"
-                                    rf"{{\sqrt{{{fmt(s1)}^2/{n1} + {fmt(s2)}^2/{n2}}}}} = "
-                                    f"{fmt(float(result.statistic))}"},
+                     "substituted": rf"t = \frac{{{tex(m1)} - {tex(m2)}}}"
+                                    rf"{{\sqrt{{{tex(s1)}^2/{n1} + {tex(s2)}^2/{n2}}}}} = "
+                                    f"{tex(float(result.statistic))}"},
                     {"label": "Welch-Satterthwaite df",
                      "formula": r"df = \frac{(s_1^2/n_1 + s_2^2/n_2)^2}"
                                 r"{\frac{(s_1^2/n_1)^2}{n_1 - 1} + \frac{(s_2^2/n_2)^2}{n_2 - 1}}",
-                     "substituted": f"df = {fmt(df)}"},
+                     "substituted": f"df = {tex(df)}"},
                     {"label": "p-value (two-sided)",
                      "formula": r"p = 2 \cdot P(T_{df} \geq |t|)",
-                     "substituted": f"p = {fmt(float(result.pvalue))}"},
+                     "substituted": f"p = {tex(float(result.pvalue))}"},
                     {"label": "Cohen's d",
                      "formula": r"d = \frac{\bar{x}_1 - \bar{x}_2}{s_p},\ "
                                 r"s_p = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1+n_2-2}}",
-                     "substituted": f"d = {fmt(d)}"},
+                     "substituted": f"d = {tex(d)}"},
                 ]}
 
     result = stats.mannwhitneyu(churned, retained, alternative="two-sided")
@@ -272,14 +281,14 @@ def numeric_test(x: pd.Series, y: pd.Series, variable: str) -> dict[str, Any]:
             "steps": [
                 {"label": "U statistic (churned group)",
                  "formula": r"U_1 = R_1 - \frac{n_1(n_1 + 1)}{2}",
-                 "substituted": f"U_1 = {fmt(u1)}, n_1 = {n1}, n_2 = {n2}"},
+                 "substituted": f"U_1 = {tex(u1)}, n_1 = {n1}, n_2 = {n2}"},
                 {"label": "p-value (two-sided)",
                  "formula": r"p = 2 \cdot P(U \leq \min(U_1, n_1 n_2 - U_1))",
-                 "substituted": f"p = {fmt(float(result.pvalue))}"},
+                 "substituted": f"p = {tex(float(result.pvalue))}"},
                 {"label": "Rank-biserial correlation",
                  "formula": r"r = \frac{2 U_1}{n_1 n_2} - 1",
-                 "substituted": rf"r = \frac{{2 \cdot {fmt(u1)}}}{{{n1} \cdot {n2}}} - 1 = "
-                                f"{fmt(r)}"},
+                 "substituted": rf"r = \frac{{2 \cdot {tex(u1)}}}{{{n1} \cdot {n2}}} - 1 = "
+                                f"{tex(r)}"},
             ]}
 
 

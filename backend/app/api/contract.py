@@ -293,6 +293,81 @@ class ValidationReport(Passthrough):
     final: bool
 
 
+class Assumption(BaseModel):
+    name: str
+    result: bool
+    detail: str
+
+
+class LabelledTable(BaseModel):
+    rows: list[str]
+    columns: list[str]
+    values: list[list[float]]
+
+
+class GroupStats(Passthrough):
+    n: int
+    mean: float | None = None
+    median: float | None = None
+    sd: float | None = None
+
+
+class HypothesisInputs(Passthrough):
+    observed: LabelledTable | None = None
+    expected: LabelledTable | None = None
+    cell_contributions: LabelledTable | None = None
+    churn_rate_by_level: dict[str, float] | None = None
+    groups: dict[str, GroupStats] | None = None
+    n: int | None = None
+
+
+class EffectSize(BaseModel):
+    name: str
+    value: float | None = None
+    band: str
+
+
+class CalculationStep(BaseModel):
+    label: str
+    formula: str  # LaTeX
+    substituted: str  # LaTeX with the numbers filled in
+
+
+class HypothesisTest(Passthrough):
+    variable: str
+    kind: Literal["categorical", "numeric"]
+    test_name: str
+    why: str
+    h0: str
+    h1: str
+    assumptions: list[Assumption] = Field(default_factory=list)
+    inputs: HypothesisInputs
+    statistic: float | None = None
+    statistic_name: str
+    df: float | None = None  # Welch-Satterthwaite df is fractional
+    p_value: float | None = None
+    p_adjusted: float | None = None
+    significant: bool
+    effect_size: EffectSize
+    steps: list[CalculationStep] = Field(default_factory=list)
+    conclusion: str
+    merged_levels: list[str] = Field(default_factory=list)
+
+
+class SkippedTest(BaseModel):
+    variable: str
+    reason: str
+
+
+class HypothesisResults(Passthrough):
+    alpha: float
+    correction: str
+    n_tests: int
+    n_significant: int
+    tests: list[HypothesisTest] = Field(default_factory=list)
+    skipped: list[SkippedTest] = Field(default_factory=list)
+
+
 class ResultsPayload(BaseModel):
     """Keys the dashboard reads are typed; the rest pass through until their tab is built."""
 
@@ -307,6 +382,7 @@ class ResultsPayload(BaseModel):
     feature_importance: FeatureImportance | None = None
     shap_summary: ShapSummary | None = None
     odds_ratios: OddsRatios | None = None
+    hypothesis_results: HypothesisResults | None = None
     final_insights: list[Insight] | None = None
     final_recommendations: list[Recommendation] | None = None
     validation_report: ValidationReport | None = None

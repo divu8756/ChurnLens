@@ -1,6 +1,29 @@
 {
   "components": {
     "schemas": {
+      "Assumption": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "result": {
+            "title": "Result",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "result",
+          "detail"
+        ],
+        "title": "Assumption",
+        "type": "object"
+      },
       "AwaitingConfirmationEvent": {
         "properties": {
           "proposal": {
@@ -53,6 +76,29 @@
           "file"
         ],
         "title": "Body_upload_upload_post",
+        "type": "object"
+      },
+      "CalculationStep": {
+        "properties": {
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "substituted": {
+            "title": "Substituted",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "formula",
+          "substituted"
+        ],
+        "title": "CalculationStep",
         "type": "object"
       },
       "ClassBalance": {
@@ -514,6 +560,35 @@
         "title": "DroppedTerm",
         "type": "object"
       },
+      "EffectSize": {
+        "properties": {
+          "band": {
+            "title": "Band",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "band"
+        ],
+        "title": "EffectSize",
+        "type": "object"
+      },
       "ErrorEvent": {
         "properties": {
           "fatal": {
@@ -596,6 +671,53 @@
           "display"
         ],
         "title": "Figure",
+        "type": "object"
+      },
+      "GroupStats": {
+        "additionalProperties": true,
+        "properties": {
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "sd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sd"
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "title": "GroupStats",
         "type": "object"
       },
       "HTTPErrorOut": {
@@ -733,6 +855,256 @@
           "n_test"
         ],
         "title": "HeldOutMetrics",
+        "type": "object"
+      },
+      "HypothesisInputs": {
+        "additionalProperties": true,
+        "properties": {
+          "cell_contributions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LabelledTable"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "churn_rate_by_level": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Rate By Level"
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LabelledTable"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "groups": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/GroupStats"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Groups"
+          },
+          "n": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N"
+          },
+          "observed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LabelledTable"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "HypothesisInputs",
+        "type": "object"
+      },
+      "HypothesisResults": {
+        "additionalProperties": true,
+        "properties": {
+          "alpha": {
+            "title": "Alpha",
+            "type": "number"
+          },
+          "correction": {
+            "title": "Correction",
+            "type": "string"
+          },
+          "n_significant": {
+            "title": "N Significant",
+            "type": "integer"
+          },
+          "n_tests": {
+            "title": "N Tests",
+            "type": "integer"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/SkippedTest"
+            },
+            "title": "Skipped",
+            "type": "array"
+          },
+          "tests": {
+            "items": {
+              "$ref": "#/components/schemas/HypothesisTest"
+            },
+            "title": "Tests",
+            "type": "array"
+          }
+        },
+        "required": [
+          "alpha",
+          "correction",
+          "n_tests",
+          "n_significant"
+        ],
+        "title": "HypothesisResults",
+        "type": "object"
+      },
+      "HypothesisTest": {
+        "additionalProperties": true,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/Assumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "conclusion": {
+            "title": "Conclusion",
+            "type": "string"
+          },
+          "df": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Df"
+          },
+          "effect_size": {
+            "$ref": "#/components/schemas/EffectSize"
+          },
+          "h0": {
+            "title": "H0",
+            "type": "string"
+          },
+          "h1": {
+            "title": "H1",
+            "type": "string"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/HypothesisInputs"
+          },
+          "kind": {
+            "enum": [
+              "categorical",
+              "numeric"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "merged_levels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Merged Levels",
+            "type": "array"
+          },
+          "p_adjusted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Adjusted"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "significant": {
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "statistic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statistic"
+          },
+          "statistic_name": {
+            "title": "Statistic Name",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/CalculationStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "test_name": {
+            "title": "Test Name",
+            "type": "string"
+          },
+          "variable": {
+            "title": "Variable",
+            "type": "string"
+          },
+          "why": {
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variable",
+          "kind",
+          "test_name",
+          "why",
+          "h0",
+          "h1",
+          "inputs",
+          "statistic_name",
+          "significant",
+          "effect_size",
+          "conclusion"
+        ],
+        "title": "HypothesisTest",
         "type": "object"
       },
       "Impact": {
@@ -897,6 +1269,41 @@
           "values"
         ],
         "title": "LabelOption",
+        "type": "object"
+      },
+      "LabelledTable": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "values": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "columns",
+          "values"
+        ],
+        "title": "LabelledTable",
         "type": "object"
       },
       "LeakageWarning": {
@@ -1498,6 +1905,16 @@
             ],
             "title": "Final Recommendations"
           },
+          "hypothesis_results": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HypothesisResults"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "impact_estimates": {
             "anyOf": [
               {
@@ -1953,6 +2370,24 @@
           }
         },
         "title": "ShapSummary",
+        "type": "object"
+      },
+      "SkippedTest": {
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "variable": {
+            "title": "Variable",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variable",
+          "reason"
+        ],
+        "title": "SkippedTest",
         "type": "object"
       },
       "StreamEvents": {

@@ -184,3 +184,18 @@ def test_results_types_driver_keys(finished_session):
     assert shap["global"][0]["mean_abs_shap"] >= shap["global"][-1]["mean_abs_shap"]
     assert results["feature_importance"]["driver_impact"][0]["feature"]
     assert all("odds_ratio" in t for t in results["odds_ratios"]["terms"])
+
+
+def test_results_types_hypothesis_keys(finished_session):
+    client, sid = finished_session
+    hyp = client.get(f"/results/{sid}").json()["results"]["hypothesis_results"]
+    assert hyp["alpha"] == 0.05 and hyp["n_tests"] == len(hyp["tests"])
+    for test in hyp["tests"]:
+        assert test["steps"] and all({"label", "formula", "substituted"} <= set(s)
+                                     for s in test["steps"])
+        assert test["significant"] == (test["p_adjusted"] < hyp["alpha"])
+        if test["kind"] == "categorical":
+            assert len(test["inputs"]["observed"]["values"]) == len(
+                test["inputs"]["observed"]["rows"])
+        else:
+            assert set(test["inputs"]["groups"]) == {"churned", "retained"}

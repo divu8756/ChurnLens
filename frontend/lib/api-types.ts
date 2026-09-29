@@ -144,6 +144,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Assumption */
+        Assumption: {
+            /** Detail */
+            detail: string;
+            /** Name */
+            name: string;
+            /** Result */
+            result: boolean;
+        };
         /** AwaitingConfirmationEvent */
         AwaitingConfirmationEvent: {
             proposal?: components["schemas"]["SchemaProposalOut"] | null;
@@ -159,6 +168,15 @@ export interface components {
             file: string;
             /** Sheet Name */
             sheet_name?: string | null;
+        };
+        /** CalculationStep */
+        CalculationStep: {
+            /** Formula */
+            formula: string;
+            /** Label */
+            label: string;
+            /** Substituted */
+            substituted: string;
         };
         /** ClassBalance */
         ClassBalance: {
@@ -300,6 +318,15 @@ export interface components {
             /** Term */
             term: string;
         };
+        /** EffectSize */
+        EffectSize: {
+            /** Band */
+            band: string;
+            /** Name */
+            name: string;
+            /** Value */
+            value?: number | null;
+        };
         /** ErrorEvent */
         ErrorEvent: {
             /**
@@ -332,6 +359,19 @@ export interface components {
             /** Value */
             value: number;
         };
+        /** GroupStats */
+        GroupStats: {
+            /** Mean */
+            mean?: number | null;
+            /** Median */
+            median?: number | null;
+            /** N */
+            n: number;
+            /** Sd */
+            sd?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** HTTPErrorOut */
         HTTPErrorOut: {
             /** Detail */
@@ -362,6 +402,83 @@ export interface components {
             roc_curve?: components["schemas"]["RocCurve"] | null;
             /** Threshold */
             threshold?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** HypothesisInputs */
+        HypothesisInputs: {
+            cell_contributions?: components["schemas"]["LabelledTable"] | null;
+            /** Churn Rate By Level */
+            churn_rate_by_level?: {
+                [key: string]: number;
+            } | null;
+            expected?: components["schemas"]["LabelledTable"] | null;
+            /** Groups */
+            groups?: {
+                [key: string]: components["schemas"]["GroupStats"];
+            } | null;
+            /** N */
+            n?: number | null;
+            observed?: components["schemas"]["LabelledTable"] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** HypothesisResults */
+        HypothesisResults: {
+            /** Alpha */
+            alpha: number;
+            /** Correction */
+            correction: string;
+            /** N Significant */
+            n_significant: number;
+            /** N Tests */
+            n_tests: number;
+            /** Skipped */
+            skipped?: components["schemas"]["SkippedTest"][];
+            /** Tests */
+            tests?: components["schemas"]["HypothesisTest"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /** HypothesisTest */
+        HypothesisTest: {
+            /** Assumptions */
+            assumptions?: components["schemas"]["Assumption"][];
+            /** Conclusion */
+            conclusion: string;
+            /** Df */
+            df?: number | null;
+            effect_size: components["schemas"]["EffectSize"];
+            /** H0 */
+            h0: string;
+            /** H1 */
+            h1: string;
+            inputs: components["schemas"]["HypothesisInputs"];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "categorical" | "numeric";
+            /** Merged Levels */
+            merged_levels?: string[];
+            /** P Adjusted */
+            p_adjusted?: number | null;
+            /** P Value */
+            p_value?: number | null;
+            /** Significant */
+            significant: boolean;
+            /** Statistic */
+            statistic?: number | null;
+            /** Statistic Name */
+            statistic_name: string;
+            /** Steps */
+            steps?: components["schemas"]["CalculationStep"][];
+            /** Test Name */
+            test_name: string;
+            /** Variable */
+            variable: string;
+            /** Why */
+            why: string;
         } & {
             [key: string]: unknown;
         };
@@ -425,6 +542,15 @@ export interface components {
             column: string;
             /** Values */
             values: string[];
+        };
+        /** LabelledTable */
+        LabelledTable: {
+            /** Columns */
+            columns: string[];
+            /** Rows */
+            rows: string[];
+            /** Values */
+            values: number[][];
         };
         /** LeakageWarning */
         LeakageWarning: {
@@ -612,6 +738,7 @@ export interface components {
             final_insights?: components["schemas"]["Insight"][] | null;
             /** Final Recommendations */
             final_recommendations?: components["schemas"]["Recommendation"][] | null;
+            hypothesis_results?: components["schemas"]["HypothesisResults"] | null;
             impact_estimates?: components["schemas"]["ImpactEstimates"] | null;
             model_metrics?: components["schemas"]["ModelMetrics"] | null;
             odds_ratios?: components["schemas"]["OddsRatios"] | null;
@@ -749,6 +876,13 @@ export interface components {
             scale?: string | null;
         } & {
             [key: string]: unknown;
+        };
+        /** SkippedTest */
+        SkippedTest: {
+            /** Reason */
+            reason: string;
+            /** Variable */
+            variable: string;
         };
         /**
          * StreamEvents

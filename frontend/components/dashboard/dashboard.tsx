@@ -6,6 +6,7 @@ import type { ResultsPayload } from "@/lib/results";
 
 import { DataHealthView } from "../data-health";
 import { DriversTab } from "../drivers/drivers-tab";
+import { HypothesisTab } from "../hypothesis/hypothesis-tab";
 import { OverviewTab } from "../overview/overview-tab";
 import { EmptyState } from "../ui";
 
@@ -15,6 +16,7 @@ type Tab = { id: string; label: string; render: (results: ResultsPayload) => Rea
 const TABS: Tab[] = [
   { id: "overview", label: "Executive Overview", render: (r) => <OverviewTab results={r} /> },
   { id: "drivers", label: "Churn Drivers", render: (r) => <DriversTab results={r} /> },
+  { id: "hypothesis", label: "Hypothesis Testing", render: (r) => <HypothesisTab results={r} /> },
   {
     id: "health",
     label: "Data Health",
