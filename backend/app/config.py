@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     MIN_ROWS: int = Field(default=100, ge=1)
     RISK_HIGH: float = Field(default=0.6, gt=0, lt=1)
     RISK_MEDIUM: float = Field(default=0.3, gt=0, lt=1)
+    # Next best offer (Phase 5b): customer value horizon and eligibility rules.
+    NBO_HORIZON_MONTHS: int = Field(default=12, ge=1, le=120)
+    NBO_MAX_DISCOUNT: float = Field(default=0.20, ge=0, le=1)
+    NBO_DECLINE_DAYS: int = Field(default=30, ge=0)
 
     @field_validator("DATA_DIR")
     @classmethod

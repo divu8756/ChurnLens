@@ -42,7 +42,7 @@ function CountTable({ title, table, digits }: { title: string; table: Table; dig
 
 function Inputs({ test }: { test: HypothesisTest }) {
   const { observed, expected, groups, churn_rate_by_level: rates } = test.inputs;
-  if (test.kind === "categorical" && observed) {
+  if (test.kind !== "numeric" && observed) {
     return (
       <div className="grid gap-4 sm:grid-cols-2">
         <CountTable title="Observed counts (O)" table={observed} digits={0} />

@@ -342,6 +342,10 @@ def run_hypothesis_tests(frame: pd.DataFrame, schema: dict[str, Any],
         test = (categorical_test if kind == "categorical" else numeric_test)(frame[col], y, col)
         tests.append(test)
 
+    # Offer tests (Phase 5b) join the same Benjamini-Hochberg family.
+    from app.stats.offers import offer_tests  # avoid an import cycle
+    tests.extend(offer_tests(frame, schema))
+
     if tests:
         raw = [t["p_value"] for t in tests]
         _, adjusted, _, _ = multipletests(raw, alpha=alpha, method="fdr_bh")

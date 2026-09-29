@@ -336,7 +336,8 @@ class CalculationStep(BaseModel):
 
 class HypothesisTest(Passthrough):
     variable: str
-    kind: Literal["categorical", "numeric"]
+    kind: Literal["categorical", "numeric", "offer"]
+    offer: str | None = None  # kind "offer": the offer tested (accepted vs declined)
     test_name: str
     why: str
     h0: str
@@ -519,6 +520,11 @@ class PredictionRow(BaseModel):
     reason_1: str | None = None
     reason_2: str | None = None
     reason_3: str | None = None
+    # Next best offer (Phase 5b); null for Low-risk customers or without offer data.
+    best_offer: str | None = None
+    expected_value: float | None = None
+    runner_up: str | None = None
+    runner_up_value: float | None = None
 
 
 class PredictionsResponse(BaseModel):

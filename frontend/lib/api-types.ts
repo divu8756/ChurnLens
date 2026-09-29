@@ -551,9 +551,11 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "categorical" | "numeric";
+            kind: "categorical" | "numeric" | "offer";
             /** Merged Levels */
             merged_levels?: string[];
+            /** Offer */
+            offer?: string | null;
             /** P Adjusted */
             p_adjusted?: number | null;
             /** P Value */
@@ -835,10 +837,14 @@ export interface components {
         PredictionRow: {
             /** Actual Churn */
             actual_churn: number;
+            /** Best Offer */
+            best_offer?: string | null;
             /** Churn Probability */
             churn_probability: number;
             /** Customer Id */
             customer_id: string;
+            /** Expected Value */
+            expected_value?: number | null;
             /** Reason 1 */
             reason_1?: string | null;
             /** Reason 2 */
@@ -850,6 +856,10 @@ export interface components {
              * @enum {string}
              */
             risk_band: "High" | "Medium" | "Low";
+            /** Runner Up */
+            runner_up?: string | null;
+            /** Runner Up Value */
+            runner_up_value?: number | null;
         };
         /** PredictionsPage */
         PredictionsPage: {

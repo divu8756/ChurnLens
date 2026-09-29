@@ -1217,7 +1217,8 @@
           "kind": {
             "enum": [
               "categorical",
-              "numeric"
+              "numeric",
+              "offer"
             ],
             "title": "Kind",
             "type": "string"
@@ -1228,6 +1229,17 @@
             },
             "title": "Merged Levels",
             "type": "array"
+          },
+          "offer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer"
           },
           "p_adjusted": {
             "anyOf": [
@@ -2126,6 +2138,17 @@
             "title": "Actual Churn",
             "type": "integer"
           },
+          "best_offer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Offer"
+          },
           "churn_probability": {
             "title": "Churn Probability",
             "type": "number"
@@ -2133,6 +2156,17 @@
           "customer_id": {
             "title": "Customer Id",
             "type": "string"
+          },
+          "expected_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Value"
           },
           "reason_1": {
             "anyOf": [
@@ -2175,6 +2209,28 @@
             ],
             "title": "Risk Band",
             "type": "string"
+          },
+          "runner_up": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up"
+          },
+          "runner_up_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up Value"
           }
         },
         "required": [

@@ -18,6 +18,7 @@ MAX_SIGNIFICANT_TESTS = 20
 NON_SIGNIFICANT_TESTS = 5
 MAX_DRIVERS = 10
 MAX_IMPACT_ITEMS = 12
+MAX_OFFERS = 10
 
 
 def _round(value: Any) -> Any:
@@ -141,6 +142,36 @@ def build_digest(state: dict[str, Any]) -> dict[str, Any]:
                   f"{name}: churners saved if churn fell {scenario[7:9]}% (assumption)")
             f.add("impact", join(sbase, "monthly_revenue_saved"),
                   f"{name}: monthly revenue saved if churn fell {scenario[7:9]}% (assumption)")
+
+    # Offers (Phase 5b): effectiveness per offer and the next-best-offer summary.
+    offers = state.get("offer_effectiveness") or {}
+    for i, row in enumerate(offers.get("offers", [])[:MAX_OFFERS]):
+        base = join("offer_effectiveness.offers", i)
+        name = f"offer '{row['offer']}'"
+        f.add("offers", join(base, "shown"), f"{name}: customers shown")
+        f.add("offers", join(base, "acceptance_rate"), f"{name}: acceptance rate (fraction)")
+        f.add("offers", join(base, "acceptors.churn_rate"),
+              f"{name}: churn rate (fraction) of customers who accepted")
+        f.add("offers", join(base, "decliners.churn_rate"),
+              f"{name}: churn rate (fraction) of customers who declined")
+        if row.get("test"):
+            tag = "significant" if row["test"]["significant"] else "NOT significant"
+            f.add("offers", join(base, "test.p_adjusted"),
+                  f"{name}: accepted vs declined churn, BH-adjusted p ({tag})")
+    f.add("offers", "offer_effectiveness.never_offered.churn_rate",
+          "churn rate (fraction) of customers never offered anything")
+    f.add("offers", "offer_effectiveness.selection_bias.gap",
+          "offered minus never-offered mean predicted churn (selection bias check)")
+    nbo = offers.get("next_best_offer") or {}
+    f.add("offers", "offer_effectiveness.next_best_offer.customers_scored",
+          "Medium/High-risk customers scored for a next best offer")
+    for i, row in enumerate(nbo.get("by_offer", [])):
+        base = join("offer_effectiveness.next_best_offer.by_offer", i)
+        f.add("offers", join(base, "customers"),
+              f"customers whose next best offer is '{row['offer']}'")
+        f.add("offers", join(base, "expected_value"),
+              f"total expected value if '{row['offer']}' goes to them "
+              f"({nbo.get('value_unit')}, assumption)")
 
     digest = {
         "about": "Computed results. Every fact has a key (source_key) and a value.",

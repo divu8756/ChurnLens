@@ -3,13 +3,15 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5b.2 (offer effectiveness analysis)
+T5b.4 (offer message, validation, UI)
 
 ## Next step
-T5b.2 on branch phase-5b (T5b.1 committed): offer effectiveness in
-app/stats/offers.py from reshape_offers() output (acceptance, churn among
-acceptors / non-acceptors / never offered, chi-square or Fisher per offer in
-the BH family, leakage filter on offer_date, selection-bias warning).
+T5b.4 on branch phase-5b (T5b.1-T5b.3 committed): prompts/offer_message.v1.md
++ on-demand POST endpoint with a per-customer cache, validator check on the
+message numbers, Risk Predictions "Next best offer" / "Expected value"
+columns and a "Why this offer" panel (KaTeX formula with inputs), Offer
+performance cards in Recommendations, offer warnings on Data Health, README
+limitations line. Then the Phase 5b gate.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -310,6 +312,36 @@ the BH family, leakage filter on offer_date, selection-bias warning).
   40 with the cap hit; campaign columns excluded from the model; the run
   routes through the offer step (still a stub). Backend 238, frontend 86,
   E2E 1.
+- T5b.2: offer effectiveness (app/stats/offers.py + app/agents/offer.py,
+  offer_node registered). Cleaning no longer fills blanks in offer columns
+  with "Unknown" (blank = no offer). Leakage filter: offers dated after the
+  observation cutoff (a date column named snapshot/as-of/cutoff/extract) are
+  dropped; a missing offer date or cutoff column gives a visible warning.
+  Per offer (and per segment): shown, accepted, acceptance rate, churn among
+  acceptors vs decliners with n; never-offered vs offered churn. Accepted x
+  churned per offer (chi-square, Fisher when sparse; >= 20 shown) runs in
+  the hypothesis step, kind "offer", in the same BH family (equal to scipy
+  within 1e-9). Selection-bias check: mean predicted churn of offered vs
+  never-offered; warns at a gap >= 0.05. Telco: 6 offers, 0 dropped
+  (cutoff SnapshotDate); 10% loyalty discount significant (acceptors 27.9%
+  vs decliners 44.6% churn, adj. p 0.0007); device upgrade credit not
+  (matches the data dictionary); bias warning fires (57.3% vs 37.0% risk:
+  offers were targeted by an old risk score). Backend 244.
+- T5b.3: next best offer (app/stats/nbo.py, run by offer_node; settings
+  NBO_HORIZON_MONTHS 12, NBO_MAX_DISCOUNT 0.20, NBO_DECLINE_DAYS 30).
+  P(accept): per offer with >= 50 shown an unweighted logistic regression on
+  the churn model's features (5-fold CV ROC-AUC reported), else the
+  Laplace-smoothed segment acceptance rate flagged "low data". Expected value
+  per Medium/High-risk customer x eligible offer with "No offer" when all are
+  negative; discount cap and recent-decline rules. Best offer, runner-up and
+  every input go to next_best_offers.parquet; /predictions and the CSV join
+  best offer, expected value and runner-up. Summary with ASSUMPTIONS
+  (source default/data) in offer_effectiveness.next_best_offer; offer facts
+  (per offer rates, test p, never-offered churn, bias gap, customers and
+  value per best offer) added to the results digest (Telco 11.2k tokens).
+  Telco: 4,136 customers scored in 0.5 s; offer model CV ROC-AUC 0.48-0.64
+  (weak signal); loyalty discount 1,793, 10GB booster 1,267, OTT 894,
+  annual-plan month 128, no offer 54. Backend 255 (+ lift test).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -353,6 +385,31 @@ the BH family, leakage filter on offer_date, selection-bias warning).
 - recharts 3 added in T6.2 (listed in the CLAUDE.md stack) for dashboard charts.
 - Results sub-objects are still dict[str, Any] in the contract; each T6.3 tab
   adds typed models for the keys it reads.
+- T5b.2: offer leakage and selection-bias warnings live in
+  offer_effectiveness.warnings, not data_health (runbook wording): data_health
+  has one producer (cleaning), and the bias check needs Phase 4 risk scores.
+  T5b.4 shows them on the Data Health tab and the offer cards. Offer tests run
+  in the hypothesis step so there is one BH family; leakage-dropped offers
+  count their customers as never offered (not offered at observation time).
+- T5b.3 deviations from the runbook: (1) P(accept) models are unweighted
+  logistic regressions, not class_weight="balanced": the expected value is a
+  money metric and needs calibrated probabilities (CLAUDE.md rule 23);
+  balancing inflates them. (2) Cost is subtracted as P(accept) x cost per
+  acceptance: OfferCost is only paid when an offer is accepted (0
+  otherwise). (2b) The value uses retention_lift = max(0, P(stay | accepted) -
+  P(stay | declined)) instead of P(stay | accepted): the runbook's version
+  credits every acceptor who would have stayed anyway, so on Telco it
+  recommended the device upgrade credit (no churn effect per the data
+  dictionary) to 371 customers and summed to 1.04M expected value; with the
+  lift it recommends only offers that retain more acceptors than decliners
+  (loyalty discount leads, 54 customers get "No offer", total 187K). Both
+  probabilities and the lift are stored per customer. (3) Next-best-offer rows go to their own
+  next_best_offers.parquet (state key offer_recommendations_path, SPEC)
+  rather than predictions.parquet, which belongs to modelling_node; the API
+  joins them. (4) The discount rule reads "NN% discount/off" from the offer
+  name; offers without one are eligible. (5) A decline with an unknown date
+  counts as recent. P(churn) is still the uncalibrated churn score until
+  Phase 5d.
 - Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).

@@ -19,13 +19,15 @@ router = APIRouter(tags=["predictions"])
 PAGE_SIZE = 50
 MAX_QUERY = 100
 FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
+NBO_COLUMNS = ["best_offer", "expected_value", "runner_up", "runner_up_value"]
 
 Band = Annotated[Literal["High", "Medium", "Low"] | None, Query()]
 Search = Annotated[str | None, Query(max_length=MAX_QUERY,
                                      description="Case-insensitive part of a customer ID")]
 
 
-def _predictions_path(session_id: str, request: Request) -> Path:
+def _paths(session_id: str, request: Request) -> tuple[Path, Path | None]:
+    """(predictions table, next-best-offer table or None when there is none)."""
     try:
         sessions.read_meta(session_id)
     except sessions.SessionNotFound:
@@ -35,12 +37,19 @@ def _predictions_path(session_id: str, request: Request) -> Path:
     path = values.get("predictions_path")
     if not path or not Path(path).exists():
         raise HTTPException(409, "Risk predictions are not available for this session yet.")
-    return Path(path)
+    nbo = values.get("offer_recommendations_path")
+    return Path(path), (Path(nbo) if nbo and Path(nbo).exists() else None)
 
 
-def filtered(path: Path, band: str | None, q: str | None) -> pd.DataFrame:
-    """Rows stay in the stored order (highest churn probability first)."""
+def filtered(path: Path, band: str | None, q: str | None,
+             nbo_path: Path | None = None) -> pd.DataFrame:
+    """Rows stay in the stored order (highest churn probability first). Next-best-offer
+    columns are joined when an offer analysis ran (Low-risk rows have none)."""
     table = pd.read_parquet(path)
+    if nbo_path is not None:
+        offers = pd.read_parquet(nbo_path, columns=["customer_id", *NBO_COLUMNS])
+        table = table.merge(offers.drop_duplicates("customer_id"), on="customer_id",
+                            how="left", sort=False)
     if band:
         table = table[table["risk_band"] == band]
     if q and q.strip():
@@ -65,7 +74,8 @@ def predictions(
     band: Band = None,
     q: Search = None,
 ) -> PredictionsResponse:
-    table = filtered(_predictions_path(session_id, request), band, q)
+    path, nbo_path = _paths(session_id, request)
+    table = filtered(path, band, q, nbo_path)
     total = len(table)
     pages = max(1, -(-total // PAGE_SIZE))
     start = (page - 1) * PAGE_SIZE
@@ -79,7 +89,8 @@ def predictions(
                        409: {"model": HTTPErrorOut}, 410: {"model": HTTPErrorOut}})
 def predictions_csv(session_id: str, request: Request, band: Band = None,
                     q: Search = None) -> StreamingResponse:
-    table = filtered(_predictions_path(session_id, request), band, q)
+    path, nbo_path = _paths(session_id, request)
+    table = filtered(path, band, q, nbo_path)
 
     def rows() -> Iterator[str]:
         buffer = io.StringIO()

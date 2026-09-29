@@ -6,7 +6,8 @@ Decisions:
 - Numeric blanks are NOT imputed here. The model pipeline imputes medians on
   the training split only (no test-set leakage), and some blanks carry
   meaning (for example NPS never answered).
-- Categorical blanks become "Unknown" (a constant, so no leakage).
+- Categorical blanks become "Unknown" (a constant, so no leakage), except in
+  offer/campaign columns, where a blank means "no offer" and must stay blank.
 - Outliers are flagged (IQR 1.5x and |z| > 3) and counted, never deleted or capped.
 """
 
@@ -17,6 +18,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from app.schema_validation import offer_column_names
 from app.stats import profiling
 
 UNKNOWN = "Unknown"
@@ -137,6 +139,7 @@ def clean(frame: pd.DataFrame, schema: dict[str, Any], min_rows: int) -> Cleanin
     target = schema["target_column"]
     positive = str(schema["positive_label"])
     time_col = schema.get("time_column")
+    offer_cols = set(offer_column_names(schema.get("offer_columns")))
     if target not in frame.columns:
         raise CleaningFatal(f"Target column '{target}' is missing from the data.")
 
@@ -211,7 +214,7 @@ def clean(frame: pd.DataFrame, schema: dict[str, Any], min_rows: int) -> Cleanin
             if df[col].isna().any():
                 _log(log, "missing_left_for_model", col, int(df[col].isna().sum()),
                      "Left missing; the model imputes the training-set median.")
-        elif kind in ("categorical", "binary") and col != time_col:
+        elif kind in ("categorical", "binary") and col != time_col and col not in offer_cols:
             n_missing = int(df[col].isna().sum())
             if n_missing:
                 df[col] = df[col].fillna(UNKNOWN)
