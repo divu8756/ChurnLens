@@ -10,6 +10,7 @@ Shared by Phase 5c (experiments) and Phase 5d (A/B plan).
 import math
 from typing import Any, Literal
 
+from scipy.stats import norm
 from statsmodels.stats.power import NormalIndPower
 from statsmodels.stats.proportion import proportion_effectsize
 
@@ -137,3 +138,38 @@ def sample_size(baseline_rate: float, mde: float, *, alpha: float = 0.05, power:
                 f"{n_total:,} are needed ({n_treatment:,} treatment + {n_control:,} "
                 f"control). With {n_available:,} customers, {hint}")
     return result
+
+
+PLAN_FORMULA = (r"n = \left(\frac{z_{1-\alpha/2} + z_{1-\beta}}{h}\right)^2,\quad "
+                r"h = 2\arcsin\sqrt{p_1} - 2\arcsin\sqrt{p_2},\quad p_2 = p_1(1 - \text{lift})")
+
+
+def sample_size_two_proportions(p1: float, relative_lift: float, alpha: float = 0.05,
+                                power: float = 0.8, ratio: float = 1.0) -> dict[str, Any]:
+    """A/B plan for the Business Impact tab (SPEC v1.3): the RELATIVE drop in churn to
+    detect, two-sided. ratio = second arm / first arm (statsmodels' ratio)."""
+    if not 0 < p1 < 1:
+        raise ValueError("The baseline churn rate p1 must be between 0 and 1.")
+    if not 0 < relative_lift < 1:
+        raise ValueError("The relative lift must be between 0 and 1 (e.g. 0.2 for a 20% "
+                         "drop in churn).")
+    if not 0 < power < 1:
+        raise ValueError("Power must be between 0 and 1.")
+    if not 0 < alpha < 1:
+        raise ValueError("Alpha must be between 0 and 1.")
+    if not ratio > 0:
+        raise ValueError("The allocation ratio must be greater than 0.")
+    p2 = p1 * (1 - relative_lift)
+    h = abs(float(proportion_effectsize(p1, p2)))
+    nobs1 = float(NormalIndPower().solve_power(
+        effect_size=h, nobs1=None, alpha=alpha, power=power, ratio=ratio,
+        alternative="two-sided"))
+    n1, n2 = math.ceil(nobs1), math.ceil(nobs1 * ratio)
+    return {
+        "p1": p1, "p2": p2, "relative_lift": relative_lift, "cohens_h": h,
+        "alpha": alpha, "power": power, "ratio": ratio,
+        "z_alpha": float(norm.ppf(1 - alpha / 2)), "z_beta": float(norm.ppf(power)),
+        "n_per_arm": n1, "n_second_arm": n2, "total_n": n1 + n2,
+        "n_unrounded": nobs1,
+        "formula_latex": PLAN_FORMULA,
+    }

@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5d.3 (A/B test plan)
+T5d.4 (Run telemetry)
 
 ## Next step
-T5d.3 per the Phase 5d plan below, then T5d.4-T5d.6 and the Phase 5d gate.
+T5d.4 per the Phase 5d plan below, then T5d.5-T5d.6 and the Phase 5d gate.
 Branch phase-5d is stacked on phase-5c (tip 9af926c); after PR #8 is
 squash-merged: git rebase --onto main 9af926c phase-5d.
 
@@ -606,6 +606,12 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   an ASSUMPTIONS block with sources. app/business.py computes it per session
   (disabled with a reason without an ARPU column; user edits > data >
   YAML). Backend 388 (19 new).
+- T5d.3: experiment_design.sample_size_two_proportions (relative lift,
+  two-sided, ratio; returns p1, p2, Cohen's h, z values, n per arm, total,
+  LaTeX); references 903 (p1 0.20, lift 0.25; statsmodels 902.34) and 1038
+  (p1 0.26, lift 0.20) per arm. business_metrics.ab_plan sizes a test for
+  the customers who get an offer (p1 = their observed churn), warns when
+  they are too few, with an ASSUMPTIONS block. Backend 397 (9 new).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

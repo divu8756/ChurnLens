@@ -75,4 +75,10 @@ def compute(values: dict[str, Any], evidence: dict[str, dict[str, Any]],
     result = bm.summarise(table, risk, terms, roi, warnings, months, months_source)
     top = table.sort_values("expected_saving", ascending=False, kind="stable").head(50)
     result["next_best_offers"] = jsonable(top.to_dict("records"))
+    targeted = (table["best_offer"] != bm.NO_OFFER).to_numpy()
+    label = "customers with an offer" if targeted.any() else "all customers"
+    outcomes = customers["actual_churn"].to_numpy()
+    result["ab_plan"] = bm.ab_plan(outcomes[targeted] if targeted.any() else outcomes, label,
+                                   a.relative_lift, a.alpha, a.power)
+    result["assumptions"] += [x for x in result["ab_plan"]["assumptions"] if x["name"] != "p1"]
     return result

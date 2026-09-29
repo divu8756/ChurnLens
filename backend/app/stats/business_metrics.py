@@ -20,6 +20,7 @@ import pandas as pd
 
 from app.catalog import ColumnInRule, OfferSpec, RiskBandRule
 from app.stats.common import jsonable
+from app.stats.experiment_design import sample_size_two_proportions
 
 NO_OFFER = "No offer"
 DEFAULT_MONTHS = 12
@@ -274,3 +275,44 @@ def summarise(table: pd.DataFrame, risk: dict[str, Any], terms: list[OfferTerms]
         "warnings": warnings,
         "assumptions": assumptions_block(months, months_source, terms),
     })
+
+
+DEFAULT_LIFT = 0.2
+
+
+def ab_plan(outcomes: Any, segment: str, relative_lift: float | None = None,
+            alpha: float | None = None, power: float | None = None) -> dict[str, Any]:
+    """A/B test plan for a target segment: p1 = its observed churn rate. Warns when the
+    segment has fewer customers than the test needs (2 x n per arm)."""
+    y = np.asarray(outcomes, dtype=float)
+    lift = DEFAULT_LIFT if relative_lift is None else relative_lift
+    a = 0.05 if alpha is None else alpha
+    pw = 0.8 if power is None else power
+    assumptions = [
+        {"name": "relative_lift", "value": lift, "unit": "share",
+         "source": "default" if relative_lift is None else "user",
+         "meaning": "Relative drop in churn the test must be able to detect."},
+        {"name": "alpha", "value": a, "unit": "probability",
+         "source": "default" if alpha is None else "user",
+         "meaning": "Chance of a false positive (two-sided)."},
+        {"name": "power", "value": pw, "unit": "probability",
+         "source": "default" if power is None else "user",
+         "meaning": "Chance of detecting the effect if it is real."},
+    ]
+    if len(y) == 0:
+        return {"available": False, "segment": segment, "reason": "The segment is empty.",
+                "assumptions": assumptions}
+    p1 = float(y.mean())
+    assumptions.insert(0, {"name": "p1", "value": p1, "unit": "share", "source": "data",
+                           "meaning": f"Observed churn rate of {segment}."})
+    if not 0 < p1 < 1:
+        return {"available": False, "segment": segment, "assumptions": assumptions,
+                "reason": "The segment's churn rate is 0% or 100%, so no test can be sized."}
+    plan = sample_size_two_proportions(p1, lift, alpha=a, power=pw)
+    warnings = []
+    if len(y) < plan["total_n"]:
+        warnings.append(f"{segment} has {len(y):,} customers but the test needs "
+                        f"{plan['total_n']:,} ({plan['n_per_arm']:,} per arm). Detect a larger "
+                        "lift, lower the power or test over a longer period.")
+    return jsonable({"available": True, "segment": segment, "segment_customers": len(y),
+                     **plan, "warnings": warnings, "assumptions": assumptions})
