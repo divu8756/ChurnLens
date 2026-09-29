@@ -3,13 +3,152 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5d.0 (Plan the metrics layer, no code)
+T5d.1 (Model metrics + calibration)
 
 ## Next step
-Phase 5c PR is open (see Done); the human merges it. Then Phase 5d on a
-branch stacked on phase-5c: T5d.0 plan, then T5d.1-T5d.6. The shared A/B
-function already exists (stats/experiment_design.sample_size with
-mde_type="relative").
+T5d.1 per the Phase 5d plan below, then T5d.2-T5d.6 and the Phase 5d gate.
+Branch phase-5d is stacked on phase-5c (tip 9af926c); after PR #8 is
+squash-merged: git rebase --onto main 9af926c phase-5d.
+
+## Phase 5d plan (T5d.0; S8 recorded as a checkpoint, FULL-AUTO)
+
+### 1. Files and functions
+- backend/app/stats/model_metrics.py (new, pure, dict in / dict out):
+  `roc_auc(y, p) -> float`; `pr_auc(y, p) -> float` (average precision);
+  `at_top(y, p, share=0.10) -> {k, precision, recall}` (k = ceil(share*n),
+  stable sort by -p); `deciles(y, p) -> [{decile, n, churners, churn_rate,
+  lift, cumulative_gain}]`; `brier(y, p) -> float`; `calibration(y, p,
+  bins=10) -> [{bin, low, high, n, mean_predicted, observed_rate}]`;
+  `evaluate(y, p) -> dict` (all of the above); `calibrate(pipeline, x_train,
+  y_train) -> (model, method)` (CalibratedClassifierCV(clone, isotonic if
+  n_train >= 1000 else sigmoid, cv=5), fitted on the training split only);
+  `model_metrics_v2(artifacts, frame, schema) -> (metrics, calibrated_all)`.
+- backend/app/stats/modelling.py: ModelArtifacts gains `calibrated` (the
+  fitted calibrator) and `calibration_method`.
+- backend/app/agents/modelling.py: writes `model_metrics_v2`; predictions
+  gain `churn_probability_raw`; `churn_probability` becomes the calibrated
+  value (rule 23: money metrics and NBO use it). SHAP reasons still explain
+  the raw model (ranking). Risk bands move to calibrated probabilities
+  (closes the Phase 4 known issue: 32% High vs ~25% churn).
+- backend/app/config.py -> backend/app/config/__init__.py (package, same
+  imports) + app/config/offers.yaml + app/config/pricing.yaml (package data).
+- backend/app/catalog.py (new): Pydantic `OfferSpec {name, cost,
+  cost_basis: per_accepted|per_targeted, assumed_acceptance_rate,
+  assumed_save_rate=0.5, eligible_segments: [Rule]}`, `Rule =
+  {column, in} | {column, min, max} | {risk_band: [...]}`;
+  `load_catalogue(path) -> list[OfferSpec]` raising `CatalogueError` with
+  the YAML line of the problem; `load_pricing(path) -> Pricing`.
+- backend/app/stats/business_metrics.py (new): `revenue_at_risk(df, p,
+  arpu_col, months_remaining=12) -> dict`; `eligible_offers(customer,
+  catalogue, columns) -> (offers, warnings)`; `expected_saving(p, arpu,
+  months, offer) -> float`; `next_best_offer(df, p, arpu_col, catalogue,
+  months) -> table + summary` (best, runner-up, "No offer" when best <= 0);
+  `offer_roi_by_segment(nbo_table, segment_col) -> [...]`; `ab_plan(segment
+  frame, lift, alpha, power) -> dict`; `business_metrics(state values,
+  assumptions) -> dict` (everything + ASSUMPTIONS, or {enabled: false,
+  reason} without an ARPU column); `data_overrides(offer_effectiveness,
+  evidence) -> {offer: {acceptance, save_rate, source="data"}}` from Phase
+  5b rates and Phase 5c evidence.
+- backend/app/stats/experiment_design.py: `sample_size_two_proportions(p1,
+  relative_lift, alpha=0.05, power=0.8, ratio=1.0) -> dict` (shares the
+  maths of `sample_size`).
+- backend/app/graph/telemetry.py (new): `traced(name, fn) -> fn` wrapping
+  every node inside safe_node (one event per run incl. failed/skipped);
+  per-node token capture through a contextvar + llm usage listener;
+  `schema_corrections(proposal, confirmed) -> {count, fields}`;
+  `summarise_run(values, pricing) -> dict`; `save_run(summary)`,
+  `list_runs(workspace, limit)`.
+- backend/app/experiments/models.py + migration 0007: `RunSummary` table
+  (session_id, workspace_hash, created_at, summary JSON).
+- backend/app/api/metrics.py (new) and app/api/telemetry.py (new).
+- backend/app/api/upload.py + app/ingest.py: 422s for no binary target
+  candidate and one class only (MIN_ROWS exists already).
+- backend/app/prompts/business_explanation.v1.md + app/agents/
+  business_explanation.py: 3 validated sentences on the business metrics
+  (the "Regenerate explanation" button; cached per assumptions hash).
+- frontend: components/charts/plotly-chart.tsx; components/model-performance/
+  *, components/business-impact/*, components/agent-health/*; lib/metrics.ts
+  (display helpers only); dashboard tabs; Churn Drivers loses its metrics
+  cards; e2e opens the three tabs and edits one assumption.
+
+### 2. State, API, config
+- State: `model_metrics_v2: JsonDict | None` (modelling_node);
+  `business_metrics: JsonDict | None` (impact_node, default assumptions);
+  `telemetry_events` already exists (operator.add, parallel-safe).
+- GET /metrics/model/{id} -> ModelMetricsV2; GET /metrics/business/{id} ->
+  BusinessMetrics (defaults); POST /metrics/business/{id} body
+  BusinessAssumptions {months_remaining 1..60, offers: {name: {acceptance,
+  save_rate, cost}}, relative_lift 0.01..0.9, alpha, power} -> recomputed
+  BusinessMetrics (no LLM); POST /metrics/business/{id}/explain ->
+  validated explanation; GET /telemetry/{id} -> RunSummary; GET
+  /telemetry/runs?limit=50 -> [RunSummary] (workspace-scoped).
+- offers.yaml example:
+  ```yaml
+  - name: 10% loyalty discount (3 mo)
+    cost: 15
+    assumed_acceptance_rate: 0.35
+    assumed_save_rate: 0.5
+    eligible_segments: [{risk_band: [High, Medium]}]
+  - name: Annual contract switch bonus
+    cost: 40
+    assumed_acceptance_rate: 0.2
+    eligible_segments: [{column: Contract, in: [Month-to-month]}]
+  ```
+- pricing.yaml: `note: free tier; prices: {<model>: {input_per_1m: 0,
+  output_per_1m: 0}}`, default 0, labelled ESTIMATE.
+
+### 3. Reuse vs new
+Reused: the Phase 4 stratified split (ModelArtifacts.train_index /
+test_index, seed 42), predictions parquet, stats/experiment_design.py
+(Phase 5c), Phase 5b offer_effectiveness rates and Phase 5c offer_evidence
+(workspace-scoped) as "data" overrides, llm usage listeners (Phase 1),
+the experiments database for the runs table. New: model_metrics.py,
+calibration, catalogue/pricing YAML, business_metrics.py, telemetry.py,
+metrics/telemetry APIs, Plotly wrapper and three tabs.
+
+### 4. Risks
+- Calibrating class-weighted models: calibrate a clone of the chosen
+  pipeline with CalibratedClassifierCV on the training split only; the
+  test split is only used to report raw vs calibrated Brier (asserted
+  index-disjoint).
+- No ARPU column: business metrics return {enabled: false, reason}; model
+  metrics, A/B plan (churn only) and telemetry still work.
+- offers.yaml rules on absent columns: skip that offer with a warning.
+- Parallel telemetry writes: events go through the operator.add reducer;
+  token attribution uses a contextvar per node run, not globals.
+- Stale LLM explanations after assumption edits: explanation cached by an
+  assumptions hash; the UI shows "Based on default assumptions" + a
+  Regenerate button whenever the shown numbers differ from the explained
+  ones.
+- Plotly bundle / SSR: plotly.js-basic-dist-min imported only in the
+  browser inside one wrapper. Deviation: no react-plotly.js (it requires
+  the full plotly.js as a peer, which npm would install); the wrapper calls
+  Plotly.react / purge itself.
+- Calibrated probabilities change risk bands and NBO values: fixtures that
+  cite them (E2E cites impact_estimates only) are re-checked.
+
+### 5. Tests and reference values
+- T5d.1: ROC-AUC, PR-AUC, Brier, calibration_curve(n_bins=10) equal sklearn
+  at 1e-9; precision/recall@10% and decile lift on a hand-worked 20-row
+  fixture with ties (k = 2); calibrator fitted on train indices only
+  (disjoint from test); calibrated Brier <= raw Brier on Telco.
+- T5d.2: 5-row fixture with hand-computed revenue_at_risk and every
+  customer x offer expected_saving; "No offer" when all <= 0; ineligible
+  offers excluded; missing-column rule -> warning; save_rate 1 +
+  per_targeted reproduces p*acc*ARPU*12 - cost; months linear; invalid
+  YAML -> CatalogueError with line number; no ARPU -> disabled.
+- T5d.3: p1 0.20, lift 0.25 -> 903 per arm (statsmodels 902.34); p1
+  0.26, lift 0.20 -> 1038; bad lift / p1 / power -> ValueError; ratio
+  matches solve_power(ratio=...).
+- T5d.4: parallel nodes append events (no InvalidUpdateError); every node
+  incl. skipped has latency; token sums match a mocked wrapper; cost by
+  hand; schema corrections on a fixture; summaries persist and list.
+- T5d.5: each endpoint happy path, 410 unknown session, 422 invalid
+  assumptions; uploads with no churn column, one class, 49 rows and
+  MIN_ROWS - 1 rows -> 422 with the SPEC messages.
+- T5d.6: component tests (KPI tooltips, ASSUMPTION labels, banner +
+  Regenerate), PlotlyChart loads client-side only; E2E opens the three
+  tabs and edits months remaining.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -614,6 +753,11 @@ flowchart TD
   "untrustworthy" (blocks ship).
 
 ## Checkpoints for the human
+- S8 (T5d.0): Phase 5d plan written above under "Phase 5d plan" (FULL-AUTO:
+  recorded as a checkpoint, work continued). Deviations to note: app/config.py
+  becomes a package so offers.yaml / pricing.yaml can live in app/config/;
+  no react-plotly.js (full plotly.js peer); calibrated probabilities replace
+  raw ones for risk bands, NBO and money metrics.
 - S6 (end of Phase 6, MVP): run the app locally and click through all tabs:
   backend `cd backend && .venv/bin/uvicorn app.main:app --port 8010`,
   frontend `cd frontend && NEXT_PUBLIC_API_URL=http://localhost:8010 npm run dev`,
