@@ -356,6 +356,10 @@ push, open the PR; the human merges it. Then Phase 5c (A/B testing).
   Live Gemini: 2 of 2 messages passed validation first try (SMS 146/145
   chars); prompt gained a rule against inventing customer history after
   one called a 4-month customer "long-standing". Backend 262, frontend 91.
+- Phase 5b gate review: no High or Medium issues. Added a test for
+  confirmed offer columns with every cell blank (no crash; everyone gets
+  "No offer: no eligible offers"). Low items in Known issues. Backend 263,
+  frontend 91, E2E 1 (offer flow included).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -532,6 +536,14 @@ flowchart TD
 - Phase 6 (Low): the 30 s client timeout can be short for a 10 MB upload on a
   slow connection; /results sends the whole state on every call (~300 KB on
   Telco); /predictions is not rate-limited yet (Phase 8 hardening).
+
+- Phase 5b (Low): the offer-message endpoint can be called for many
+  customers (each first call is one LLM call; bounded by GEMINI_RPM and the
+  cache, per-IP limits come in Phase 8); offer names and reasons from the
+  uploaded file reach the message prompt (numbers are validated, wording is
+  not); duplicate customer IDs would share one row's features in next-best-
+  offer scoring; offer acceptance models are weak on Telco (CV ROC-AUC
+  0.48-0.64), so offer choice leans on the retention lift.
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

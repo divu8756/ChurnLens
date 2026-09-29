@@ -127,3 +127,19 @@ def test_an_offer_with_no_retention_effect_is_never_recommended():
     frame.loc[shown & (frame["Accepted"] == "Yes"), "Churn"] = 1  # acceptors even worse
     table, _ = run(frame, schema, predictions)
     assert "Data pack" not in set(table["best_offer"])
+
+
+def test_confirmed_offer_columns_with_no_offers_do_not_crash():
+    from app.stats.offers import offer_tests, run_offer_effectiveness
+    frame, schema, predictions = data()
+    frame["Offer"] = ""
+    frame["Accepted"] = ""
+    assert offer_tests(frame, schema) == []
+    catalog, eff = run_offer_effectiveness(frame, schema, probabilities=predictions.set_index(
+        "customer_id")["churn_probability"])
+    assert catalog["n_offers"] == 0 and eff["offers"] == [] and eff["selection_bias"] is None
+    assert eff["never_offered"]["n"] == len(frame)
+    table, summary = run(frame, schema, predictions)
+    assert (table["best_offer"] == NO_OFFER).all()
+    assert table["no_offer_reason"].eq("no eligible offers").all()
+    assert summary["by_offer"][0]["offer"] == NO_OFFER
