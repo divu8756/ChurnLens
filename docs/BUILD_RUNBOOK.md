@@ -8,7 +8,7 @@ This single file is the complete build plan. Claude Code reads it and builds Chu
 
 ### Before you start (one time)
 
-- Install: Homebrew, then `brew install python@3.11 node git gh libomp pandoc`, and Claude Code (`npm install -g @anthropic-ai/claude-code`).
+- Install: Homebrew, then `brew install python@3.14 node git gh libomp pandoc`, and Claude Code (`npm install -g @anthropic-ai/claude-code`).
 - Accounts: GitHub (`gh auth login`), Vercel and Render (sign up with GitHub), Google AI Studio (create a Gemini API key; note the current Pro and Flash model names).
 - Create the project folder: `mkdir churnlens && cd churnlens && git init && mkdir -p docs backend/sample_data`.
 - Sample data is generated automatically by scripts/generate_telco_sample.py (IBM-Telco-style, 7,000 customers + retention offers, fixed seed) and scripts/generate_india_sample.py (4-table India dataset). No download needed.
@@ -70,7 +70,7 @@ Before the first task
 1. Confirm the repo root contains docs/BUILD_RUNBOOK.md and
    backend/sample_data/telco_churn.csv. If the CSV is missing, generate
    it: python3 scripts/generate_telco_sample.py backend/sample_data/telco_churn.csv
-2. Check tool versions: python3.11, node >= 20, git, gh. Report any gap.
+2. Check tool versions: python3.14, node >= 20, git, gh. Report any gap.
 
 Standard Task Protocol (run for EVERY task)
 1. Set "Current task" in docs/PROGRESS.md to the task ID.
@@ -168,7 +168,7 @@ application code in this task.
 Phase 1 of docs/SPEC.md: scaffold only, no business logic.
 
 backend/
-- Python 3.11 venv at backend/.venv; pyproject.toml with pinned
+- Python 3.14 venv at backend/.venv; pyproject.toml with pinned
 versions; ruff + pytest configured.
 - app/main.py: FastAPI with GET /health returning {status, version},
 CORS limited to FRONTEND_ORIGIN from env.
@@ -178,7 +178,7 @@ DATABASE_URL (optional), MAX_UPLOAD_MB=10, MAX_ROWS=100000.
 Fail fast with a clear message if a required var is missing.
 - Empty packages: app/agents, app/graph, app/prompts, app/stats,
 app/api, tests/. Keep backend/sample_data/telco_churn.csv (already present).
-- Dockerfile (python:3.11-slim, non-root user, uvicorn on $PORT).
+- Dockerfile (python:3.14-slim, non-root user, uvicorn on $PORT).
 - tests/test_health.py.
 
 frontend/
@@ -1279,7 +1279,7 @@ Agentic churn analysis app. Full spec: docs/SPEC.md. Progress: docs/PROGRESS.md.
 Build plan: docs/BUILD_RUNBOOK.md (follow its Execution Protocol).
 
 ## Stack
-- backend/: Python 3.11, FastAPI, LangGraph, langchain-google-genai, pandas,
+- backend/: Python 3.14, FastAPI, LangGraph, langchain-google-genai, pandas,
 scipy, statsmodels, scikit-learn, shap, lifelines. Deployed on Render (Docker).
 - frontend/: Next.js (App Router), TypeScript strict, Tailwind, Recharts,
 KaTeX. Deployed on Vercel, root directory = frontend.

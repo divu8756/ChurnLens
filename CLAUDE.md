@@ -3,7 +3,7 @@ Agentic churn analysis app. Full spec: docs/SPEC.md. Progress: docs/PROGRESS.md.
 Build plan: docs/BUILD_RUNBOOK.md (follow its Execution Protocol).
 
 ## Stack
-- backend/: Python 3.11, FastAPI, LangGraph, langchain-google-genai, pandas,
+- backend/: Python 3.14, FastAPI, LangGraph, langchain-google-genai, pandas,
 scipy, statsmodels, scikit-learn, shap, lifelines. Deployed on Render (Docker).
 - frontend/: Next.js (App Router), TypeScript strict, Tailwind, Recharts,
 KaTeX. Deployed on Vercel, root directory = frontend.
@@ -95,8 +95,8 @@ working immediately. Do not ask what to do.
 ### PREFLIGHT (once, right after BOOTSTRAP)
 Project root must be /Users/divyanshusrivastava/ChurnLens. Run `pwd`; if it differs, stop and tell the
 human to start Claude Code from that folder.
-1. Check: python3.11, node >= 20, git, gh. If Homebrew is available, install
-   anything missing with brew (python@3.11 node gh libomp). Report versions.
+1. Check: python3.14, node >= 20, git, gh. If Homebrew is available, install
+   anything missing with brew (python@3.14 node gh libomp). Report versions.
 2. backend/.env already exists (written by BOOTSTRAP) with GEMINI_API_KEY set.
    Never print, log, commit or echo its value.
 3. Pick the Gemini models automatically: with a small Python script that
