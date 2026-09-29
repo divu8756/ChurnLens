@@ -15,6 +15,8 @@ from app.main import create_app
 SID = "a" * 32
 SID2 = "b" * 32
 OFFER = "10% off annual contract"
+WORKSPACE = "test-workspace-key-0001"
+OTHER_WORKSPACE = "someone-else-key-0002"
 
 
 def _write_session(tmp_path, sid: str, n: int = 3000, seed: int = 42) -> dict:
@@ -58,7 +60,7 @@ def api(tmp_path, monkeypatch):
         return load
 
     monkeypatch.setattr(experiments_api, "values_loader", fake_loader)
-    with TestClient(create_app()) as client:
+    with TestClient(create_app(), headers={"X-Workspace-Key": WORKSPACE}) as client:
         yield client, store
 
 
@@ -364,3 +366,57 @@ def test_design_preview_and_segment_options(api):
     assert "risk_band" in options and "churn_probability" in options
     assert "customerID" not in options and "Churn" not in options
     assert client.get(f"/experiments/segment-options/{'e' * 32}").status_code == 410
+
+
+
+def test_experiments_are_private_to_their_workspace(api):
+    client, _ = api
+    exp, _ = _running(client)
+    other = {"X-Workspace-Key": OTHER_WORKSPACE}
+    assert client.get("/experiments", headers=other).json() == []
+    for path in (f"/experiments/{exp['id']}", f"/experiments/{exp['id']}/assignment.csv"):
+        assert client.get(path, headers=other).status_code == 404
+    res = client.post(f"/experiments/{exp['id']}/approve", headers=other,
+                      json={"approver": "x", "cost_and_eligibility_reviewed": True})
+    assert res.status_code == 404
+    # The other workspace can assign the same customers: no cross-workspace overlap.
+    theirs = client.post("/experiments", headers=other, json={
+        "name": "Theirs", "hypothesis": "h", "session_id": SID, "segment_definition": MTM,
+        "offer": OFFER, "mde": 0.05, "created_by": "them"}).json()
+    client.post(f"/experiments/{theirs['id']}/approve", headers=other,
+                json={"approver": "them", "cost_and_eligibility_reviewed": True})
+    body = client.post(f"/experiments/{theirs['id']}/assign", headers=other,
+                       json={"session_id": SID, "actor": "them"}).json()
+    assert body["assignment_summary"]["excluded_other_experiments"] == 0
+    assert [e["id"] for e in client.get("/experiments").json()] == [exp["id"]]
+
+
+@pytest.mark.parametrize("headers", [{}, {"X-Workspace-Key": "short"},
+                                     {"X-Workspace-Key": "bad key with spaces!!"}])
+def test_workspace_key_is_required_and_checked(api, headers):
+    client, _ = api
+    bare = TestClient(client.app)
+    assert bare.get("/experiments", headers=headers).status_code == 400
+
+
+
+def test_degenerate_results_do_not_crash(api):
+    client, _ = api
+    exp, assignment = _running(client)
+    only_control = _results(assignment)
+    only_control = only_control[only_control.group == "control"]
+    res = _upload(client, exp["id"], only_control)
+    assert res.status_code == 422 and "both the treatment and the control" in res.json()["detail"]
+
+    flat = _results(assignment)
+    flat["churned"] = 0
+    flat["revenue"] = 50.0
+    flat["complaints"] = 0
+    res = _upload(client, exp["id"], flat, offer_cost="5")
+    assert res.status_code == 200, res.text
+    analysis = res.json()["analysis"]
+    assert analysis["itt"]["p_value"] is None  # nobody churned: no test
+    # It saved nobody but still cost money.
+    assert analysis["impact"]["net_value"] < 0
+    assert analysis["decision_helper"]["verdict"] == "dont_ship"
+    assert analysis["guardrails"]["arpu"]["breached"] is False

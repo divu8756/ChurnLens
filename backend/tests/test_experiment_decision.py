@@ -209,3 +209,32 @@ def test_experiment_evidence_changes_next_best_offer_inputs():
     assert len(cashback) > (base_table.best_offer == "Cashback").sum()
     assert (cashback["retention_lift"] == 0.9).all()
     assert (cashback["evidence"] == EXPERIMENT_PROVEN).all()
+
+
+
+def test_offer_node_reads_only_its_workspace_evidence(api):  # noqa: F811
+    import json
+
+    from test_experiments_api import OTHER_WORKSPACE, WORKSPACE
+
+    from app import sessions
+    from app.agents.offer import offer_evidence
+    from app.experiments.workspace import hash_key
+
+    client, _ = api
+    exp, assignment = _running(client)
+    _upload(client, exp["id"], _results(assignment), offer_cost="20")
+    assert _decide(client, exp["id"], "ship").status_code == 200
+
+    def session_with(workspace):
+        sid = sessions.new_session_id()
+        folder = sessions.session_dir(sid)
+        folder.mkdir(parents=True)
+        (folder / sessions.META_FILE).write_text(json.dumps({"workspace_hash": workspace}))
+        return sid
+
+    mine = offer_evidence(session_with(hash_key(WORKSPACE)))
+    assert set(mine) == {exp["offer"].casefold()}
+    assert offer_evidence(session_with(hash_key(OTHER_WORKSPACE))) == {}
+    assert offer_evidence(session_with(None)) == {}
+    assert offer_evidence(None) == {}

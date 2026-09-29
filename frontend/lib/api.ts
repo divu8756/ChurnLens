@@ -1,6 +1,7 @@
 // Typed client for the ChurnLens API. The base URL is inlined at build time.
 // Types come from the backend's OpenAPI schema: run `npm run gen:types` after API changes.
 import type { components } from "./api-types";
+import { WORKSPACE_HEADER, workspaceKey } from "./workspace";
 
 type Schemas = components["schemas"];
 
@@ -122,7 +123,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
   const timeout = AbortSignal.timeout(timeoutMs);
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
-  const headers: Record<string, string> = {};
+  // Scopes experiments to this browser; uploads record it for next-best-offer evidence.
+  const headers: Record<string, string> = { [WORKSPACE_HEADER]: workspaceKey() };
   let body = options.body;
   if (options.json !== undefined) {
     headers["Content-Type"] = "application/json";
@@ -283,8 +285,21 @@ export function assignExperiment(id: number, sessionId: string, actor: string, s
   });
 }
 
-export function assignmentCsvUrl(id: number): string {
-  return `${API_URL}/experiments/${id}/assignment.csv`;
+/** The assignment CSV (fetched with the workspace header, so it cannot be a plain link). */
+export async function downloadAssignmentCsv(id: number, signal?: AbortSignal): Promise<Blob> {
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/experiments/${id}/assignment.csv`, {
+      headers: { [WORKSPACE_HEADER]: workspaceKey() },
+      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiError("network", "Could not download the assignment.");
+  }
+  if (!response.ok) throw await toApiError(response);
+  return response.blob();
 }
 
 export function uploadExperimentResults(

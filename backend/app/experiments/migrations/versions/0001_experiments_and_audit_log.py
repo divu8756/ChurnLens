@@ -90,13 +90,13 @@ def upgrade() -> None:
     op.create_index("ix_experiment_audit_log_experiment_id", "experiment_audit_log",
                     ["experiment_id"])
 
-    dialect = op.get_bind().dialect.name
+    dialect = op.get_context().dialect.name
     for sql in {"sqlite": SQLITE_TRIGGERS, "postgresql": POSTGRES_TRIGGERS}.get(dialect, []):
         op.execute(sql)
 
 
 def downgrade() -> None:
-    dialect = op.get_bind().dialect.name
+    dialect = op.get_context().dialect.name
     if dialect == "sqlite":
         op.execute("DROP TRIGGER IF EXISTS experiment_audit_log_no_update")
         op.execute("DROP TRIGGER IF EXISTS experiment_audit_log_no_delete")

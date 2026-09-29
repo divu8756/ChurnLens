@@ -1,7 +1,7 @@
 """Experiment segment definitions: a flat list of column filters, ANDed together.
 Evaluated with plain pandas comparisons (no query strings, no eval)."""
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -13,7 +13,7 @@ Scalar = str | float | int | bool
 class SegmentFilter(BaseModel):
     column: str = Field(min_length=1, max_length=200)
     op: Op
-    value: Scalar | list[Scalar]
+    value: Scalar | Annotated[list[Scalar], Field(max_length=200)]
 
 
 class SegmentDefinition(BaseModel):

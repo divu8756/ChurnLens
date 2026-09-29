@@ -51,9 +51,10 @@ class ServiceError(Exception):
         self.detail = detail
 
 
-def get_experiment(db: Session, experiment_id: int) -> Experiment:
+def get_experiment(db: Session, experiment_id: int, workspace: str) -> Experiment:
     exp = db.get(Experiment, experiment_id)
-    if exp is None:
+    # Another workspace's experiment looks exactly like a missing one.
+    if exp is None or exp.workspace_hash != workspace:
         raise ServiceError(404, f"Experiment {experiment_id} not found.")
     return exp
 
@@ -133,9 +134,16 @@ def _apply_design(exp: Experiment, fields: ExperimentDesignFields, design: dict[
     exp.design = design
 
 
-def create(db: Session, payload: ExperimentCreate, load: ValuesLoader) -> Experiment:
+def list_experiments(db: Session, workspace: str) -> list[Experiment]:
+    return list(db.scalars(select(Experiment).where(Experiment.workspace_hash == workspace)
+                           .order_by(Experiment.id.desc())))
+
+
+def create(db: Session, payload: ExperimentCreate, load: ValuesLoader, workspace: str
+           ) -> Experiment:
     design = build_design(payload, load)
-    exp = Experiment(created_by=payload.created_by, status="draft", primary_metric="churn")
+    exp = Experiment(created_by=payload.created_by, status="draft", primary_metric="churn",
+                     workspace_hash=workspace)
     _apply_design(exp, payload, design)
     db.add(exp)
     db.flush()
@@ -200,12 +208,12 @@ def approve(db: Session, exp: Experiment, request: ApproveRequest) -> Experiment
     return exp
 
 
-def busy_customers(db: Session, experiment_id: int) -> set[str]:
-    """Customers already assigned to another experiment that is still running."""
+def busy_customers(db: Session, exp: Experiment) -> set[str]:
+    """Customers already in another running experiment of the same workspace."""
     rows = db.scalars(
         select(Assignment.customer_id).join(Experiment, Experiment.id == Assignment.experiment_id)
-        .where(Experiment.status.in_(ACTIVE), Experiment.id != experiment_id,
-               Experiment.demo.is_(False)))
+        .where(Experiment.status.in_(ACTIVE), Experiment.id != exp.id,
+               Experiment.demo.is_(False), Experiment.workspace_hash == exp.workspace_hash))
     return set(rows)
 
 
@@ -232,7 +240,7 @@ def assign(db: Session, exp: Experiment, session_id: str, actor: str, load: Valu
     values = load(session_id)
     customers, covariates = _customers(values)
     segment = _segment(customers, exp.segment_definition)
-    busy = busy_customers(db, exp.id)
+    busy = busy_customers(db, exp)
     eligible = segment[~segment["customer_id"].isin(busy)].reset_index(drop=True)
     excluded = len(segment) - len(eligible)
     if eligible.empty:
@@ -362,6 +370,10 @@ def upload_results(db: Session, exp: Experiment, content: bytes, uploaded_by: st
     if early:
         warnings.insert(0, early)
 
+    arms = set(outcomes["arm"])
+    if arms != {"treatment", "control"}:
+        raise ServiceError(422, "Results do not match the assignment: the file needs "
+                                "customers from both the treatment and the control group.")
     db.execute(delete(Outcome).where(Outcome.experiment_id == exp.id))
     db.execute(insert(Outcome), outcome_rows(exp.id, outcomes))
     db.flush()
@@ -431,9 +443,11 @@ def decide(db: Session, exp: Experiment, request: DecideRequest) -> Experiment:
     return exp
 
 
-def offer_evidence(db: Session) -> list[OfferEvidence]:
-    return list(db.scalars(select(OfferEvidence).order_by(OfferEvidence.decided_at.desc(),
-                                                          OfferEvidence.id.desc())))
+def offer_evidence(db: Session, workspace: str) -> list[OfferEvidence]:
+    return list(db.scalars(
+        select(OfferEvidence).join(Experiment, Experiment.id == OfferEvidence.experiment_id)
+        .where(Experiment.workspace_hash == workspace)
+        .order_by(OfferEvidence.decided_at.desc(), OfferEvidence.id.desc())))
 
 
 def summary(db: Session, exp: Experiment) -> dict[str, Any]:
@@ -443,7 +457,13 @@ def summary(db: Session, exp: Experiment) -> dict[str, Any]:
     cached = exp.analysis.get("summary")
     if cached:
         return cached
-    result = generate_summary(exp.analysis, exp.offer)
+    analysis = exp.analysis
+    # The LLM call can take minutes: never hold a database transaction open across it.
+    db.commit()
+    result = generate_summary(analysis, exp.offer)
+    db.refresh(exp)
+    if exp.analysis != analysis:
+        return result  # results or assumptions changed meanwhile: do not cache a stale text
     # Reassign so SQLAlchemy sees the JSON change.
     exp.analysis = {**exp.analysis, "summary": result}
     audit(db, exp, "system", "summary_generated", details={"source": result["source"]})
@@ -484,8 +504,8 @@ DEMO_ACTOR = "demo"
 DEMO_ASSUMPTIONS = AnalysisAssumptions(offer_cost=20.0)
 
 
-def create_demo(db: Session, session_id: str, load: ValuesLoader, *, is_sample: bool
-                ) -> Experiment:
+def create_demo(db: Session, session_id: str, load: ValuesLoader, workspace: str, *,
+                is_sample: bool) -> Experiment:
     """A worked example on the sample data: designed, approved, assigned and given a
     simulated results file with a known effect (control 26% vs treatment 21% churn).
     Left at "results uploaded" so the user makes the decision. Not real evidence: demo
@@ -514,7 +534,8 @@ def create_demo(db: Session, session_id: str, load: ValuesLoader, *, is_sample: 
     except ServiceError as exc:
         raise ServiceError(409, f"The demo needs the sample data's columns: {exc.detail}"
                            ) from None
-    exp = Experiment(created_by=DEMO_ACTOR, status="draft", primary_metric="churn", demo=True)
+    exp = Experiment(created_by=DEMO_ACTOR, status="draft", primary_metric="churn", demo=True,
+                     workspace_hash=workspace)
     _apply_design(exp, fields, design)
     db.add(exp)
     db.flush()

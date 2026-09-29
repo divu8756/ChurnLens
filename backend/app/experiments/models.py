@@ -83,6 +83,8 @@ class Experiment(Base):
     results_uploaded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Demo experiments (simulated results on the sample data) never block real ones.
     demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # SHA-256 of the owner's workspace key (app/experiments/workspace.py).
+    workspace_hash: Mapped[str | None] = mapped_column(String(64), index=True)
 
 
 class Assignment(Base):

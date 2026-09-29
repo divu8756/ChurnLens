@@ -2725,7 +2725,9 @@ export interface operations {
     list_experiments_experiments_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2740,12 +2742,23 @@ export interface operations {
                     "application/json": components["schemas"]["ExperimentSummary"][];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     create_experiment_experiments_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2814,7 +2827,9 @@ export interface operations {
     create_demo_experiments_demo_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2952,7 +2967,9 @@ export interface operations {
     list_offer_evidence_experiments_offer_evidence_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2965,6 +2982,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OfferEvidenceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3039,7 +3065,9 @@ export interface operations {
     get_experiment_experiments__experiment_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3106,7 +3134,9 @@ export interface operations {
     update_experiment_experiments__experiment_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3177,7 +3207,9 @@ export interface operations {
     reanalyse_experiments__experiment_id__analysis_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3248,7 +3280,9 @@ export interface operations {
     approve_experiment_experiments__experiment_id__approve_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3319,7 +3353,9 @@ export interface operations {
     assign_experiment_experiments__experiment_id__assign_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3390,7 +3426,9 @@ export interface operations {
     export_assignment_experiments__experiment_id__assignment_csv_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3458,7 +3496,9 @@ export interface operations {
     decide_experiments__experiment_id__decide_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3529,7 +3569,9 @@ export interface operations {
     upload_results_experiments__experiment_id__results_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3600,7 +3642,9 @@ export interface operations {
     experiment_summary_experiments__experiment_id__summary_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path: {
                 experiment_id: number;
             };
@@ -3966,7 +4010,9 @@ export interface operations {
     load_sample_sample_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -4095,7 +4141,9 @@ export interface operations {
     upload_upload_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };

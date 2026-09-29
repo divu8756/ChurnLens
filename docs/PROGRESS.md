@@ -3,11 +3,13 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 5c gate (review, PR)
+T5d.0 (Plan the metrics layer, no code)
 
 ## Next step
-Phase 5c gate: strict review of git diff main...phase-5c, fix High/Medium,
-push, open the PR and get CI green. Then Phase 5d (metrics layer, T5d.0).
+Phase 5c PR is open (see Done); the human merges it. Then Phase 5d on a
+branch stacked on phase-5c: T5d.0 plan, then T5d.1-T5d.6. The shared A/B
+function already exists (stats/experiment_design.sample_size with
+mde_type="relative").
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -429,6 +431,22 @@ push, open the PR and get CI green. Then Phase 5d (metrics layer, T5d.0).
   experiment" button on the Experiments tab; the E2E walk-through now loads
   the demo, writes the (template) summary and records a decision.
   Backend 353, frontend 101, E2E 1.
+- Phase 5c gate review. Fixed (High): experiments were global, so on a
+  shared deployment anyone could list others' experiments and download their
+  assignment CSVs (customer IDs, messages), and one user's decided experiment
+  changed next best offer for everyone with the same offer name. Now every
+  /experiments call needs an X-Workspace-Key (random per browser, only its
+  SHA-256 is stored, migration 0006); other workspaces get 404, overlap and
+  evidence are per workspace, uploads record the hash so offer_node reads
+  only its own workspace's evidence; the CSV is fetched with the header.
+  Fixed (Medium): the summary endpoint held a DB transaction open across the
+  LLM call (now commits first and skips caching if the analysis changed);
+  the async results upload ran parsing and statistics on the event loop
+  (now a sync handler in the threadpool); a results file with only one arm
+  gave a 500 (now 422). Low fixes: segment filter value lists capped at
+  200; migrations read the dialect from the context so the Postgres SQL can
+  be generated offline (checked: tables, ALTERs, trigger and function).
+  Low, not fixed: see Known issues. Backend 359, frontend 103, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -648,6 +666,15 @@ flowchart TD
 - Phase 5c (Low, T5c.2): two experiments assigned at the same moment could
   both claim the same customers (no DB lock across the overlap check);
   assignment.csv does not neutralise spreadsheet formulas in messages.
+- Phase 5c (Low, gate): Postgres was checked with offline SQL only (no
+  local Postgres; Docker needs the human's OK), and the Docker image was not
+  rebuilt for the new dependencies (sqlalchemy, alembic, psycopg[binary];
+  migrations ship inside the app package). The workspace key is a bearer
+  key in localStorage, not a login: clearing browser storage loses access to
+  that browser's experiments. Restarting the API re-runs an analysis when
+  the dashboard reloads (existing RunManager behaviour, seen during the
+  T5c.4 browser check). OfferEvidence.decided_at comes back without a
+  timezone on SQLite.
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

@@ -4,12 +4,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app import sessions
 from app.api.contract import HTTPErrorOut
 from app.config import BACKEND_DIR, get_settings
+from app.experiments.workspace import optional_workspace
 from app.ingest import (
     ParsedUpload,
     UploadRejected,
@@ -51,7 +52,7 @@ async def _read_limited(file: UploadFile, max_mb: int) -> bytes:
 
 
 def _finish(session_id: str, path: Path, filename: str, parsed: ParsedUpload,
-            sample: bool = False) -> UploadResponse:
+            sample: bool = False, workspace: str | None = None) -> UploadResponse:
     sessions.save_raw(path, parsed.frame)
     columns = [str(c) for c in parsed.frame.columns]
     sessions.write_meta(path, {
@@ -66,6 +67,8 @@ def _finish(session_id: str, path: Path, filename: str, parsed: ParsedUpload,
         "created_at": datetime.now(UTC).isoformat(),
         # The built-in sample (unlocks the demo experiment); never set for uploads.
         "sample": sample,
+        # Scopes experiment evidence for this session's next best offer (hash, not key).
+        "workspace_hash": workspace,
     })
     (path / PENDING_XLSX).unlink(missing_ok=True)
     return UploadResponse(
@@ -78,6 +81,7 @@ def _finish(session_id: str, path: Path, filename: str, parsed: ParsedUpload,
 @router.post("/upload", response_model=UploadResponse, responses=ERRORS)
 async def upload(
     file: Annotated[UploadFile, File()],
+    workspace: Annotated[str | None, Depends(optional_workspace)],
     sheet_name: Annotated[str | None, Form()] = None,
 ) -> UploadResponse:
     settings = get_settings()
@@ -92,7 +96,7 @@ async def upload(
                 (path / PENDING_XLSX).write_bytes(data)
                 sessions.write_meta(path, {
                     "session_id": session_id, "status": "choose_sheet",
-                    "filename": filename, "sheets": sheets,
+                    "filename": filename, "sheets": sheets, "workspace_hash": workspace,
                     "created_at": datetime.now(UTC).isoformat(),
                 })
                 return UploadResponse(session_id=session_id, status="choose_sheet",
@@ -102,7 +106,7 @@ async def upload(
     except UploadRejected as exc:
         raise _reject(exc) from None
     session_id, path = sessions.create_session()
-    return _finish(session_id, path, filename, parsed)
+    return _finish(session_id, path, filename, parsed, workspace=workspace)
 
 
 @router.post("/upload/{session_id}/sheet", response_model=UploadResponse, responses=ERRORS)
@@ -121,11 +125,14 @@ def choose_sheet(session_id: str, sheet_name: Annotated[str, Form()]) -> UploadR
                               min_rows=settings.MIN_ROWS, max_rows=settings.MAX_ROWS)
     except UploadRejected as exc:
         raise _reject(exc) from None
-    return _finish(session_id, path, meta["filename"], parsed)
+    return _finish(session_id, path, meta["filename"], parsed,
+                   workspace=meta.get("workspace_hash"))
 
 
 @router.post("/sample", response_model=UploadResponse, responses=ERRORS)
-def load_sample() -> UploadResponse:
+def load_sample(
+    workspace: Annotated[str | None, Depends(optional_workspace)],
+) -> UploadResponse:
     settings = get_settings()
     if not SAMPLE_FILE.exists():
         raise HTTPException(503, "The sample dataset is not available on this server.")
@@ -135,4 +142,5 @@ def load_sample() -> UploadResponse:
     except UploadRejected as exc:
         raise _reject(exc) from None
     session_id, path = sessions.create_session()
-    return _finish(session_id, path, SAMPLE_FILE.name, parsed, sample=True)
+    return _finish(session_id, path, SAMPLE_FILE.name, parsed, sample=True,
+                   workspace=workspace)

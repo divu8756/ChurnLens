@@ -18,14 +18,22 @@ from app.stats.offers import prepare, run_offer_effectiveness
 NBO_FILE = "next_best_offers.parquet"
 
 
-def offer_evidence() -> dict[str, dict[str, Any]]:
-    """Latest decided-experiment evidence per offer (Phase 5c feedback loop)."""
+def offer_evidence(session_id: str | None) -> dict[str, dict[str, Any]]:
+    """Latest decided-experiment evidence per offer (Phase 5c feedback loop), from the
+    workspace that uploaded this session only."""
+    from app import sessions
     from app.experiments.db import session_scope
     from app.experiments.service import offer_evidence as load
 
+    try:
+        workspace = sessions.read_meta(session_id).get("workspace_hash") if session_id else None
+    except sessions.SessionNotFound:
+        workspace = None
     evidence: dict[str, dict[str, Any]] = {}
+    if not workspace:
+        return evidence
     with session_scope() as db:
-        for row in load(db):  # newest first
+        for row in load(db, workspace):  # newest first
             evidence.setdefault(row.offer.casefold(), {
                 "experiment_id": row.experiment_id,
                 "retention_lift_per_acceptor": row.retention_lift_per_acceptor,
@@ -75,7 +83,7 @@ def offer_node(state: ChurnState) -> dict[str, Any]:
                                           columns=["customer_id", "churn_probability",
                                                    "risk_band"])
             try:
-                evidence = offer_evidence()
+                evidence = offer_evidence(state.session_id)
             except Exception as exc:  # noqa: BLE001 - fall back to observational estimates
                 evidence = {}
                 errors.append(ErrorEntry(node="offer", message="Experiment evidence could "

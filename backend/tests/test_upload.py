@@ -95,6 +95,11 @@ def test_sample_endpoint_loads_telco(client):
     assert response.status_code == 200, response.text
     assert response.json()["rows"] == 7014 and "Churn" in response.json()["columns"]
     assert sessions.read_meta(response.json()["session_id"])["sample"] is True
+    assert sessions.read_meta(response.json()["session_id"])["workspace_hash"] is None
+    keyed = client.post("/sample", headers={"X-Workspace-Key": "k" * 20})
+    from app.experiments.workspace import hash_key
+
+    assert sessions.read_meta(keyed.json()["session_id"])["workspace_hash"] == hash_key("k" * 20)
 
 
 # ---------------------------------------------------------------- rejections

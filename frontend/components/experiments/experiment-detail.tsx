@@ -6,7 +6,7 @@ import {
   ApiError,
   approveExperiment,
   assignExperiment,
-  assignmentCsvUrl,
+  downloadAssignmentCsv,
   uploadExperimentResults,
   type Experiment,
 } from "@/lib/api";
@@ -144,17 +144,38 @@ function AssignCard({ exp, actor, sessionId, onChange }: { exp: Experiment; acto
   );
 }
 
+function DownloadCsv({ id }: { id: number }) {
+  const [error, setError] = useState<string | null>(null);
+  const download = async () => {
+    setError(null);
+    try {
+      const url = URL.createObjectURL(await downloadAssignmentCsv(id));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `experiment_${id}_assignment.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not download the assignment.");
+    }
+  };
+  return (
+    <span className="flex items-center gap-2">
+      <Button variant="secondary" onClick={() => void download()}>
+        Download assignment CSV
+      </Button>
+      {error ? <span className="text-xs text-red-700 dark:text-red-300">{error}</span> : null}
+    </span>
+  );
+}
+
 function AssignmentSummary({ exp }: { exp: Experiment }) {
   const s = exp.assignment_summary;
   if (!s) return null;
   return (
     <Card
       title="Assigned groups"
-      actions={
-        <a className="text-sm font-medium text-blue-700 hover:underline dark:text-blue-300" href={assignmentCsvUrl(exp.id)}>
-          Download assignment CSV
-        </a>
-      }
+      actions={<DownloadCsv id={exp.id} />}
     >
       <div className="flex flex-col gap-3 text-sm">
         <p>
