@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T3.4
+Phase 3 gate
 
 ## Next step
-T3.4: hypothesis testing node (chi-square/Fisher, Welch/Mann-Whitney, BH).
+Phase 3 gate: review, PR, CI, merge. Then T4.1 (modelling).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -93,6 +93,13 @@ T3.4: hypothesis testing node (chi-square/Fisher, Welch/Mann-Whitney, BH).
   (or "not reached"), survival at 6/12/24 (null beyond follow-up), 95% CI,
   multivariate log-rank per variable, curves <= 200 points. KM and log-rank
   equal lifelines called directly. 132 tests.
+- T3.4: stats/hypothesis.py + hypothesis_node: chi-square (no Yates, stated
+  explicitly), Fisher for sparse 2x2, rare-level merging into Other,
+  Shapiro (<= 5,000 sample) + Levene then Welch t (Cohen's d) or
+  Mann-Whitney (rank-biserial r), BH across tests, H0/H1, assumptions, why,
+  inputs, LaTeX steps with numbers, effect bands, conclusions; cap 40 tests;
+  constant/>20-level columns skipped. All equal scipy/statsmodels within
+  1e-9. Telco: Contract strongest (V 0.37), 28 of 40 significant. 146 tests.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -202,6 +209,12 @@ flowchart TD
 - Gemini Flash models often return 503 "high demand" (both 3.8 and 3.5 at
   the same time during T2.3). The schema agent then uses rules only, which
   are correct on Telco. Consider billing / another model if this persists.
+- Campaign/offer columns (OfferCost, CampaignGroup...) are treatments, not
+  customer traits. They still enter segmentation and hypothesis tests until
+  Phase 5b confirms offer_columns; then exclude them from segmentation and
+  the churn model (runbook T4.1 / data dictionary).
+- Hypothesis test cap (40) keeps columns in data order; with more candidates
+  the last ones are skipped (Telco: OfferCost).
 - Per-IP rate limiting on /upload and /chat (SPEC API section) is not built
   yet; planned for Phase 8 hardening.
 

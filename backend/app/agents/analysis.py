@@ -9,6 +9,7 @@ import pandas as pd
 from app.graph.errors import FatalNodeError
 from app.graph.state import ChurnState, ProgressEntry
 from app.stats.eda import run_eda
+from app.stats.hypothesis import run_hypothesis_tests
 from app.stats.segmentation import run_segmentation
 from app.stats.survival import run_survival
 
@@ -57,3 +58,11 @@ def survival_node(state: ChurnState) -> dict[str, Any]:
               else "median survival not reached")
     return {"survival_results": result,
             "progress": [ProgressEntry(node="survival", status="done", detail=detail)]}
+
+
+def hypothesis_node(state: ChurnState) -> dict[str, Any]:
+    frame, schema = _load(state)
+    result = run_hypothesis_tests(frame, schema)
+    detail = f"{result['n_significant']} of {result['n_tests']} tests significant"
+    return {"hypothesis_results": result,
+            "progress": [ProgressEntry(node="hypothesis", status="done", detail=detail)]}

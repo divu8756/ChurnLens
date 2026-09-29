@@ -3,7 +3,12 @@
 Nodes not listed here still run as stubs until their task is built.
 """
 
-from app.agents.analysis import eda_node, segmentation_node, survival_node
+from app.agents.analysis import (
+    eda_node,
+    hypothesis_node,
+    segmentation_node,
+    survival_node,
+)
 from app.agents.cleaning import cleaning_node
 from app.agents.human_review import human_review_node
 from app.agents.ingest import ingest_node
@@ -21,4 +26,5 @@ def default_nodes() -> dict[str, NodeFn]:
         b.EDA: eda_node,
         b.SEGMENTATION: segmentation_node,
         b.SURVIVAL: survival_node,
+        b.HYPOTHESIS: hypothesis_node,
     }
