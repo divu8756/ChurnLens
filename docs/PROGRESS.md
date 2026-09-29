@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 3 gate
+Phase 3 gate (PR open)
 
 ## Next step
-Phase 3 gate: review, PR, CI, merge. Then T4.1 (modelling).
+Merge the Phase 3 PR when CI is green, then T4.1 (modelling).
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -100,6 +100,10 @@ Phase 3 gate: review, PR, CI, merge. Then T4.1 (modelling).
   inputs, LaTeX steps with numbers, effect bands, conclusions; cap 40 tests;
   constant/>20-level columns skipped. All equal scipy/statsmodels within
   1e-9. Telco: Contract strongest (V 0.37), 28 of 40 significant. 146 tests.
+- Phase 3 gate: 100k-row timings clean 2.1 s, EDA 0.4 s, segmentation
+  5.1 s, survival 0.4 s, hypothesis 0.7 s. Real nodes run in parallel inside
+  the graph (run tests). No High/Medium issues found; Low items are in Known
+  issues (treatment columns, test cap order).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
