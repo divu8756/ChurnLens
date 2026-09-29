@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = Field(min_length=1, repr=False)
     GEMINI_MODEL: str = Field(min_length=1)
     GEMINI_MODEL_FAST: str = Field(min_length=1)
+    GEMINI_MODEL_FALLBACK: str | None = None  # used when the main model stays overloaded
     GEMINI_RPM: int = Field(default=10, ge=1)
     FRONTEND_ORIGIN: str = "http://localhost:3000"
     DATA_DIR: Path = BACKEND_DIR / "data"

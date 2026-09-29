@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T1.2
+Phase 1 gate
 
 ## Next step
-T1.2: scaffold backend and frontend skeleton, CI, .env.example files.
+Phase 1 gate: review, PR, CI, merge. Then T2.1.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -15,6 +15,18 @@ T1.2: scaffold backend and frontend skeleton, CI, .env.example files.
   11 blank TotalCharges) and the 4-table India dataset (git-ignored, regenerate
   with scripts/generate_india_sample.py).
 - T1.1: architecture restated, Mermaid flow, top 5 risks (docs only, no tests).
+- T1.2: FastAPI skeleton (/health, CORS, fail-fast settings), Dockerfile
+  (python:3.14-slim, non-root), Next.js 16 app (TS strict, Tailwind, ESLint,
+  lint/typecheck/build scripts), home page shows Backend online/offline
+  (verified in a browser against a local backend), CI workflow, MIT license,
+  .env.example files. Backend 4 tests.
+- T1.3: public repo already existed (divu8756/ChurnLens); phase-1 pushed, CI green
+  (backend + frontend jobs). No .env file tracked.
+- T1.4: backend/app/llm.py wrapper (tiers, shared throttle, retries with
+  backoff + jitter honouring retryDelay, content-failure retry, zero-quota 429
+  not retried, optional fallback model, token logging without prompts, usage
+  listeners), app/llm_fake.py FakeLLM, scripts/gemini_smoke_test.py.
+  Backend 27 tests passing.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -26,8 +38,14 @@ T1.2: scaffold backend and frontend skeleton, CI, .env.example files.
   wheels on 3.14 (checked with a pip dry run). Dockerfile uses python:3.14-slim.
 - Tool versions: Python 3.14.5, Node v24.16.0, git 2.50.1, gh 2.101.0.
   Homebrew is not installed; nothing needed installing.
-- Gemini models (scripts/select_gemini_models.py, newest stable, non-preview):
-  GEMINI_MODEL=gemini-2.5-pro, GEMINI_MODEL_FAST=gemini-3.8-flash.
+- Gemini models (scripts/select_gemini_models.py, newest stable, non-preview)
+  first chose GEMINI_MODEL=gemini-2.5-pro, GEMINI_MODEL_FAST=gemini-3.8-flash.
+  Smoke test (T1.4): gemini-2.5-pro returns 404 for this key, and every Pro
+  model (gemini-pro-latest, gemini-3.1-pro-preview) has free-tier quota 0.
+  Enabling billing is a paid-service decision for the human, so both tiers use
+  gemini-3.8-flash for now, with GEMINI_MODEL_FALLBACK=gemini-3.5-flash for
+  when 3.8-flash is overloaded (it returned 503s during testing).
+- Port 8000 is taken by another local program; use --port 8010 locally if needed.
 - Sample data is synthetic and IBM-Telco-style (fixed seed 20260331); India
   4-table demo dataset (fixed seed 20260401).
 
@@ -95,10 +113,12 @@ flowchart TD
 
 ## Checkpoints for the human
 - S1 (T1.1): architecture summary, graph flow and risks are under Decisions above.
-- Preflight: the only stable Pro model is gemini-2.5-pro (Gemini 3.x Pro exists
-  only as preview), while the stable Flash is gemini-3.8-flash, a newer
-  generation. The rule says "newest stable Pro", so the older Pro is used for
-  GEMINI_MODEL. If you prefer, set GEMINI_MODEL=gemini-3.8-flash in backend/.env.
+- S4 (T1.4): real smoke test via the wrapper succeeded on gemini-3.8-flash
+  (answer "ready", 14 input / ~200 output tokens, 19-32 s latency because the
+  model "thinks"; it also returned 503 overloaded several times and the
+  wrapper's retries handled it). Pro models need billing: if you enable it
+  in Google AI Studio, set GEMINI_MODEL=gemini-3.1-pro-preview (or a stable
+  Pro when one exists) in backend/.env.
 
 ## Known issues
 
