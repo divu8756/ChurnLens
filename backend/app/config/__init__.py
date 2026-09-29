@@ -6,7 +6,8 @@ from pathlib import Path
 from pydantic import Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+CONFIG_DIR = Path(__file__).resolve().parent
 
 
 class Settings(BaseSettings):

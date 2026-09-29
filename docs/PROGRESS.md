@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5d.2 (Offer catalogue + business metrics)
+T5d.3 (A/B test plan)
 
 ## Next step
-T5d.2 per the Phase 5d plan below, then T5d.3-T5d.6 and the Phase 5d gate.
+T5d.3 per the Phase 5d plan below, then T5d.4-T5d.6 and the Phase 5d gate.
 Branch phase-5d is stacked on phase-5c (tip 9af926c); after PR #8 is
 squash-merged: git rebase --onto main 9af926c phase-5d.
 
@@ -596,6 +596,16 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   score, SHAP reasons still explain the raw model. Telco: Brier 0.168 ->
   0.140, ROC-AUC 0.829 unchanged, top-10% precision 70.7%; High band 2,239
   -> 667 customers. Backend 369 (10 new).
+- T5d.2: app/config.py became the package app/config/ (same imports) holding
+  offers.yaml (5 offers named like the sample data's offers) and pricing.yaml
+  (free tier, 0); app/catalog.py validates both (errors name the YAML
+  line). app/stats/business_metrics.py: revenue at risk, expected saving
+  (per_accepted / per_targeted), eligibility rules (missing column -> offer
+  skipped with a warning), next best offer ("No offer" when <= 0), ROI by
+  segment, data overrides (Phase 5b rates, Phase 5c evidence preferred) and
+  an ASSUMPTIONS block with sources. app/business.py computes it per session
+  (disabled with a reason without an ARPU column; user edits > data >
+  YAML). Backend 388 (19 new).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -761,6 +771,13 @@ flowchart TD
   fixed in the draft and membership is stored at assignment, because the
   session data expires before results arrive. SRM failure gives the verdict
   "untrustworthy" (blocks ship).
+- T5d.2: PyYAML pinned (6.0.3, already installed via langchain-core; now
+  imported directly for offers.yaml / pricing.yaml). Business metrics are
+  computed on request (not stored in graph state): data overrides need
+  offer_node's output and assumption edits recompute anyway. Data save
+  rates: experiment = retention lift per acceptor / control churn;
+  observational = (churn if declined - churn if accepted) / churn if
+  declined. ROI = net expected saving / expected offer cost.
 
 ## Checkpoints for the human
 - S8 (T5d.0): Phase 5d plan written above under "Phase 5d plan" (FULL-AUTO:
