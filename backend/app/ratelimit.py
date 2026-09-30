@@ -23,13 +23,24 @@ class RateLimiter:
         """Record a hit; None if allowed, else seconds until the next slot frees."""
         now = time.monotonic() if now is None else now
         with self._lock:
+            self._prune(now)
             hits = self._hits[key]
-            while hits and now - hits[0] >= self.window_s:
-                hits.popleft()
             if len(hits) >= self.limit:
                 return self.window_s - (now - hits[0])
             hits.append(now)
             return None
+
+    def _prune(self, now: float) -> None:
+        """Drop expired hits, and IPs with none left, so memory stays bounded."""
+        for key in list(self._hits):
+            hits = self._hits[key]
+            while hits and now - hits[0] >= self.window_s:
+                hits.popleft()
+            if not hits:
+                del self._hits[key]
+
+    def tracked(self) -> int:
+        return len(self._hits)
 
 
 def client_ip(request: Request) -> str:

@@ -253,3 +253,21 @@ def test_rate_limiter_window_and_proxy_header(monkeypatch):
     monkeypatch.setenv("TRUST_PROXY_HEADERS", "true")
     get_settings.cache_clear()
     assert client_ip(Request(scope)) == "1.2.3.4"
+
+
+
+def test_question_time_budget(fake):
+    fake({"action": "call_tool", "tool": "get_segment", "segment_id": 1})
+    out = ask(telco_state(), "Slow question", [], budget_s=0)
+    assert out["status"] == "timeout" and out["tools_used"] == []
+
+
+def test_rate_limiter_forgets_idle_ips():
+    from app.ratelimit import RateLimiter
+
+    limiter = RateLimiter(5, window_s=60)
+    for i in range(100):
+        limiter.check(f"ip{i}", now=0)
+    assert limiter.tracked() == 100
+    limiter.check("new", now=61)
+    assert limiter.tracked() == 1

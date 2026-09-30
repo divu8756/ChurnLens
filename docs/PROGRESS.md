@@ -3,12 +3,15 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 7 gate (review, PR)
+T8.1 (Production hardening)
 
 ## Next step
-Phase 5d PR is open, stacked on phase-5c (#8); the human merges #8 then the
-5d PR (GitHub retargets it to main when phase-5c is deleted). Then Phase 7
-(T7.1 chat agent, T7.2 exports) on a branch stacked on phase-5d.
+Open the Phase 7 PR (phase-7 is pushed; gh is not installed in this
+environment, so use the GitHub link or install gh), stacked on phase-5d (#9)
+which is stacked on phase-5c (#8); the human merges them in order. Then
+Phase 8: T8.1 production hardening (per-IP limits on /upload and the other
+LLM endpoints, reuse app/ratelimit.py), T8.2 deploy (HUMAN STOP S7), T8.3
+README + demo assets.
 
 ## Phase 5d plan (T5d.0; S8 recorded as a checkpoint, FULL-AUTO)
 
@@ -674,6 +677,10 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   build once per analysis checkpoint and cache in the session folder.
   Telco: Excel 2.4 s / 1.7 MB, PDF 0.4 s. Download links in the dashboard
   header; E2E fetches both. Backend 457, frontend 115, E2E 1.
+- Phase 7 gate review. Fixed (Medium): a chat question had no overall time
+  limit (8 LLM steps x 45 s timeouts x retries); now 120 s per question,
+  status "timeout". Fixed (Low): the rate limiter pruned no idle IPs. Low,
+  not fixed: see Known issues. Backend 459, frontend 115, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -935,6 +942,13 @@ flowchart TD
   Phase 8). Calibration adds 5 cross-validated fits of the chosen model to
   training time. Calibrated risk bands score fewer customers for next best
   offer on Telco (2,622 Medium+High vs 4,136 before), as intended.
+- Phase 7 (Low, gate): get_customer_risk passes one customer's SHAP reason
+  strings (feature: value) to the LLM when the user asks about that customer
+  (the spec requires the tool; no other row data reaches the model). Excel
+  export of a 100k-row file will be slow (openpyxl, tables need the normal
+  writer); consider xlsxwriter if that matters. The export build lock is
+  global (one export at a time). Docker image not rebuilt for reportlab /
+  matplotlib (pure wheels; no system packages needed).
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

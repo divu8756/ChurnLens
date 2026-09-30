@@ -9,6 +9,7 @@ retry with feedback, then a safe message instead of unverified numbers.
 
 import json
 import operator
+import time
 from typing import Annotated, Any, Literal
 
 from langgraph.graph import END, START, StateGraph
@@ -25,12 +26,15 @@ MAX_TOOL_CALLS = 6
 MAX_ANSWER_RETRIES = 1
 HISTORY_MESSAGES = 10
 TIMEOUT_S = 45
+QUESTION_BUDGET_S = 120  # the whole question, across all steps
 UNVERIFIED = ("I could not back every number in my draft answer with the analysis, so I "
               "won't show it. Try a more specific question, for example about one column or "
               "segment.")
 LIMIT = (f"I reached the limit of {MAX_TOOL_CALLS} lookups for one question without a "
          "complete answer. Try asking something narrower.")
 UNAVAILABLE = "The AI service is not available right now. Please try again in a minute."
+TOO_SLOW = ("This question took too long to answer (the AI service is slow right now). "
+            "Try again, or ask something narrower.")
 TOOL_ARGS = {
     "get_stat": ("key",), "get_segment": ("segment_id",), "get_test_result": ("variable",),
     "get_customer_risk": ("customer_id",),
@@ -56,6 +60,7 @@ class ChatStep(BaseModel):
 
 class ChatState(TypedDict, total=False):
     question: str
+    deadline: float
     history: list[dict[str, str]]
     steps: Annotated[list[dict[str, Any]], operator.add]
     pending: dict[str, Any] | None
@@ -91,6 +96,8 @@ def build_chat_graph(data: ChatData) -> Any:
 
     def agent(state: ChatState) -> dict[str, Any]:
         steps = state.get("steps", [])
+        if time.monotonic() > state.get("deadline", float("inf")):
+            return {"answer": TOO_SLOW, "status": "timeout", "pending": None}
         prompt = render_prompt(
             *PROMPT, max_tools=str(MAX_TOOL_CALLS),
             calls_left=str(MAX_TOOL_CALLS - len(steps)), stat_roots=", ".join(STAT_ROOTS),
@@ -147,12 +154,13 @@ def build_chat_graph(data: ChatData) -> Any:
     return graph.compile()
 
 
-def ask(values: dict[str, Any], question: str, history: list[dict[str, str]]
-        ) -> dict[str, Any]:
+def ask(values: dict[str, Any], question: str, history: list[dict[str, str]],
+        budget_s: float = QUESTION_BUDGET_S) -> dict[str, Any]:
     """Answer one question. Returns answer, status and the tools used."""
     graph = build_chat_graph(ChatData(values))
     # Each tool call is 2 steps and each answer retry 1; keep a safety margin.
     final = graph.invoke({"question": question, "history": history[-HISTORY_MESSAGES:],
+                          "deadline": time.monotonic() + budget_s,
                           "steps": [], "answer_retries": 0, "feedback": ""},
                          {"recursion_limit": 4 * MAX_TOOL_CALLS + 10})
     steps = final.get("steps", [])

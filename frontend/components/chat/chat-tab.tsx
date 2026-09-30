@@ -18,6 +18,7 @@ const STATUS_NOTE: Record<string, string> = {
   unverified: "The draft answer used numbers not found in the analysis, so it was withheld.",
   limit: "Stopped after the maximum number of lookups.",
   unavailable: "The AI service was unavailable.",
+  timeout: "Stopped: the question took too long to answer.",
 };
 
 function toolLabel(t: NonNullable<ChatMessage["tools_used"]>[number]): string {
