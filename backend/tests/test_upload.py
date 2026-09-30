@@ -232,3 +232,49 @@ def test_xlsx_zip_bomb_is_rejected(client, monkeypatch):
     monkeypatch.setattr(ingest, "MAX_XLSX_UNPACKED_BYTES", 1000)
     response = post(client, "book.xlsx", xlsx_bytes({"A": frame(150)}))
     assert response.status_code == 413 and "expands" in response.json()["detail"]
+
+
+# ---------------------------------------------------------------- SPEC v1.3 upload errors
+
+
+def test_no_binary_target_candidate_is_rejected(client):
+    df = frame().drop(columns="Churn")
+    df["Contract"] = np.random.default_rng(1).choice(["A", "B", "C"], len(df))
+    response = post(client, "d.csv", csv_bytes(df))
+    assert response.status_code == 422
+    assert response.json()["detail"] == (
+        "No churn/target column found. Add a column with two values, e.g. Yes/No, "
+        "and re-upload.")
+
+
+def test_one_class_churn_column_is_rejected(client):
+    df = frame()
+    df["Churn"] = "No"
+    response = post(client, "d.csv", csv_bytes(df))
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "'Churn' has only one value ('No')" in detail and "churned" in detail
+
+
+def test_binary_column_with_another_name_is_accepted(client):
+    df = frame().rename(columns={"Churn": "Status"})
+    assert post(client, "d.csv", csv_bytes(df)).status_code == 200
+
+
+@pytest.mark.parametrize("rows", [49, 99])
+def test_too_few_rows_is_rejected(client, rows):
+    assert get_settings().MIN_ROWS == 100
+    response = post(client, "d.csv", csv_bytes(frame(rows)))
+    assert response.status_code == 422
+    assert f"The file has {rows} data rows; at least 100 are needed" in response.json()["detail"]
+
+
+def test_rejected_uploads_never_start_a_session(client):
+    before = set((get_settings().DATA_DIR / "sessions").glob("*")) \
+        if (get_settings().DATA_DIR / "sessions").exists() else set()
+    df = frame()
+    df["Churn"] = "Yes"
+    assert post(client, "d.csv", csv_bytes(df)).status_code == 422
+    after = set((get_settings().DATA_DIR / "sessions").glob("*")) \
+        if (get_settings().DATA_DIR / "sessions").exists() else set()
+    assert after == before

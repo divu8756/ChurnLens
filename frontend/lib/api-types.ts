@@ -287,6 +287,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/metrics/business/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Business Metrics */
+        get: operations["business_metrics_metrics_business__session_id__get"];
+        put?: never;
+        /**
+         * Recompute Business Metrics
+         * @description Recompute with edited assumptions (no LLM).
+         */
+        post: operations["recompute_business_metrics_metrics_business__session_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/metrics/business/{session_id}/explain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Explain Business Metrics
+         * @description A validated plain-English explanation of the numbers for these assumptions.
+         */
+        post: operations["explain_business_metrics_metrics_business__session_id__explain_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/metrics/model/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Model Metrics */
+        get: operations["model_metrics_metrics_model__session_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/predictions/{session_id}": {
         parameters: {
             query?: never;
@@ -406,6 +464,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/telemetry/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Runs
+         * @description Finished runs uploaded from this browser (X-Workspace-Key), newest first.
+         */
+        get: operations["runs_telemetry_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/telemetry/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Summary
+         * @description Live summary of this session's run (also while it is still running).
+         */
+        get: operations["run_summary_telemetry__session_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/upload": {
         parameters: {
             query?: never;
@@ -444,6 +542,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AbPlan */
+        AbPlan: {
+            /** Alpha */
+            alpha?: number | null;
+            /** Assumptions */
+            assumptions?: components["schemas"]["BusinessAssumption"][];
+            /** Available */
+            available: boolean;
+            /** Cohens H */
+            cohens_h?: number | null;
+            /** Formula Latex */
+            formula_latex?: string | null;
+            /** N Per Arm */
+            n_per_arm?: number | null;
+            /** N Second Arm */
+            n_second_arm?: number | null;
+            /** P1 */
+            p1?: number | null;
+            /** P2 */
+            p2?: number | null;
+            /** Power */
+            power?: number | null;
+            /** Reason */
+            reason?: string | null;
+            /** Relative Lift */
+            relative_lift?: number | null;
+            /** Segment */
+            segment: string;
+            /** Segment Customers */
+            segment_customers?: number | null;
+            /** Total N */
+            total_n?: number | null;
+            /** Warnings */
+            warnings?: string[];
+            /** Z Alpha */
+            z_alpha?: number | null;
+            /** Z Beta */
+            z_beta?: number | null;
+        };
         /**
          * AnalysisAssumptions
          * @description Money and guardrail assumptions for the results analysis. customer_value
@@ -643,6 +780,102 @@ export interface components {
             /** Sheet Name */
             sheet_name?: string | null;
         };
+        /** BusinessAssumption */
+        BusinessAssumption: {
+            /** Meaning */
+            meaning: string;
+            /** Name */
+            name: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "default" | "user" | "data";
+            /** Unit */
+            unit: string;
+            /** Value */
+            value?: number | null;
+        };
+        /**
+         * BusinessAssumptions
+         * @description Edits from the Business Impact tab; omitted fields keep their defaults.
+         */
+        BusinessAssumptions: {
+            /** Alpha */
+            alpha?: number | null;
+            /** Months Remaining */
+            months_remaining?: number | null;
+            /** Offers */
+            offers?: {
+                [key: string]: components["schemas"]["OfferOverride"];
+            };
+            /** Power */
+            power?: number | null;
+            /** Relative Lift */
+            relative_lift?: number | null;
+        };
+        /** BusinessExplanation */
+        BusinessExplanation: {
+            /** Assumptions Hash */
+            assumptions_hash: string;
+            /** Cached */
+            cached: boolean;
+            /** Figures */
+            figures: components["schemas"]["ExplanationFigure"][];
+            /** Problems */
+            problems: string[];
+            /** Sentences */
+            sentences: string[];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "ai" | "template";
+        };
+        /** BusinessKpis */
+        BusinessKpis: {
+            /** Customers Scored */
+            customers_scored: number;
+            /** Customers With Offer */
+            customers_with_offer: number;
+            /** Expected Saving */
+            expected_saving: number;
+            /** Overall Roi */
+            overall_roi?: number | null;
+            /** Revenue At Risk */
+            revenue_at_risk: number;
+        };
+        /** BusinessMetrics */
+        BusinessMetrics: {
+            ab_plan?: components["schemas"]["AbPlan"] | null;
+            /** Assumptions */
+            assumptions?: components["schemas"]["BusinessAssumption"][];
+            /** By Offer */
+            by_offer?: components["schemas"]["OfferTotals"][];
+            /**
+             * Defaults Only
+             * @default true
+             */
+            defaults_only: boolean;
+            /** Enabled */
+            enabled: boolean;
+            /** Formula */
+            formula?: {
+                [key: string]: string;
+            };
+            kpis?: components["schemas"]["BusinessKpis"] | null;
+            /** Next Best Offers */
+            next_best_offers?: components["schemas"]["NboRow"][];
+            /** Offers */
+            offers?: components["schemas"]["OfferUsed"][];
+            /** Reason */
+            reason?: string | null;
+            revenue_at_risk?: components["schemas"]["RevenueAtRisk"] | null;
+            /** Roi By Segment */
+            roi_by_segment?: components["schemas"]["SegmentRoi"][];
+            /** Warnings */
+            warnings?: string[];
+        };
         /** CalculationStep */
         CalculationStep: {
             /** Formula */
@@ -651,6 +884,21 @@ export interface components {
             label: string;
             /** Substituted */
             substituted: string;
+        };
+        /** CalibrationBin */
+        CalibrationBin: {
+            /** Bin */
+            bin: number;
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Mean Predicted */
+            mean_predicted?: number | null;
+            /** N */
+            n: number;
+            /** Observed Rate */
+            observed_rate?: number | null;
         };
         /** CategorySummary */
         CategorySummary: {
@@ -730,6 +978,15 @@ export interface components {
             /** Tp */
             tp: number;
         };
+        /** Correction */
+        Correction: {
+            /** Confirmed */
+            confirmed?: unknown;
+            /** Field */
+            field: string;
+            /** Proposed */
+            proposed?: unknown;
+        };
         /** Correlation */
         Correlation: {
             /** Columns */
@@ -740,6 +997,24 @@ export interface components {
             with_target?: {
                 [key: string]: number | null;
             };
+        };
+        /** CostEstimate */
+        CostEstimate: {
+            /** By Model */
+            by_model: {
+                [key: string]: number;
+            };
+            /** Currency */
+            currency: string;
+            /**
+             * Label
+             * @constant
+             */
+            label: "ESTIMATE";
+            /** Note */
+            note: string;
+            /** Total */
+            total: number;
         };
         /** CvScores */
         CvScores: {
@@ -797,6 +1072,23 @@ export interface components {
             new_planned_end?: string | null;
             /** Note */
             note: string;
+        };
+        /** Decile */
+        Decile: {
+            /** Churn Rate */
+            churn_rate?: number | null;
+            /** Churners */
+            churners: number;
+            /** Cumulative Gain */
+            cumulative_gain?: number | null;
+            /** Cumulative Share */
+            cumulative_share: number;
+            /** Decile */
+            decile: number;
+            /** Lift */
+            lift?: number | null;
+            /** N */
+            n: number;
         };
         /** DecisionHelperOut */
         DecisionHelperOut: {
@@ -1220,6 +1512,15 @@ export interface components {
             /** Source Recommendation Id */
             source_recommendation_id?: string | null;
         };
+        /** ExplanationFigure */
+        ExplanationFigure: {
+            /** Display */
+            display: string;
+            /** Source Key */
+            source_key: string;
+            /** Value */
+            value: number;
+        };
         /** FeatureImportance */
         FeatureImportance: {
             /** Driver Impact */
@@ -1536,6 +1837,15 @@ export interface components {
             /** Values */
             values: number[][];
         };
+        /** Latency */
+        Latency: {
+            /** By Node */
+            by_node: components["schemas"]["NodeLatency"][];
+            /** Total Node Time */
+            total_node_time: number;
+            /** Wall Clock */
+            wall_clock: number;
+        };
         /** LeakageWarning */
         LeakageWarning: {
             /** Column */
@@ -1608,6 +1918,30 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ModelMetricsV2 */
+        ModelMetricsV2: {
+            calibrated: components["schemas"]["ScoreSet"];
+            /**
+             * Calibration Method
+             * @enum {string}
+             */
+            calibration_method: "isotonic" | "sigmoid";
+            /** Calibration Note */
+            calibration_note: string;
+            /** Chosen Model Name */
+            chosen_model_name?: string | null;
+            /** Definitions */
+            definitions?: {
+                [key: string]: string;
+            };
+            /** N Test */
+            n_test: number;
+            /** N Train */
+            n_train: number;
+            raw: components["schemas"]["ScoreSet"];
+            /** Split */
+            split: string;
+        };
         /**
          * NamedSegment
          * @description A segment registered before approval, analysed separately (exploratory).
@@ -1617,6 +1951,29 @@ export interface components {
             filters: components["schemas"]["SegmentFilter"][];
             /** Name */
             name: string;
+        };
+        /** NboRow */
+        NboRow: {
+            /** Arpu */
+            arpu: number;
+            /** Best Offer */
+            best_offer: string;
+            /** Customer Id */
+            customer_id: string;
+            /** Eligible Offers */
+            eligible_offers: number;
+            /** Expected Cost */
+            expected_cost: number;
+            /** Expected Saving */
+            expected_saving: number;
+            /** P Churn */
+            p_churn: number;
+            /** Risk Band */
+            risk_band: string;
+            /** Runner Up */
+            runner_up?: string | null;
+            /** Runner Up Saving */
+            runner_up_saving?: number | null;
         };
         /** NboSummary */
         NboSummary: {
@@ -1713,6 +2070,17 @@ export interface components {
              * @enum {string}
              */
             status: "started" | "done" | "skipped" | "failed";
+        };
+        /** NodeLatency */
+        NodeLatency: {
+            /** Latency Ms */
+            latency_ms: number;
+            /** Node */
+            node: string;
+            /** Runs */
+            runs: number;
+            /** Status */
+            status: string;
         };
         /** NodeStartEvent */
         NodeStartEvent: {
@@ -1919,6 +2287,15 @@ export interface components {
             /** Shown */
             shown: number;
         };
+        /** OfferOverride */
+        OfferOverride: {
+            /** Acceptance */
+            acceptance?: number | null;
+            /** Cost */
+            cost?: number | null;
+            /** Save Rate */
+            save_rate?: number | null;
+        };
         /** OfferRow */
         OfferRow: {
             /** Acceptance Rate */
@@ -1962,6 +2339,37 @@ export interface components {
             test_name: string;
             /** Variable */
             variable: string;
+        };
+        /** OfferTotals */
+        OfferTotals: {
+            /** Customers */
+            customers: number;
+            /** Expected Cost */
+            expected_cost: number;
+            /** Expected Saving */
+            expected_saving: number;
+            /** Offer */
+            offer: string;
+        };
+        /** OfferUsed */
+        OfferUsed: {
+            /** Acceptance */
+            acceptance: number;
+            /** Cost */
+            cost: number;
+            /**
+             * Cost Basis
+             * @enum {string}
+             */
+            cost_basis: "per_accepted" | "per_targeted";
+            /** Name */
+            name: string;
+            /** Save Rate */
+            save_rate: number;
+            /** Sources */
+            sources: {
+                [key: string]: "default" | "user" | "data";
+            };
         };
         /** OfferValue */
         OfferValue: {
@@ -2009,6 +2417,13 @@ export interface components {
             importance_std: number;
             /** Rank */
             rank: number;
+        };
+        /** PrCurve */
+        PrCurve: {
+            /** Precision */
+            precision: number[];
+            /** Recall */
+            recall: number[];
         };
         /** PredictionRow */
         PredictionRow: {
@@ -2185,6 +2600,30 @@ export interface components {
              */
             status: "running" | "awaiting_confirmation" | "done" | "failed" | "interrupted";
         };
+        /** Retries */
+        Retries: {
+            /** Llm By Node */
+            llm_by_node: {
+                [key: string]: number;
+            };
+            /** Validator */
+            validator: {
+                [key: string]: number;
+            };
+        };
+        /** RevenueAtRisk */
+        RevenueAtRisk: {
+            /** Arpu Column */
+            arpu_column: string;
+            /** Customers */
+            customers: number;
+            /** Formula */
+            formula: string;
+            /** Months Remaining */
+            months_remaining: number;
+            /** Total */
+            total: number;
+        };
         /** RiskBands */
         RiskBands: {
             /** Band Counts */
@@ -2213,6 +2652,32 @@ export interface components {
             session_id: string;
             /** Status */
             status: string;
+        };
+        /** RunSummaryOut */
+        RunSummaryOut: {
+            cost: components["schemas"]["CostEstimate"];
+            /** Created At */
+            created_at?: string | null;
+            /** Events */
+            events: number;
+            latency_ms: components["schemas"]["Latency"];
+            retries: components["schemas"]["Retries"];
+            schema_corrections: components["schemas"]["SchemaCorrections"];
+            /** Session Id */
+            session_id?: string | null;
+            /** Status */
+            status: string;
+            tokens: components["schemas"]["Tokens"];
+            validator: components["schemas"]["ValidatorCounts"];
+        };
+        /** SchemaCorrections */
+        SchemaCorrections: {
+            /** Available */
+            available: boolean;
+            /** Count */
+            count: number;
+            /** Fields */
+            fields: components["schemas"]["Correction"][];
         };
         /** SchemaProblems */
         SchemaProblems: {
@@ -2257,6 +2722,26 @@ export interface components {
             target_column?: string | null;
             /** Time Column */
             time_column?: string | null;
+        };
+        /** ScoreSet */
+        ScoreSet: {
+            /** Brier */
+            brier: number;
+            /** Calibration */
+            calibration: components["schemas"]["CalibrationBin"][];
+            /** Churn Rate */
+            churn_rate: number;
+            /** Deciles */
+            deciles: components["schemas"]["Decile"][];
+            /** N */
+            n: number;
+            /** Pr Auc */
+            pr_auc?: number | null;
+            pr_curve?: components["schemas"]["PrCurve"] | null;
+            /** Roc Auc */
+            roc_auc?: number | null;
+            roc_curve?: components["schemas"]["RocCurve"] | null;
+            top_10pct: components["schemas"]["TopShare"];
         };
         /** Segment */
         Segment: {
@@ -2342,6 +2827,19 @@ export interface components {
             skipped?: string | null;
             /** Z */
             z?: number | null;
+        };
+        /** SegmentRoi */
+        SegmentRoi: {
+            /** Customers */
+            customers: number;
+            /** Roi */
+            roi?: number | null;
+            /** Segment */
+            segment: string;
+            /** Total Expected Cost */
+            total_expected_cost: number;
+            /** Total Expected Saving */
+            total_expected_saving: number;
         };
         /** Segments */
         Segments: {
@@ -2520,6 +3018,37 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** TokenCount */
+        TokenCount: {
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+        };
+        /** Tokens */
+        Tokens: {
+            /** By Model */
+            by_model: {
+                [key: string]: components["schemas"]["TokenCount"];
+            };
+            /** Input */
+            input: number;
+            /** Output */
+            output: number;
+        };
+        /** TopShare */
+        TopShare: {
+            /** Churners In Top */
+            churners_in_top: number;
+            /** K */
+            k: number;
+            /** Precision */
+            precision: number;
+            /** Recall */
+            recall?: number | null;
+            /** Share */
+            share: number;
+        };
         /** UploadInfo */
         UploadInfo: {
             /** Early Look */
@@ -2591,6 +3120,19 @@ export interface components {
             passed: number;
         } & {
             [key: string]: unknown;
+        };
+        /** ValidatorCounts */
+        ValidatorCounts: {
+            /** Checked */
+            checked: number;
+            /** Dropped */
+            dropped: number;
+            /** Failed */
+            failed: number;
+            /** Figures Caught */
+            figures_caught: number;
+            /** Passed */
+            passed: number;
         };
         /** Assumption */
         app__api__contract__Assumption: {
@@ -3732,6 +4274,246 @@ export interface operations {
             };
         };
     };
+    business_metrics_metrics_business__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessMetrics"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+        };
+    };
+    recompute_business_metrics_metrics_business__session_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BusinessAssumptions"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessMetrics"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+        };
+    };
+    explain_business_metrics_metrics_business__session_id__explain_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BusinessAssumptions"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessExplanation"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+        };
+    };
+    model_metrics_metrics_model__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelMetricsV2"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+        };
+    };
     predictions_predictions__session_id__get: {
         parameters: {
             query?: {
@@ -4118,6 +4900,88 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StreamEvents"];
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    runs_telemetry_runs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "X-Workspace-Key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_summary_telemetry__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunSummaryOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorOut"];
                 };
             };
             /** @description Gone */

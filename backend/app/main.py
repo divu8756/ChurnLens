@@ -10,10 +10,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__, sessions
 from app.api import experiments as experiments_api
+from app.api import metrics as metrics_api
 from app.api import offers as offers_api
 from app.api import predictions as predictions_api
 from app.api import results as results_api
 from app.api import runs as runs_api
+from app.api import telemetry as telemetry_api
 from app.api import upload
 from app.config import get_settings
 from app.graph.builder import build_graph
@@ -70,6 +72,8 @@ def create_app() -> FastAPI:
     app.include_router(predictions_api.router)
     app.include_router(offers_api.router)
     app.include_router(experiments_api.router)
+    app.include_router(metrics_api.router)
+    app.include_router(telemetry_api.router)
     return app
 
 

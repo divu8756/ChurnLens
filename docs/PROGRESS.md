@@ -3,10 +3,10 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5d.5 (API + upload error handling)
+T5d.6 (Frontend: Model Performance, Business Impact, Agent Health)
 
 ## Next step
-T5d.5 per the Phase 5d plan below, then T5d.6 and the Phase 5d gate.
+T5d.6 per the Phase 5d plan below, then the Phase 5d gate.
 Branch phase-5d is stacked on phase-5c (tip 9af926c); after PR #8 is
 squash-merged: git rebase --onto main 9af926c phase-5d.
 
@@ -622,6 +622,15 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   clock, tokens per model, ESTIMATED cost from pricing.yaml. Summaries are
   saved to the runs table (migration 0007) when a run finishes, scoped by
   the session's workspace. Backend 406 (6 new).
+- T5d.5: GET /metrics/model/{id}, GET and POST /metrics/business/{id}
+  (validated assumptions: months 1-60, per-offer acceptance / save rate /
+  cost, relative lift 0.01-0.9, alpha, power; recompute 0.02 s on Telco),
+  POST /metrics/business/{id}/explain (prompts/business_explanation.v1.md,
+  3 validated sentences, cached per assumptions hash, template fallback),
+  GET /telemetry/{id} (live summary) and GET /telemetry/runs (per
+  workspace). Typed contract in app/api/metrics_contract.py. Upload 422s:
+  a churn-named column with one value, and no two-value column at all (SPEC
+  message); fewer than MIN_ROWS rows already existed. Backend 425.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

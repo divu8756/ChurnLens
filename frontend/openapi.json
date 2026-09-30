@@ -1,6 +1,192 @@
 {
   "components": {
     "schemas": {
+      "AbPlan": {
+        "properties": {
+          "alpha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alpha"
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/BusinessAssumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "cohens_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cohens H"
+          },
+          "formula_latex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formula Latex"
+          },
+          "n_per_arm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Per Arm"
+          },
+          "n_second_arm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Second Arm"
+          },
+          "p1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P1"
+          },
+          "p2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P2"
+          },
+          "power": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "relative_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Lift"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "string"
+          },
+          "segment_customers": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Customers"
+          },
+          "total_n": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total N"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "z_alpha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z Alpha"
+          },
+          "z_beta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z Beta"
+          }
+        },
+        "required": [
+          "available",
+          "segment"
+        ],
+        "title": "AbPlan",
+        "type": "object"
+      },
       "AnalysisAssumptions": {
         "description": "Money and guardrail assumptions for the results analysis. customer_value\ndefaults to the data estimate made at assignment (mean monthly revenue x horizon).",
         "properties": {
@@ -656,6 +842,316 @@
         "title": "Body_upload_upload_post",
         "type": "object"
       },
+      "BusinessAssumption": {
+        "properties": {
+          "meaning": {
+            "title": "Meaning",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "default",
+              "user",
+              "data"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "unit",
+          "source",
+          "meaning"
+        ],
+        "title": "BusinessAssumption",
+        "type": "object"
+      },
+      "BusinessAssumptions": {
+        "additionalProperties": false,
+        "description": "Edits from the Business Impact tab; omitted fields keep their defaults.",
+        "properties": {
+          "alpha": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 0.2,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alpha"
+          },
+          "months_remaining": {
+            "anyOf": [
+              {
+                "maximum": 60.0,
+                "minimum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months Remaining"
+          },
+          "offers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OfferOverride"
+            },
+            "maxProperties": 50,
+            "title": "Offers",
+            "type": "object"
+          },
+          "power": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "minimum": 0.5,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power"
+          },
+          "relative_lift": {
+            "anyOf": [
+              {
+                "maximum": 0.9,
+                "minimum": 0.01,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Lift"
+          }
+        },
+        "title": "BusinessAssumptions",
+        "type": "object"
+      },
+      "BusinessExplanation": {
+        "properties": {
+          "assumptions_hash": {
+            "title": "Assumptions Hash",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "figures": {
+            "items": {
+              "$ref": "#/components/schemas/ExplanationFigure"
+            },
+            "title": "Figures",
+            "type": "array"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "sentences": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sentences",
+            "type": "array"
+          },
+          "source": {
+            "enum": [
+              "ai",
+              "template"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sentences",
+          "figures",
+          "source",
+          "problems",
+          "assumptions_hash",
+          "cached"
+        ],
+        "title": "BusinessExplanation",
+        "type": "object"
+      },
+      "BusinessKpis": {
+        "properties": {
+          "customers_scored": {
+            "title": "Customers Scored",
+            "type": "integer"
+          },
+          "customers_with_offer": {
+            "title": "Customers With Offer",
+            "type": "integer"
+          },
+          "expected_saving": {
+            "title": "Expected Saving",
+            "type": "number"
+          },
+          "overall_roi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Roi"
+          },
+          "revenue_at_risk": {
+            "title": "Revenue At Risk",
+            "type": "number"
+          }
+        },
+        "required": [
+          "revenue_at_risk",
+          "expected_saving",
+          "customers_with_offer",
+          "customers_scored"
+        ],
+        "title": "BusinessKpis",
+        "type": "object"
+      },
+      "BusinessMetrics": {
+        "properties": {
+          "ab_plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AbPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/BusinessAssumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "by_offer": {
+            "items": {
+              "$ref": "#/components/schemas/OfferTotals"
+            },
+            "title": "By Offer",
+            "type": "array"
+          },
+          "defaults_only": {
+            "default": true,
+            "title": "Defaults Only",
+            "type": "boolean"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "formula": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Formula",
+            "type": "object"
+          },
+          "kpis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BusinessKpis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "next_best_offers": {
+            "items": {
+              "$ref": "#/components/schemas/NboRow"
+            },
+            "title": "Next Best Offers",
+            "type": "array"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/OfferUsed"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "revenue_at_risk": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RevenueAtRisk"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "roi_by_segment": {
+            "items": {
+              "$ref": "#/components/schemas/SegmentRoi"
+            },
+            "title": "Roi By Segment",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "BusinessMetrics",
+        "type": "object"
+      },
       "CalculationStep": {
         "properties": {
           "formula": {
@@ -677,6 +1173,56 @@
           "substituted"
         ],
         "title": "CalculationStep",
+        "type": "object"
+      },
+      "CalibrationBin": {
+        "properties": {
+          "bin": {
+            "title": "Bin",
+            "type": "integer"
+          },
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "mean_predicted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Predicted"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "observed_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Rate"
+          }
+        },
+        "required": [
+          "bin",
+          "low",
+          "high",
+          "n"
+        ],
+        "title": "CalibrationBin",
         "type": "object"
       },
       "CategorySummary": {
@@ -909,6 +1455,25 @@
         "title": "ConfusionMatrix",
         "type": "object"
       },
+      "Correction": {
+        "properties": {
+          "confirmed": {
+            "title": "Confirmed"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "proposed": {
+            "title": "Proposed"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "Correction",
+        "type": "object"
+      },
       "Correlation": {
         "properties": {
           "columns": {
@@ -951,6 +1516,43 @@
           }
         },
         "title": "Correlation",
+        "type": "object"
+      },
+      "CostEstimate": {
+        "properties": {
+          "by_model": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "By Model",
+            "type": "object"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "label": {
+            "const": "ESTIMATE",
+            "title": "Label",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "currency",
+          "note",
+          "total",
+          "by_model"
+        ],
+        "title": "CostEstimate",
         "type": "object"
       },
       "CvScores": {
@@ -1119,6 +1721,67 @@
           "note"
         ],
         "title": "DecideRequest",
+        "type": "object"
+      },
+      "Decile": {
+        "properties": {
+          "churn_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Rate"
+          },
+          "churners": {
+            "title": "Churners",
+            "type": "integer"
+          },
+          "cumulative_gain": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cumulative Gain"
+          },
+          "cumulative_share": {
+            "title": "Cumulative Share",
+            "type": "number"
+          },
+          "decile": {
+            "title": "Decile",
+            "type": "integer"
+          },
+          "lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lift"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decile",
+          "n",
+          "churners",
+          "cumulative_share"
+        ],
+        "title": "Decile",
         "type": "object"
       },
       "DecisionHelperOut": {
@@ -2569,6 +3232,29 @@
         "title": "ExperimentUpdate",
         "type": "object"
       },
+      "ExplanationFigure": {
+        "properties": {
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "source_key",
+          "value",
+          "display"
+        ],
+        "title": "ExplanationFigure",
+        "type": "object"
+      },
       "FeatureImportance": {
         "additionalProperties": true,
         "properties": {
@@ -3645,6 +4331,32 @@
         "title": "LabelledTable",
         "type": "object"
       },
+      "Latency": {
+        "properties": {
+          "by_node": {
+            "items": {
+              "$ref": "#/components/schemas/NodeLatency"
+            },
+            "title": "By Node",
+            "type": "array"
+          },
+          "total_node_time": {
+            "title": "Total Node Time",
+            "type": "number"
+          },
+          "wall_clock": {
+            "title": "Wall Clock",
+            "type": "number"
+          }
+        },
+        "required": [
+          "by_node",
+          "total_node_time",
+          "wall_clock"
+        ],
+        "title": "Latency",
+        "type": "object"
+      },
       "LeakageWarning": {
         "properties": {
           "column": {
@@ -3889,6 +4601,69 @@
         "title": "ModelMetrics",
         "type": "object"
       },
+      "ModelMetricsV2": {
+        "properties": {
+          "calibrated": {
+            "$ref": "#/components/schemas/ScoreSet"
+          },
+          "calibration_method": {
+            "enum": [
+              "isotonic",
+              "sigmoid"
+            ],
+            "title": "Calibration Method",
+            "type": "string"
+          },
+          "calibration_note": {
+            "title": "Calibration Note",
+            "type": "string"
+          },
+          "chosen_model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chosen Model Name"
+          },
+          "definitions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Definitions",
+            "type": "object"
+          },
+          "n_test": {
+            "title": "N Test",
+            "type": "integer"
+          },
+          "n_train": {
+            "title": "N Train",
+            "type": "integer"
+          },
+          "raw": {
+            "$ref": "#/components/schemas/ScoreSet"
+          },
+          "split": {
+            "title": "Split",
+            "type": "string"
+          }
+        },
+        "required": [
+          "split",
+          "n_train",
+          "n_test",
+          "raw",
+          "calibrated",
+          "calibration_method",
+          "calibration_note"
+        ],
+        "title": "ModelMetricsV2",
+        "type": "object"
+      },
       "NamedSegment": {
         "description": "A segment registered before approval, analysed separately (exploratory).",
         "properties": {
@@ -3913,6 +4688,76 @@
           "filters"
         ],
         "title": "NamedSegment",
+        "type": "object"
+      },
+      "NboRow": {
+        "properties": {
+          "arpu": {
+            "title": "Arpu",
+            "type": "number"
+          },
+          "best_offer": {
+            "title": "Best Offer",
+            "type": "string"
+          },
+          "customer_id": {
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "eligible_offers": {
+            "title": "Eligible Offers",
+            "type": "integer"
+          },
+          "expected_cost": {
+            "title": "Expected Cost",
+            "type": "number"
+          },
+          "expected_saving": {
+            "title": "Expected Saving",
+            "type": "number"
+          },
+          "p_churn": {
+            "title": "P Churn",
+            "type": "number"
+          },
+          "risk_band": {
+            "title": "Risk Band",
+            "type": "string"
+          },
+          "runner_up": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up"
+          },
+          "runner_up_saving": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up Saving"
+          }
+        },
+        "required": [
+          "customer_id",
+          "risk_band",
+          "p_churn",
+          "arpu",
+          "best_offer",
+          "expected_saving",
+          "expected_cost",
+          "eligible_offers"
+        ],
+        "title": "NboRow",
         "type": "object"
       },
       "NboSummary": {
@@ -4203,6 +5048,34 @@
           "status"
         ],
         "title": "NodeFinishEvent",
+        "type": "object"
+      },
+      "NodeLatency": {
+        "properties": {
+          "latency_ms": {
+            "title": "Latency Ms",
+            "type": "number"
+          },
+          "node": {
+            "title": "Node",
+            "type": "string"
+          },
+          "runs": {
+            "title": "Runs",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node",
+          "latency_ms",
+          "runs",
+          "status"
+        ],
+        "title": "NodeLatency",
         "type": "object"
       },
       "NodeStartEvent": {
@@ -4883,6 +5756,51 @@
         "title": "OfferModelInfo",
         "type": "object"
       },
+      "OfferOverride": {
+        "additionalProperties": false,
+        "properties": {
+          "acceptance": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "save_rate": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Save Rate"
+          }
+        },
+        "title": "OfferOverride",
+        "type": "object"
+      },
       "OfferRow": {
         "properties": {
           "acceptance_rate": {
@@ -5041,6 +5959,84 @@
         "title": "OfferTestRef",
         "type": "object"
       },
+      "OfferTotals": {
+        "properties": {
+          "customers": {
+            "title": "Customers",
+            "type": "integer"
+          },
+          "expected_cost": {
+            "title": "Expected Cost",
+            "type": "number"
+          },
+          "expected_saving": {
+            "title": "Expected Saving",
+            "type": "number"
+          },
+          "offer": {
+            "title": "Offer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "offer",
+          "customers",
+          "expected_saving",
+          "expected_cost"
+        ],
+        "title": "OfferTotals",
+        "type": "object"
+      },
+      "OfferUsed": {
+        "properties": {
+          "acceptance": {
+            "title": "Acceptance",
+            "type": "number"
+          },
+          "cost": {
+            "title": "Cost",
+            "type": "number"
+          },
+          "cost_basis": {
+            "enum": [
+              "per_accepted",
+              "per_targeted"
+            ],
+            "title": "Cost Basis",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "save_rate": {
+            "title": "Save Rate",
+            "type": "number"
+          },
+          "sources": {
+            "additionalProperties": {
+              "enum": [
+                "default",
+                "user",
+                "data"
+              ],
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "acceptance",
+          "save_rate",
+          "cost",
+          "cost_basis",
+          "sources"
+        ],
+        "title": "OfferUsed",
+        "type": "object"
+      },
       "OfferValue": {
         "properties": {
           "customers": {
@@ -5184,6 +6180,30 @@
           "rank"
         ],
         "title": "PermutationItem",
+        "type": "object"
+      },
+      "PrCurve": {
+        "properties": {
+          "precision": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Precision",
+            "type": "array"
+          },
+          "recall": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Recall",
+            "type": "array"
+          }
+        },
+        "required": [
+          "recall",
+          "precision"
+        ],
+        "title": "PrCurve",
         "type": "object"
       },
       "PredictionRow": {
@@ -5829,6 +6849,63 @@
         "title": "ResultsResponse",
         "type": "object"
       },
+      "Retries": {
+        "properties": {
+          "llm_by_node": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Llm By Node",
+            "type": "object"
+          },
+          "validator": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Validator",
+            "type": "object"
+          }
+        },
+        "required": [
+          "validator",
+          "llm_by_node"
+        ],
+        "title": "Retries",
+        "type": "object"
+      },
+      "RevenueAtRisk": {
+        "properties": {
+          "arpu_column": {
+            "title": "Arpu Column",
+            "type": "string"
+          },
+          "customers": {
+            "title": "Customers",
+            "type": "integer"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "months_remaining": {
+            "title": "Months Remaining",
+            "type": "number"
+          },
+          "total": {
+            "title": "Total",
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "customers",
+          "months_remaining",
+          "arpu_column",
+          "formula"
+        ],
+        "title": "RevenueAtRisk",
+        "type": "object"
+      },
       "RiskBands": {
         "additionalProperties": true,
         "properties": {
@@ -5899,6 +6976,96 @@
           "status"
         ],
         "title": "RunStatusResponse",
+        "type": "object"
+      },
+      "RunSummaryOut": {
+        "properties": {
+          "cost": {
+            "$ref": "#/components/schemas/CostEstimate"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "latency_ms": {
+            "$ref": "#/components/schemas/Latency"
+          },
+          "retries": {
+            "$ref": "#/components/schemas/Retries"
+          },
+          "schema_corrections": {
+            "$ref": "#/components/schemas/SchemaCorrections"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tokens": {
+            "$ref": "#/components/schemas/Tokens"
+          },
+          "validator": {
+            "$ref": "#/components/schemas/ValidatorCounts"
+          }
+        },
+        "required": [
+          "status",
+          "validator",
+          "retries",
+          "schema_corrections",
+          "latency_ms",
+          "tokens",
+          "cost",
+          "events"
+        ],
+        "title": "RunSummaryOut",
+        "type": "object"
+      },
+      "SchemaCorrections": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/Correction"
+            },
+            "title": "Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "fields",
+          "available"
+        ],
+        "title": "SchemaCorrections",
         "type": "object"
       },
       "SchemaProblems": {
@@ -6038,6 +7205,91 @@
           "source"
         ],
         "title": "SchemaProposalOut",
+        "type": "object"
+      },
+      "ScoreSet": {
+        "properties": {
+          "brier": {
+            "title": "Brier",
+            "type": "number"
+          },
+          "calibration": {
+            "items": {
+              "$ref": "#/components/schemas/CalibrationBin"
+            },
+            "title": "Calibration",
+            "type": "array"
+          },
+          "churn_rate": {
+            "title": "Churn Rate",
+            "type": "number"
+          },
+          "deciles": {
+            "items": {
+              "$ref": "#/components/schemas/Decile"
+            },
+            "title": "Deciles",
+            "type": "array"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "pr_auc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pr Auc"
+          },
+          "pr_curve": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrCurve"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "roc_auc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roc Auc"
+          },
+          "roc_curve": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RocCurve"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "top_10pct": {
+            "$ref": "#/components/schemas/TopShare"
+          }
+        },
+        "required": [
+          "n",
+          "churn_rate",
+          "brier",
+          "top_10pct",
+          "deciles",
+          "calibration"
+        ],
+        "title": "ScoreSet",
         "type": "object"
       },
       "Segment": {
@@ -6343,6 +7595,45 @@
           "n"
         ],
         "title": "SegmentResultOut",
+        "type": "object"
+      },
+      "SegmentRoi": {
+        "properties": {
+          "customers": {
+            "title": "Customers",
+            "type": "integer"
+          },
+          "roi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roi"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "string"
+          },
+          "total_expected_cost": {
+            "title": "Total Expected Cost",
+            "type": "number"
+          },
+          "total_expected_saving": {
+            "title": "Total Expected Saving",
+            "type": "number"
+          }
+        },
+        "required": [
+          "segment",
+          "customers",
+          "total_expected_saving",
+          "total_expected_cost"
+        ],
+        "title": "SegmentRoi",
         "type": "object"
       },
       "Segments": {
@@ -6907,6 +8198,89 @@
         "title": "TenureBands",
         "type": "object"
       },
+      "TokenCount": {
+        "properties": {
+          "input_tokens": {
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "title": "Output Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "TokenCount",
+        "type": "object"
+      },
+      "Tokens": {
+        "properties": {
+          "by_model": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TokenCount"
+            },
+            "title": "By Model",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input",
+            "type": "integer"
+          },
+          "output": {
+            "title": "Output",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "by_model",
+          "input",
+          "output"
+        ],
+        "title": "Tokens",
+        "type": "object"
+      },
+      "TopShare": {
+        "properties": {
+          "churners_in_top": {
+            "title": "Churners In Top",
+            "type": "integer"
+          },
+          "k": {
+            "title": "K",
+            "type": "integer"
+          },
+          "precision": {
+            "title": "Precision",
+            "type": "number"
+          },
+          "recall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recall"
+          },
+          "share": {
+            "title": "Share",
+            "type": "number"
+          }
+        },
+        "required": [
+          "share",
+          "k",
+          "churners_in_top",
+          "precision"
+        ],
+        "title": "TopShare",
+        "type": "object"
+      },
       "UploadInfo": {
         "properties": {
           "early_look": {
@@ -7088,6 +8462,39 @@
           "final"
         ],
         "title": "ValidationReport",
+        "type": "object"
+      },
+      "ValidatorCounts": {
+        "properties": {
+          "checked": {
+            "title": "Checked",
+            "type": "integer"
+          },
+          "dropped": {
+            "title": "Dropped",
+            "type": "integer"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "figures_caught": {
+            "title": "Figures Caught",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "checked",
+          "passed",
+          "failed",
+          "dropped",
+          "figures_caught"
+        ],
+        "title": "ValidatorCounts",
         "type": "object"
       },
       "app__api__contract__Assumption": {
@@ -8723,6 +10130,314 @@
         "summary": "Health"
       }
     },
+    "/metrics/business/{session_id}": {
+      "get": {
+        "operationId": "business_metrics_metrics_business__session_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessMetrics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Business Metrics",
+        "tags": [
+          "metrics"
+        ]
+      },
+      "post": {
+        "description": "Recompute with edited assumptions (no LLM).",
+        "operationId": "recompute_business_metrics_metrics_business__session_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BusinessAssumptions"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessMetrics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Recompute Business Metrics",
+        "tags": [
+          "metrics"
+        ]
+      }
+    },
+    "/metrics/business/{session_id}/explain": {
+      "post": {
+        "description": "A validated plain-English explanation of the numbers for these assumptions.",
+        "operationId": "explain_business_metrics_metrics_business__session_id__explain_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BusinessAssumptions"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessExplanation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Explain Business Metrics",
+        "tags": [
+          "metrics"
+        ]
+      }
+    },
+    "/metrics/model/{session_id}": {
+      "get": {
+        "operationId": "model_metrics_metrics_model__session_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelMetricsV2"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Model Metrics",
+        "tags": [
+          "metrics"
+        ]
+      }
+    },
     "/predictions/{session_id}": {
       "get": {
         "operationId": "predictions_predictions__session_id__get",
@@ -9384,6 +11099,135 @@
         "summary": "Stream",
         "tags": [
           "runs"
+        ]
+      }
+    },
+    "/telemetry/runs": {
+      "get": {
+        "description": "Finished runs uploaded from this browser (X-Workspace-Key), newest first.",
+        "operationId": "runs_telemetry_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RunSummaryOut"
+                  },
+                  "title": "Response Runs Telemetry Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Runs",
+        "tags": [
+          "telemetry"
+        ]
+      }
+    },
+    "/telemetry/{session_id}": {
+      "get": {
+        "description": "Live summary of this session's run (also while it is still running).",
+        "operationId": "run_summary_telemetry__session_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Summary",
+        "tags": [
+          "telemetry"
         ]
       }
     },
