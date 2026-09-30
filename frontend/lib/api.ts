@@ -239,6 +239,11 @@ export function predictionsCsvUrl(sessionId: string, options: Omit<PredictionsQu
   return `${API_URL}/predictions/${enc(sessionId)}/csv${query ? `?${query}` : ""}`;
 }
 
+/** Report downloads (built on the server the first time, then cached). */
+export function exportUrl(sessionId: string, kind: "excel" | "pdf"): string {
+  return `${API_URL}/export/${enc(sessionId)}/${kind}`;
+}
+
 /** URL for the SSE progress stream; `after` resumes after that event id. */
 export function streamUrl(sessionId: string, after = 0): string {
   const query = after > 0 ? `?after=${after}` : "";

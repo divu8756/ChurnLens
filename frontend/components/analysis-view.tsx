@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { ApiError, getResults, startAnalysis, type ResultsResponse } from "@/lib/api";
+import { ApiError, exportUrl, getResults, startAnalysis, type ResultsResponse } from "@/lib/api";
 import { cleaningFinished, stepperStages } from "@/lib/pipeline";
 import { useProgressStream } from "@/lib/use-progress-stream";
 
@@ -79,9 +79,21 @@ export function AnalysisView({ sessionId }: { sessionId: string }) {
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Analysis</h1>
-        <Link href="/" className="text-sm text-blue-600 hover:underline">
-          New upload
-        </Link>
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          {progress.done?.ok ? (
+            <>
+              <a href={exportUrl(sessionId, "excel")} className="text-blue-600 hover:underline" download>
+                Download Excel
+              </a>
+              <a href={exportUrl(sessionId, "pdf")} className="text-blue-600 hover:underline" download>
+                Download PDF report
+              </a>
+            </>
+          ) : null}
+          <Link href="/" className="text-blue-600 hover:underline">
+            New upload
+          </Link>
+        </div>
       </div>
 
       {start.state === "starting" ? <Spinner label="Starting the analysis..." /> : null}

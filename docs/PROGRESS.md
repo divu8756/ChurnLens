@@ -3,7 +3,7 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T7.2 (Exports)
+Phase 7 gate (review, PR)
 
 ## Next step
 Phase 5d PR is open, stacked on phase-5c (#8); the human merges #8 then the
@@ -664,6 +664,16 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   window, CHAT_PER_MINUTE=10; X-Forwarded-For only with TRUST_PROXY_HEADERS)
   and GET /chat/{id}. Ask the Data tab with example questions, loading
   state and the tools used under each answer. Backend 451, frontend 117.
+- T7.2: exports on demand. app/exports/excel.py (openpyxl: Cleaned_Data,
+  Predictions, Hypothesis_Tests, Drivers, Recommendations; bold header,
+  frozen panes, one Excel table per sheet, number formats, no merged cells,
+  formula-looking text written as text), app/exports/pdf.py (reportlab:
+  cover, executive summary, 3 matplotlib charts, insights,
+  recommendations, methodology, limitations, validator summary; 5 pages on
+  Telco), report_node marks exports ready, GET /export/{id}/excel and /pdf
+  build once per analysis checkpoint and cache in the session folder.
+  Telco: Excel 2.4 s / 1.7 MB, PDF 0.4 s. Download links in the dashboard
+  header; E2E fetches both. Backend 457, frontend 115, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -846,6 +856,14 @@ flowchart TD
 - T7.1: the chat agent is a hand-built LangGraph ReAct loop with structured
   steps instead of native tool calling, so it keeps CLAUDE.md rules 5 and 19
   (Pydantic structured output, flat schemas) and the number check of rule 4.
+- T7.2 dependencies: reportlab 5.0.1 (PDF; chosen over WeasyPrint because it
+  needs no Pango/Cairo system packages in Docker) and matplotlib 3.11.2
+  (already installed via SHAP; pinned because the PDF charts import it).
+- T7.1 live check (real Gemini, 5 calls, 4,105 in / 288 out tokens): the
+  agent answered "month-to-month, tenure <= 12" churn (44.33%, from
+  filter_and_aggregate) and the PaymentMethod test (from get_test_result)
+  correctly with the tool cited, and refused a prompt-injection attempt
+  without calling any tool.
 
 ## Checkpoints for the human
 - S8 (T5d.0): Phase 5d plan written above under "Phase 5d plan" (FULL-AUTO:
