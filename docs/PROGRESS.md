@@ -681,6 +681,21 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   limit (8 LLM steps x 45 s timeouts x retries); now 120 s per question,
   status "timeout". Fixed (Low): the rate limiter pruned no idle IPs. Low,
   not fixed: see Known issues. Backend 459, frontend 115, E2E 1.
+- T8.1: render.yaml (one Docker web service, healthCheckPath /health,
+  secrets sync: false), multi-stage Dockerfile (deps in a venv, slim
+  runtime, non-root uid 1000, uvicorn --workers 1 --proxy-headers, PORT
+  from env), CORS FRONTEND_ORIGIN + FRONTEND_ORIGIN_REGEX (Vercel
+  previews), JSON logs with session_id (request middleware + run threads;
+  root logger and warnings too), per-IP limits on /upload and /sample
+  (UPLOAD_PER_MINUTE) and every AI endpoint (AI_PER_MINUTE; chat has
+  CHAT_PER_MINUTE), frontend "Waking up the server (up to a minute)..."
+  with retries for 90 s. Added langgraph-checkpoint-postgres 3.1.2 so
+  DATABASE_URL works for the checkpointer too. Docker checked (approved by
+  the human): image builds (1.74 GB), runs as uid 1000; the full Telco flow
+  against it with real Gemini finished in 132 s (6 insights and 5
+  recommendations; validator 11/15, 4 dropped), plus model and business
+  metrics, telemetry, both exports and a chat answer; logs were JSON with
+  session_id and no key. Backend 465, frontend 117, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).

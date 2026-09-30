@@ -34,10 +34,13 @@ def test_json_log_lines_carry_the_session(monkeypatch):
 def test_request_logs_are_json_and_never_contain_the_key(monkeypatch, capsys):
     client = _client(monkeypatch)
     logging.getLogger("churnlens").warning("hello from a request")
+    logging.getLogger("google_genai.models").warning("third-party notice")
     client.get("/health")
     err = capsys.readouterr().err
     lines = [json.loads(line) for line in err.splitlines() if line.startswith("{")]
     assert any(line["message"] == "hello from a request" for line in lines)
+    assert any(line["message"] == "third-party notice" for line in lines)
+    assert all(line.startswith("{") for line in err.splitlines() if line.strip())
     assert get_settings().GEMINI_API_KEY not in err
 
 

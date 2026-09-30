@@ -38,6 +38,12 @@ def setup_logging(level: str = "INFO") -> None:
         log.handlers = [handler]
         log.setLevel(level)
         log.propagate = False
+    # Third-party libraries (e.g. the Google SDK) log through the root logger, and Python
+    # warnings through "py.warnings": both become JSON lines too, at WARNING and above.
+    root = logging.getLogger()
+    root.handlers = [handler]
+    root.setLevel(logging.WARNING)
+    logging.captureWarnings(True)
 
 
 def session_from_path(path: str) -> str | None:
