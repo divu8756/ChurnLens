@@ -91,6 +91,20 @@ test("Telco sample runs end to end and every tab renders", async ({ page }) => {
   await expect(panel.getByRole("button", { name: "Regenerate explanation" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "A/B test plan" })).toBeVisible();
 
+  // Exports: both downloads are built on the server and served as files.
+  for (const [name, type] of [["Download Excel", "spreadsheetml"], ["Download PDF report", "application/pdf"]]) {
+    const href = await page.getByRole("link", { name }).getAttribute("href");
+    const res = await page.request.get(href ?? "");
+    expect(res.ok()).toBe(true);
+    expect(res.headers()["content-type"]).toContain(type);
+  }
+
+  // Ask the Data: a tool-only answer with the tool shown underneath.
+  await openTab(page, "Ask the Data");
+  await panel.getByRole("button", { name: "What is the overall churn rate?" }).click();
+  await expect(panel.getByText("Overall churn is 25.66% (from get_stat).")).toBeVisible({ timeout: 30_000 });
+  await expect(panel.getByText("Tools used: get_stat")).toBeVisible();
+
   // Agent Health: this run's validator, timing and estimated cost.
   await openTab(page, "Agent Health");
   await expect(panel.getByText("Validator pass rate")).toBeVisible();

@@ -3,12 +3,15 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T7.1 (Tool-only chat agent, Ask the Data tab)
+T8.1 (Production hardening)
 
 ## Next step
-Phase 5d PR is open, stacked on phase-5c (#8); the human merges #8 then the
-5d PR (GitHub retargets it to main when phase-5c is deleted). Then Phase 7
-(T7.1 chat agent, T7.2 exports) on a branch stacked on phase-5d.
+Open the Phase 7 PR (phase-7 is pushed; gh is not installed in this
+environment, so use the GitHub link or install gh), stacked on phase-5d (#9)
+which is stacked on phase-5c (#8); the human merges them in order. Then
+Phase 8: T8.1 production hardening (per-IP limits on /upload and the other
+LLM endpoints, reuse app/ratelimit.py), T8.2 deploy (HUMAN STOP S7), T8.3
+README + demo assets.
 
 ## Phase 5d plan (T5d.0; S8 recorded as a checkpoint, FULL-AUTO)
 
@@ -651,6 +654,33 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   human to confirm the schema (now busy time = union of step intervals);
   numeric offer rules compared as text (YAML 1 never matched 1.0). No High
   issues. Low, not fixed: see Known issues. Backend 427, frontend 113, E2E 1.
+- T7.1: Ask the Data. app/chat/tools.py (get_stat over whitelisted result
+  roots, get_segment, get_test_result, get_customer_risk (score, band and
+  reasons only), filter_and_aggregate with Pydantic-validated args: known
+  non-ID columns, ops == != > >= < <= in, metrics count/mean/median/sum/
+  churn_rate, max 3 filters, 50 rows; plain pandas, no eval/query).
+  app/chat/agent.py: LangGraph loop agent -> tools -> agent; each LLM step
+  is a structured ChatStep (call_tool / answer / refuse) via the wrapper;
+  max 6 tool calls; answer numbers must appear in this question's tool
+  results (one retry, then withheld). prompts/chat_agent.v1.md. History:
+  last 10 messages in the session folder. POST /chat/{id} (per-IP sliding
+  window, CHAT_PER_MINUTE=10; X-Forwarded-For only with TRUST_PROXY_HEADERS)
+  and GET /chat/{id}. Ask the Data tab with example questions, loading
+  state and the tools used under each answer. Backend 451, frontend 117.
+- T7.2: exports on demand. app/exports/excel.py (openpyxl: Cleaned_Data,
+  Predictions, Hypothesis_Tests, Drivers, Recommendations; bold header,
+  frozen panes, one Excel table per sheet, number formats, no merged cells,
+  formula-looking text written as text), app/exports/pdf.py (reportlab:
+  cover, executive summary, 3 matplotlib charts, insights,
+  recommendations, methodology, limitations, validator summary; 5 pages on
+  Telco), report_node marks exports ready, GET /export/{id}/excel and /pdf
+  build once per analysis checkpoint and cache in the session folder.
+  Telco: Excel 2.4 s / 1.7 MB, PDF 0.4 s. Download links in the dashboard
+  header; E2E fetches both. Backend 457, frontend 115, E2E 1.
+- Phase 7 gate review. Fixed (Medium): a chat question had no overall time
+  limit (8 LLM steps x 45 s timeouts x retries); now 120 s per question,
+  status "timeout". Fixed (Low): the rate limiter pruned no idle IPs. Low,
+  not fixed: see Known issues. Backend 459, frontend 115, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -830,6 +860,17 @@ flowchart TD
   directly through a 20-line wrapper instead of react-plotly.js (whose peer
   is the full plotly.js). Explanations of business metrics are written on
   demand (button), not on page load, to save free-tier calls.
+- T7.1: the chat agent is a hand-built LangGraph ReAct loop with structured
+  steps instead of native tool calling, so it keeps CLAUDE.md rules 5 and 19
+  (Pydantic structured output, flat schemas) and the number check of rule 4.
+- T7.2 dependencies: reportlab 5.0.1 (PDF; chosen over WeasyPrint because it
+  needs no Pango/Cairo system packages in Docker) and matplotlib 3.11.2
+  (already installed via SHAP; pinned because the PDF charts import it).
+- T7.1 live check (real Gemini, 5 calls, 4,105 in / 288 out tokens): the
+  agent answered "month-to-month, tenure <= 12" churn (44.33%, from
+  filter_and_aggregate) and the PaymentMethod test (from get_test_result)
+  correctly with the tool cited, and refused a prompt-injection attempt
+  without calling any tool.
 
 ## Checkpoints for the human
 - S8 (T5d.0): Phase 5d plan written above under "Phase 5d plan" (FULL-AUTO:
@@ -901,6 +942,13 @@ flowchart TD
   Phase 8). Calibration adds 5 cross-validated fits of the chosen model to
   training time. Calibrated risk bands score fewer customers for next best
   offer on Telco (2,622 Medium+High vs 4,136 before), as intended.
+- Phase 7 (Low, gate): get_customer_risk passes one customer's SHAP reason
+  strings (feature: value) to the LLM when the user asks about that customer
+  (the spec requires the tool; no other row data reaches the model). Excel
+  export of a 100k-row file will be slow (openpyxl, tables need the normal
+  writer); consider xlsxwriter if that matters. The export build lock is
+  global (one export at a time). Docker image not rebuilt for reportlab /
+  matplotlib (pure wheels; no system packages needed).
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

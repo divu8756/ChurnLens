@@ -43,6 +43,8 @@ export type BusinessMetrics = Schemas["BusinessMetrics"];
 export type BusinessAssumptions = Schemas["BusinessAssumptions"];
 export type BusinessExplanation = Schemas["BusinessExplanation"];
 export type RunSummary = Schemas["RunSummaryOut"];
+export type ChatMessage = Schemas["ChatMessage"];
+export type ChatResponse = Schemas["ChatResponse"];
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 export const REQUEST_TIMEOUT_MS = 30_000;
@@ -237,6 +239,11 @@ export function predictionsCsvUrl(sessionId: string, options: Omit<PredictionsQu
   return `${API_URL}/predictions/${enc(sessionId)}/csv${query ? `?${query}` : ""}`;
 }
 
+/** Report downloads (built on the server the first time, then cached). */
+export function exportUrl(sessionId: string, kind: "excel" | "pdf"): string {
+  return `${API_URL}/export/${enc(sessionId)}/${kind}`;
+}
+
 /** URL for the SSE progress stream; `after` resumes after that event id. */
 export function streamUrl(sessionId: string, after = 0): string {
   const query = after > 0 ? `?after=${after}` : "";
@@ -385,4 +392,20 @@ export function getRunSummary(sessionId: string, signal?: AbortSignal): Promise<
 
 export function listRunSummaries(limit = 50, signal?: AbortSignal): Promise<RunSummary[]> {
   return request<RunSummary[]>(`/telemetry/runs?limit=${limit}`, { signal });
+}
+
+// ---------------------------------------------------------------- Ask the Data (Phase 7)
+
+export function getChatHistory(sessionId: string, signal?: AbortSignal): Promise<ChatMessage[]> {
+  return request<ChatMessage[]>(`/chat/${enc(sessionId)}`, { signal });
+}
+
+/** One question to the tool-only agent (several model calls, so the AI timeout applies). */
+export function askData(sessionId: string, message: string, signal?: AbortSignal): Promise<ChatResponse> {
+  return request<ChatResponse>(`/chat/${enc(sessionId)}`, {
+    method: "POST",
+    json: { message },
+    signal,
+    timeoutMs: AI_TIMEOUT_MS,
+  });
 }

@@ -8,6 +8,7 @@ import { DataHealthView } from "../data-health";
 import { DriversTab } from "../drivers/drivers-tab";
 import { AgentHealthTab } from "../agent-health/agent-health-tab";
 import { BusinessImpactTab } from "../business-impact/business-impact-tab";
+import { ChatTab } from "../chat/chat-tab";
 import { ExperimentsTab } from "../experiments/experiments-tab";
 import { ModelPerformanceTab } from "../model-performance/model-performance-tab";
 import { HypothesisTab } from "../hypothesis/hypothesis-tab";
@@ -30,6 +31,7 @@ const TABS: Tab[] = [
   { id: "recommendations", label: "Recommendations", render: (r) => <RecommendationsTab results={r} /> },
   { id: "business", label: "Business Impact", render: (_, id) => <BusinessImpactTab sessionId={id} /> },
   { id: "experiments", label: "Experiments", render: (r, id, sample) => <ExperimentsTab results={r} sessionId={id} sample={sample} /> },
+  { id: "chat", label: "Ask the Data", render: (_, id) => <ChatTab sessionId={id} /> },
   { id: "agents", label: "Agent Health", render: (_, id) => <AgentHealthTab sessionId={id} /> },
   {
     id: "health",

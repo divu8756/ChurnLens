@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     NBO_HORIZON_MONTHS: int = Field(default=12, ge=1, le=120)
     NBO_MAX_DISCOUNT: float = Field(default=0.20, ge=0, le=1)
     NBO_DECLINE_DAYS: int = Field(default=30, ge=0)
+    # Ask the Data (Phase 7): questions per minute per client IP.
+    CHAT_PER_MINUTE: int = Field(default=10, ge=1)
+    # Use the first X-Forwarded-For address as the client IP (only behind a trusted proxy).
+    TRUST_PROXY_HEADERS: bool = False
 
     @field_validator("DATA_DIR")
     @classmethod

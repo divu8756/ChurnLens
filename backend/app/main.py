@@ -9,7 +9,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__, sessions
+from app.api import chat as chat_api
 from app.api import experiments as experiments_api
+from app.api import exports as exports_api
 from app.api import metrics as metrics_api
 from app.api import offers as offers_api
 from app.api import predictions as predictions_api
@@ -21,6 +23,7 @@ from app.config import get_settings
 from app.graph.builder import build_graph
 from app.graph.checkpointer import create_checkpointer
 from app.graph.nodes import default_nodes
+from app.ratelimit import RateLimiter
 from app.runs import RunManager
 
 logger = logging.getLogger("churnlens")
@@ -74,6 +77,9 @@ def create_app() -> FastAPI:
     app.include_router(experiments_api.router)
     app.include_router(metrics_api.router)
     app.include_router(telemetry_api.router)
+    app.include_router(chat_api.router)
+    app.include_router(exports_api.router)
+    app.state.chat_limiter = RateLimiter(settings.CHAT_PER_MINUTE)
     return app
 
 
