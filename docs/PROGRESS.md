@@ -3,15 +3,14 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T8.1 (Production hardening)
+T8.2 (Deploy) - HUMAN STOP S7
 
 ## Next step
-Open the Phase 7 PR (phase-7 is pushed; gh is not installed in this
-environment, so use the GitHub link or install gh), stacked on phase-5d (#9)
-which is stacked on phase-5c (#8); the human merges them in order. Then
-Phase 8: T8.1 production hardening (per-IP limits on /upload and the other
-LLM endpoints, reuse app/ratelimit.py), T8.2 deploy (HUMAN STOP S7), T8.3
-README + demo assets.
+Waiting for the human (S7): merge PRs #8, #9, #10 and the Phase 8 PR in order,
+then do the Render and Vercel steps (listed under "Human actions needed")
+and paste both URLs. Then: verify <render>/health, smoke-test the sample flow
+against the live URLs, put the live link in README.md and PROGRESS.md, run
+the final Phase Gate and report "ChurnLens build complete."
 
 ## Phase 5d plan (T5d.0; S8 recorded as a checkpoint, FULL-AUTO)
 
@@ -696,6 +695,11 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   recommendations; validator 11/15, 4 dropped), plus model and business
   metrics, telemetry, both exports and a chat answer; logs were JSON with
   session_id and no key. Backend 465, frontend 117, E2E 1.
+- T8.3 (done before S7 because it does not need the URLs): README.md (pitch,
+  CI badge, Mermaid architecture, how the agents stay honest, stack table,
+  local setup, env var table, deploy steps, tests, limitations, screenshot
+  placeholders; live link filled in after deploy) and docs/DEMO_SCRIPT.md
+  (2-minute walkthrough with backup answers).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -966,4 +970,13 @@ flowchart TD
   matplotlib (pure wheels; no system packages needed).
 
 ## Human actions needed
+- S7 (now): 1) Merge #8, #9, #10 and the Phase 8 PR in that order (each
+  retargets to main as its base merges). 2) Render: New -> Blueprint -> this
+  repo (main). Set GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_FAST (the values
+  in backend/.env), and FRONTEND_ORIGIN=https://example.com for now. Optional:
+  DATABASE_URL from a free Postgres (Neon / Supabase). 3) Vercel: Add New ->
+  Project -> this repo, Root Directory frontend, env NEXT_PUBLIC_API_URL = the
+  Render URL; deploy. 4) Render: set FRONTEND_ORIGIN to the Vercel production
+  URL (and optionally FRONTEND_ORIGIN_REGEX for previews); redeploy.
+  5) Paste both URLs back.
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).
