@@ -59,6 +59,7 @@ def test_valid_csv_is_saved_as_parquet(client):
     saved = pd.read_parquet(sessions.session_dir(body["session_id"]) / sessions.RAW_FILE)
     assert saved.shape == (150, 5)
     assert saved["tenure"].dtype.kind == "i" and saved["MonthlyCharges"].dtype.kind == "f"
+    assert sessions.read_meta(body["session_id"])["sample"] is False
 
 
 def test_multi_sheet_xlsx_returns_sheets_then_accepts_choice(client):
@@ -93,6 +94,12 @@ def test_sample_endpoint_loads_telco(client):
     response = client.post("/sample")
     assert response.status_code == 200, response.text
     assert response.json()["rows"] == 7014 and "Churn" in response.json()["columns"]
+    assert sessions.read_meta(response.json()["session_id"])["sample"] is True
+    assert sessions.read_meta(response.json()["session_id"])["workspace_hash"] is None
+    keyed = client.post("/sample", headers={"X-Workspace-Key": "k" * 20})
+    from app.experiments.workspace import hash_key
+
+    assert sessions.read_meta(keyed.json()["session_id"])["workspace_hash"] == hash_key("k" * 20)
 
 
 # ---------------------------------------------------------------- rejections

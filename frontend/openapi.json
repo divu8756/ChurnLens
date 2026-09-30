@@ -1,27 +1,436 @@
 {
   "components": {
     "schemas": {
-      "Assumption": {
+      "AnalysisAssumptions": {
+        "description": "Money and guardrail assumptions for the results analysis. customer_value\ndefaults to the data estimate made at assignment (mean monthly revenue x horizon).",
         "properties": {
-          "detail": {
-            "title": "Detail",
-            "type": "string"
+          "arpu_tolerance": {
+            "default": 0.05,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Arpu Tolerance",
+            "type": "number"
           },
-          "name": {
-            "title": "Name",
-            "type": "string"
+          "customer_value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Value"
           },
-          "result": {
-            "title": "Result",
-            "type": "boolean"
+          "offer_cost": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Cost"
+          }
+        },
+        "title": "AnalysisAssumptions",
+        "type": "object"
+      },
+      "AnalysisOut": {
+        "properties": {
+          "assumption_inputs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisAssumptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/app__experiments__schemas__Assumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "decision_helper": {
+            "$ref": "#/components/schemas/DecisionHelperOut"
+          },
+          "guardrails": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GuardrailOut"
+            },
+            "title": "Guardrails",
+            "type": "object"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/ImpactOut"
+          },
+          "itt": {
+            "$ref": "#/components/schemas/IttOut"
+          },
+          "per_protocol": {
+            "$ref": "#/components/schemas/PerProtocolOut"
+          },
+          "segments": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SegmentsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "srm": {
+            "$ref": "#/components/schemas/SrmOut"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentSummaryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "upload": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UploadInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
           }
         },
         "required": [
-          "name",
-          "result",
-          "detail"
+          "srm",
+          "itt",
+          "impact",
+          "per_protocol",
+          "guardrails",
+          "assumptions",
+          "decision_helper"
         ],
-        "title": "Assumption",
+        "title": "AnalysisOut",
+        "type": "object"
+      },
+      "ApproveRequest": {
+        "properties": {
+          "approver": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Approver",
+            "type": "string"
+          },
+          "cost_and_eligibility_reviewed": {
+            "title": "Cost And Eligibility Reviewed",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "approver",
+          "cost_and_eligibility_reviewed"
+        ],
+        "title": "ApproveRequest",
+        "type": "object"
+      },
+      "ArmCounts": {
+        "properties": {
+          "control": {
+            "title": "Control",
+            "type": "integer"
+          },
+          "treatment": {
+            "title": "Treatment",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "treatment",
+          "control"
+        ],
+        "title": "ArmCounts",
+        "type": "object"
+      },
+      "ArmMeans": {
+        "properties": {
+          "control": {
+            "$ref": "#/components/schemas/MeanCI"
+          },
+          "treatment": {
+            "$ref": "#/components/schemas/MeanCI"
+          }
+        },
+        "required": [
+          "treatment",
+          "control"
+        ],
+        "title": "ArmMeans",
+        "type": "object"
+      },
+      "ArmRate": {
+        "properties": {
+          "churned": {
+            "title": "Churned",
+            "type": "integer"
+          },
+          "ci_high": {
+            "title": "Ci High",
+            "type": "number"
+          },
+          "ci_low": {
+            "title": "Ci Low",
+            "type": "number"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "rate": {
+            "title": "Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "n",
+          "churned",
+          "rate",
+          "ci_low",
+          "ci_high"
+        ],
+        "title": "ArmRate",
+        "type": "object"
+      },
+      "ArmRates": {
+        "properties": {
+          "control": {
+            "$ref": "#/components/schemas/ArmRate"
+          },
+          "treatment": {
+            "$ref": "#/components/schemas/ArmRate"
+          }
+        },
+        "required": [
+          "treatment",
+          "control"
+        ],
+        "title": "ArmRates",
+        "type": "object"
+      },
+      "ArmShares": {
+        "properties": {
+          "control": {
+            "title": "Control",
+            "type": "number"
+          },
+          "treatment": {
+            "title": "Treatment",
+            "type": "number"
+          }
+        },
+        "required": [
+          "treatment",
+          "control"
+        ],
+        "title": "ArmShares",
+        "type": "object"
+      },
+      "AssignRequest": {
+        "properties": {
+          "actor": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "actor"
+        ],
+        "title": "AssignRequest",
+        "type": "object"
+      },
+      "AssignmentSummaryOut": {
+        "properties": {
+          "assigned": {
+            "title": "Assigned",
+            "type": "integer"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/BalanceOut"
+          },
+          "customer_value_estimate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Value Estimate"
+          },
+          "data_snapshot_hash": {
+            "title": "Data Snapshot Hash",
+            "type": "string"
+          },
+          "excluded_other_experiments": {
+            "title": "Excluded Other Experiments",
+            "type": "integer"
+          },
+          "messages_attached": {
+            "title": "Messages Attached",
+            "type": "integer"
+          },
+          "n_control": {
+            "title": "N Control",
+            "type": "integer"
+          },
+          "n_treatment": {
+            "title": "N Treatment",
+            "type": "integer"
+          },
+          "required_control": {
+            "title": "Required Control",
+            "type": "integer"
+          },
+          "required_treatment": {
+            "title": "Required Treatment",
+            "type": "integer"
+          },
+          "segment_customers": {
+            "title": "Segment Customers",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "segment_customers",
+          "excluded_other_experiments",
+          "assigned",
+          "n_treatment",
+          "n_control",
+          "required_treatment",
+          "required_control",
+          "messages_attached",
+          "data_snapshot_hash",
+          "balance",
+          "warnings"
+        ],
+        "title": "AssignmentSummaryOut",
+        "type": "object"
+      },
+      "AuditEntryOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "from_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Status"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "to_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Status"
+          }
+        },
+        "required": [
+          "at",
+          "actor",
+          "action",
+          "from_status",
+          "to_status",
+          "note",
+          "details"
+        ],
+        "title": "AuditEntryOut",
         "type": "object"
       },
       "AwaitingConfirmationEvent": {
@@ -40,6 +449,116 @@
         "title": "AwaitingConfirmationEvent",
         "type": "object"
       },
+      "BalanceOut": {
+        "properties": {
+          "balanced": {
+            "title": "Balanced",
+            "type": "boolean"
+          },
+          "covariates": {
+            "items": {
+              "$ref": "#/components/schemas/BalanceRow"
+            },
+            "title": "Covariates",
+            "type": "array"
+          },
+          "flagged": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flagged",
+            "type": "array"
+          },
+          "n_control": {
+            "title": "N Control",
+            "type": "integer"
+          },
+          "n_treatment": {
+            "title": "N Treatment",
+            "type": "integer"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "threshold",
+          "n_treatment",
+          "n_control",
+          "covariates",
+          "balanced",
+          "flagged"
+        ],
+        "title": "BalanceOut",
+        "type": "object"
+      },
+      "BalanceRow": {
+        "properties": {
+          "control_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Control Mean"
+          },
+          "covariate": {
+            "title": "Covariate",
+            "type": "string"
+          },
+          "flagged": {
+            "title": "Flagged",
+            "type": "boolean"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "smd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Smd"
+          },
+          "treatment_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Mean"
+          }
+        },
+        "required": [
+          "covariate",
+          "level",
+          "smd",
+          "treatment_mean",
+          "control_mean",
+          "flagged"
+        ],
+        "title": "BalanceRow",
+        "type": "object"
+      },
       "Body_choose_sheet_upload__session_id__sheet_post": {
         "properties": {
           "sheet_name": {
@@ -51,6 +570,65 @@
           "sheet_name"
         ],
         "title": "Body_choose_sheet_upload__session_id__sheet_post",
+        "type": "object"
+      },
+      "Body_upload_results_experiments__experiment_id__results_post": {
+        "properties": {
+          "arpu_tolerance": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arpu Tolerance"
+          },
+          "customer_value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Value"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "Results CSV",
+            "title": "File",
+            "type": "string"
+          },
+          "offer_cost": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Cost"
+          },
+          "uploaded_by": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Uploaded By",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "uploaded_by"
+        ],
+        "title": "Body_upload_results_experiments__experiment_id__results_post",
         "type": "object"
       },
       "Body_upload_upload_post": {
@@ -499,6 +1077,431 @@
         "title": "DataHealth",
         "type": "object"
       },
+      "DecideRequest": {
+        "properties": {
+          "decider": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Decider",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "ship",
+              "dont_ship",
+              "extend"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "new_planned_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Planned End"
+          },
+          "note": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "decider",
+          "note"
+        ],
+        "title": "DecideRequest",
+        "type": "object"
+      },
+      "DecisionHelperOut": {
+        "properties": {
+          "extra_sample_needed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "guardrails_breached": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Guardrails Breached",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "verdict": {
+            "enum": [
+              "ship",
+              "dont_ship",
+              "inconclusive",
+              "untrustworthy"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "reasons",
+          "guardrails_breached",
+          "extra_sample_needed",
+          "note"
+        ],
+        "title": "DecisionHelperOut",
+        "type": "object"
+      },
+      "DemoRequest": {
+        "properties": {
+          "session_id": {
+            "pattern": "^[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "title": "DemoRequest",
+        "type": "object"
+      },
+      "DesignInputs": {
+        "description": "What the sample size depends on; POST /experiments/design previews it live.",
+        "properties": {
+          "alpha": {
+            "default": 0.05,
+            "title": "Alpha",
+            "type": "number"
+          },
+          "baseline_rate": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Rate"
+          },
+          "control_share": {
+            "default": 0.5,
+            "title": "Control Share",
+            "type": "number"
+          },
+          "mde": {
+            "exclusiveMinimum": 0.0,
+            "title": "Mde",
+            "type": "number"
+          },
+          "mde_type": {
+            "default": "absolute",
+            "enum": [
+              "absolute",
+              "relative"
+            ],
+            "title": "Mde Type",
+            "type": "string"
+          },
+          "monthly_volume": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Volume"
+          },
+          "power": {
+            "default": 0.8,
+            "title": "Power",
+            "type": "number"
+          },
+          "preregistered_segments": {
+            "items": {
+              "$ref": "#/components/schemas/NamedSegment"
+            },
+            "maxItems": 10,
+            "title": "Preregistered Segments",
+            "type": "array"
+          },
+          "segment_definition": {
+            "$ref": "#/components/schemas/SegmentDefinition"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "source_recommendation_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Recommendation Id"
+          }
+        },
+        "required": [
+          "mde"
+        ],
+        "title": "DesignInputs",
+        "type": "object"
+      },
+      "DesignInputsEcho": {
+        "properties": {
+          "alpha": {
+            "title": "Alpha",
+            "type": "number"
+          },
+          "alternative": {
+            "title": "Alternative",
+            "type": "string"
+          },
+          "baseline_rate": {
+            "title": "Baseline Rate",
+            "type": "number"
+          },
+          "control_share": {
+            "title": "Control Share",
+            "type": "number"
+          },
+          "mde": {
+            "title": "Mde",
+            "type": "number"
+          },
+          "mde_type": {
+            "enum": [
+              "absolute",
+              "relative"
+            ],
+            "title": "Mde Type",
+            "type": "string"
+          },
+          "monthly_volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Volume"
+          },
+          "n_available": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Available"
+          },
+          "power": {
+            "title": "Power",
+            "type": "number"
+          }
+        },
+        "required": [
+          "baseline_rate",
+          "mde",
+          "mde_type",
+          "alpha",
+          "power",
+          "control_share",
+          "alternative"
+        ],
+        "title": "DesignInputsEcho",
+        "type": "object"
+      },
+      "DesignOut": {
+        "properties": {
+          "absolute_mde": {
+            "title": "Absolute Mde",
+            "type": "number"
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/app__experiments__schemas__Assumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "detectable_with_available": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DetectableEffect"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "duration_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Days"
+          },
+          "duration_months": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Months"
+          },
+          "effect_size_h": {
+            "title": "Effect Size H",
+            "type": "number"
+          },
+          "feasible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feasible"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/DesignInputsEcho"
+          },
+          "measured_segment_churn": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Segment Churn"
+          },
+          "n_control": {
+            "title": "N Control",
+            "type": "integer"
+          },
+          "n_total": {
+            "title": "N Total",
+            "type": "integer"
+          },
+          "n_treatment": {
+            "title": "N Treatment",
+            "type": "integer"
+          },
+          "relative_mde": {
+            "title": "Relative Mde",
+            "type": "number"
+          },
+          "treatment_rate": {
+            "title": "Treatment Rate",
+            "type": "number"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "inputs",
+          "treatment_rate",
+          "absolute_mde",
+          "relative_mde",
+          "effect_size_h",
+          "n_treatment",
+          "n_control",
+          "n_total",
+          "formula"
+        ],
+        "title": "DesignOut",
+        "type": "object"
+      },
+      "DetectableEffect": {
+        "properties": {
+          "absolute": {
+            "title": "Absolute",
+            "type": "number"
+          },
+          "effect_size_h": {
+            "title": "Effect Size H",
+            "type": "number"
+          },
+          "relative": {
+            "title": "Relative",
+            "type": "number"
+          },
+          "treatment_rate": {
+            "title": "Treatment Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "treatment_rate",
+          "absolute",
+          "relative",
+          "effect_size_h"
+        ],
+        "title": "DetectableEffect",
+        "type": "object"
+      },
       "DoneEvent": {
         "properties": {
           "final_error": {
@@ -776,6 +1779,796 @@
         "title": "ErrorEvent",
         "type": "object"
       },
+      "ExperimentCreate": {
+        "properties": {
+          "alpha": {
+            "default": 0.05,
+            "title": "Alpha",
+            "type": "number"
+          },
+          "baseline_rate": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Rate"
+          },
+          "control_share": {
+            "default": 0.5,
+            "title": "Control Share",
+            "type": "number"
+          },
+          "created_by": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Created By",
+            "type": "string"
+          },
+          "guardrail_metrics": {
+            "items": {
+              "enum": [
+                "complaints",
+                "arpu"
+              ],
+              "type": "string"
+            },
+            "title": "Guardrail Metrics",
+            "type": "array"
+          },
+          "hypothesis": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Hypothesis",
+            "type": "string"
+          },
+          "mde": {
+            "exclusiveMinimum": 0.0,
+            "title": "Mde",
+            "type": "number"
+          },
+          "mde_type": {
+            "default": "absolute",
+            "enum": [
+              "absolute",
+              "relative"
+            ],
+            "title": "Mde Type",
+            "type": "string"
+          },
+          "monthly_volume": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Volume"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "offer": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Offer",
+            "type": "string"
+          },
+          "outcome_window_days": {
+            "default": 90,
+            "maximum": 730.0,
+            "minimum": 1.0,
+            "title": "Outcome Window Days",
+            "type": "integer"
+          },
+          "planned_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned End"
+          },
+          "planned_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Start"
+          },
+          "power": {
+            "default": 0.8,
+            "title": "Power",
+            "type": "number"
+          },
+          "preregistered_segments": {
+            "items": {
+              "$ref": "#/components/schemas/NamedSegment"
+            },
+            "maxItems": 10,
+            "title": "Preregistered Segments",
+            "type": "array"
+          },
+          "segment_definition": {
+            "$ref": "#/components/schemas/SegmentDefinition"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "source_recommendation_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Recommendation Id"
+          }
+        },
+        "required": [
+          "mde",
+          "name",
+          "hypothesis",
+          "offer",
+          "created_by"
+        ],
+        "title": "ExperimentCreate",
+        "type": "object"
+      },
+      "ExperimentOut": {
+        "properties": {
+          "alpha": {
+            "title": "Alpha",
+            "type": "number"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "assignment_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssignmentSummaryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "audit": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryOut"
+            },
+            "title": "Audit",
+            "type": "array"
+          },
+          "baseline_rate": {
+            "title": "Baseline Rate",
+            "type": "number"
+          },
+          "control_share": {
+            "title": "Control Share",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "data_snapshot_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Snapshot Hash"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "decision_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Note"
+          },
+          "demo": {
+            "default": false,
+            "title": "Demo",
+            "type": "boolean"
+          },
+          "design": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DesignOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "guardrail_metrics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Guardrail Metrics",
+            "type": "array"
+          },
+          "hypothesis": {
+            "title": "Hypothesis",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "mde": {
+            "title": "Mde",
+            "type": "number"
+          },
+          "mde_type": {
+            "title": "Mde Type",
+            "type": "string"
+          },
+          "n_required_control": {
+            "title": "N Required Control",
+            "type": "integer"
+          },
+          "n_required_treatment": {
+            "title": "N Required Treatment",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "offer": {
+            "title": "Offer",
+            "type": "string"
+          },
+          "outcome_window_days": {
+            "title": "Outcome Window Days",
+            "type": "integer"
+          },
+          "planned_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned End"
+          },
+          "planned_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Start"
+          },
+          "power": {
+            "title": "Power",
+            "type": "number"
+          },
+          "preregistered_segments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/NamedSegment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preregistered Segments"
+          },
+          "primary_metric": {
+            "title": "Primary Metric",
+            "type": "string"
+          },
+          "results_uploaded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results Uploaded At"
+          },
+          "segment_definition": {
+            "$ref": "#/components/schemas/SegmentDefinition"
+          },
+          "source_recommendation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Recommendation Id"
+          },
+          "source_session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Session Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "offer",
+          "status",
+          "created_by",
+          "created_at",
+          "decision",
+          "hypothesis",
+          "source_recommendation_id",
+          "source_session_id",
+          "segment_definition",
+          "primary_metric",
+          "outcome_window_days",
+          "guardrail_metrics",
+          "baseline_rate",
+          "mde",
+          "mde_type",
+          "alpha",
+          "power",
+          "control_share",
+          "n_required_treatment",
+          "n_required_control",
+          "planned_start",
+          "planned_end",
+          "approved_by",
+          "approved_at",
+          "decision_note",
+          "data_snapshot_hash",
+          "design",
+          "preregistered_segments",
+          "analysis",
+          "results_uploaded_at",
+          "assignment_summary"
+        ],
+        "title": "ExperimentOut",
+        "type": "object"
+      },
+      "ExperimentSummary": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "demo": {
+            "default": false,
+            "title": "Demo",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "offer": {
+            "title": "Offer",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "offer",
+          "status",
+          "created_by",
+          "created_at",
+          "decision"
+        ],
+        "title": "ExperimentSummary",
+        "type": "object"
+      },
+      "ExperimentSummaryOut": {
+        "properties": {
+          "figures": {
+            "items": {
+              "$ref": "#/components/schemas/SummaryFigure"
+            },
+            "title": "Figures",
+            "type": "array"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "sentences": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sentences",
+            "type": "array"
+          },
+          "source": {
+            "enum": [
+              "ai",
+              "template"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "verdict": {
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sentences",
+          "figures",
+          "source",
+          "verdict",
+          "problems"
+        ],
+        "title": "ExperimentSummaryOut",
+        "type": "object"
+      },
+      "ExperimentUpdate": {
+        "additionalProperties": false,
+        "description": "Fields to change while the experiment is a draft; omitted fields stay as they are.",
+        "properties": {
+          "actor": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
+          "alpha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alpha"
+          },
+          "baseline_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Rate"
+          },
+          "control_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Control Share"
+          },
+          "guardrail_metrics": {
+            "anyOf": [
+              {
+                "items": {
+                  "enum": [
+                    "complaints",
+                    "arpu"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guardrail Metrics"
+          },
+          "hypothesis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hypothesis"
+          },
+          "mde": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mde"
+          },
+          "mde_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "absolute",
+                  "relative"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mde Type"
+          },
+          "monthly_volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Volume"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "offer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer"
+          },
+          "outcome_window_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Window Days"
+          },
+          "planned_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned End"
+          },
+          "planned_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Start"
+          },
+          "power": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power"
+          },
+          "preregistered_segments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/NamedSegment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preregistered Segments"
+          },
+          "segment_definition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SegmentDefinition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "source_recommendation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Recommendation Id"
+          }
+        },
+        "required": [
+          "actor"
+        ],
+        "title": "ExperimentUpdate",
+        "type": "object"
+      },
       "FeatureImportance": {
         "additionalProperties": true,
         "properties": {
@@ -922,6 +2715,47 @@
           "n"
         ],
         "title": "GroupSummary",
+        "type": "object"
+      },
+      "GuardrailOut": {
+        "properties": {
+          "arms": {
+            "$ref": "#/components/schemas/ArmMeans"
+          },
+          "bad_direction": {
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Bad Direction",
+            "type": "string"
+          },
+          "breached": {
+            "title": "Breached",
+            "type": "boolean"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeanDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tolerance": {
+            "title": "Tolerance",
+            "type": "number"
+          }
+        },
+        "required": [
+          "arms",
+          "bad_direction",
+          "tolerance",
+          "breached"
+        ],
+        "title": "GuardrailOut",
         "type": "object"
       },
       "HTTPErrorOut": {
@@ -1209,7 +3043,7 @@
         "properties": {
           "assumptions": {
             "items": {
-              "$ref": "#/components/schemas/Assumption"
+              "$ref": "#/components/schemas/app__api__contract__Assumption"
             },
             "title": "Assumptions",
             "type": "array"
@@ -1450,6 +3284,131 @@
         "title": "ImpactGroup",
         "type": "object"
       },
+      "ImpactOut": {
+        "properties": {
+          "acceptance_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance Rate"
+          },
+          "acceptors": {
+            "title": "Acceptors",
+            "type": "integer"
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/app__experiments__schemas__Assumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "customer_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Value"
+          },
+          "customers_saved": {
+            "title": "Customers Saved",
+            "type": "number"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "net_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value"
+          },
+          "net_value_ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value Ci High"
+          },
+          "net_value_ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Value Ci Low"
+          },
+          "offer_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Cost"
+          },
+          "saved_ci_high": {
+            "title": "Saved Ci High",
+            "type": "number"
+          },
+          "saved_ci_low": {
+            "title": "Saved Ci Low",
+            "type": "number"
+          },
+          "total_offer_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Offer Cost"
+          }
+        },
+        "required": [
+          "customers_saved",
+          "saved_ci_low",
+          "saved_ci_high",
+          "acceptors",
+          "acceptance_rate",
+          "customer_value",
+          "offer_cost",
+          "total_offer_cost",
+          "net_value",
+          "net_value_ci_low",
+          "net_value_ci_high",
+          "formula",
+          "assumptions"
+        ],
+        "title": "ImpactOut",
+        "type": "object"
+      },
       "Insight": {
         "properties": {
           "causality_note": {
@@ -1488,6 +3447,88 @@
           "significant"
         ],
         "title": "Insight",
+        "type": "object"
+      },
+      "IttOut": {
+        "properties": {
+          "achieved_power": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Achieved Power"
+          },
+          "arms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmRates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RateDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "relative_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Lift"
+          },
+          "significant": {
+            "default": false,
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "IttOut",
         "type": "object"
       },
       "KmSummary": {
@@ -1694,6 +3735,92 @@
         "title": "LogRank",
         "type": "object"
       },
+      "MeanCI": {
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "n",
+          "mean",
+          "ci_low",
+          "ci_high"
+        ],
+        "title": "MeanCI",
+        "type": "object"
+      },
+      "MeanDifference": {
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "ci_low",
+          "ci_high"
+        ],
+        "title": "MeanDifference",
+        "type": "object"
+      },
       "ModelMetrics": {
         "additionalProperties": true,
         "properties": {
@@ -1762,6 +3889,32 @@
         "title": "ModelMetrics",
         "type": "object"
       },
+      "NamedSegment": {
+        "description": "A segment registered before approval, analysed separately (exploratory).",
+        "properties": {
+          "filters": {
+            "items": {
+              "$ref": "#/components/schemas/SegmentFilter"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Filters",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "filters"
+        ],
+        "title": "NamedSegment",
+        "type": "object"
+      },
       "NboSummary": {
         "additionalProperties": true,
         "properties": {
@@ -1793,6 +3946,13 @@
           "formula": {
             "title": "Formula",
             "type": "string"
+          },
+          "offer_evidence": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OfferEvidenceInfo"
+            },
+            "title": "Offer Evidence",
+            "type": "object"
           },
           "offer_models": {
             "additionalProperties": {
@@ -1848,6 +4008,21 @@
           "eligible_offers": {
             "title": "Eligible Offers",
             "type": "integer"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "enum": [
+                  "experiment-proven",
+                  "observational"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
           },
           "expected_value": {
             "title": "Expected Value",
@@ -2436,6 +4611,190 @@
         "title": "OfferEffectiveness",
         "type": "object"
       },
+      "OfferEvidenceInfo": {
+        "description": "Where an offer's retention effect comes from (Phase 5c feedback loop).",
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "experiment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Id"
+          },
+          "itt_difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itt Difference"
+          },
+          "label": {
+            "enum": [
+              "experiment-proven",
+              "observational"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "retention_lift_per_acceptor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Lift Per Acceptor"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "OfferEvidenceInfo",
+        "type": "object"
+      },
+      "OfferEvidenceOut": {
+        "properties": {
+          "acceptance_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance Rate"
+          },
+          "ci_high": {
+            "title": "Ci High",
+            "type": "number"
+          },
+          "ci_low": {
+            "title": "Ci Low",
+            "type": "number"
+          },
+          "control_churn": {
+            "title": "Control Churn",
+            "type": "number"
+          },
+          "decided_at": {
+            "format": "date-time",
+            "title": "Decided At",
+            "type": "string"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "integer"
+          },
+          "itt_difference": {
+            "title": "Itt Difference",
+            "type": "number"
+          },
+          "n_control": {
+            "title": "N Control",
+            "type": "integer"
+          },
+          "n_treatment": {
+            "title": "N Treatment",
+            "type": "integer"
+          },
+          "offer": {
+            "title": "Offer",
+            "type": "string"
+          },
+          "retention_lift_per_acceptor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Lift Per Acceptor"
+          },
+          "segment_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Description"
+          },
+          "treatment_churn": {
+            "title": "Treatment Churn",
+            "type": "number"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "offer",
+          "segment_description",
+          "decision",
+          "decided_at",
+          "n_treatment",
+          "n_control",
+          "treatment_churn",
+          "control_churn",
+          "itt_difference",
+          "ci_low",
+          "ci_high",
+          "acceptance_rate",
+          "retention_lift_per_acceptor"
+        ],
+        "title": "OfferEvidenceOut",
+        "type": "object"
+      },
       "OfferMessageResponse": {
         "properties": {
           "cached": {
@@ -2721,6 +5080,82 @@
           "zscore"
         ],
         "title": "OutlierCounts",
+        "type": "object"
+      },
+      "PerProtocolOut": {
+        "properties": {
+          "arms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmRates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RateDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "relative_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Lift"
+          },
+          "significant": {
+            "default": false,
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          }
+        },
+        "required": [
+          "label",
+          "available"
+        ],
+        "title": "PerProtocolOut",
         "type": "object"
       },
       "PermutationItem": {
@@ -3013,6 +5448,58 @@
         "title": "ProposedColumn",
         "type": "object"
       },
+      "RateDifference": {
+        "properties": {
+          "ci_high": {
+            "title": "Ci High",
+            "type": "number"
+          },
+          "ci_level": {
+            "title": "Ci Level",
+            "type": "number"
+          },
+          "ci_low": {
+            "title": "Ci Low",
+            "type": "number"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "ci_low",
+          "ci_high",
+          "method",
+          "ci_level"
+        ],
+        "title": "RateDifference",
+        "type": "object"
+      },
+      "ReanalyseRequest": {
+        "properties": {
+          "actor": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Actor",
+            "type": "string"
+          },
+          "assumptions": {
+            "$ref": "#/components/schemas/AnalysisAssumptions"
+          }
+        },
+        "required": [
+          "actor",
+          "assumptions"
+        ],
+        "title": "ReanalyseRequest",
+        "type": "object"
+      },
       "Recommendation": {
         "properties": {
           "action": {
@@ -3300,6 +5787,11 @@
           },
           "results": {
             "$ref": "#/components/schemas/ResultsPayload"
+          },
+          "sample": {
+            "default": false,
+            "title": "Sample",
+            "type": "boolean"
           },
           "session_id": {
             "title": "Session Id",
@@ -3610,6 +6102,238 @@
         "title": "Segment",
         "type": "object"
       },
+      "SegmentColumn": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "numeric",
+              "categorical"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "levels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          }
+        },
+        "required": [
+          "column",
+          "kind"
+        ],
+        "title": "SegmentColumn",
+        "type": "object"
+      },
+      "SegmentDefinition": {
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "filters": {
+            "items": {
+              "$ref": "#/components/schemas/SegmentFilter"
+            },
+            "maxItems": 20,
+            "title": "Filters",
+            "type": "array"
+          }
+        },
+        "title": "SegmentDefinition",
+        "type": "object"
+      },
+      "SegmentFilter": {
+        "properties": {
+          "column": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Column",
+            "type": "string"
+          },
+          "op": {
+            "enum": [
+              "eq",
+              "ne",
+              "in",
+              "not_in",
+              "gt",
+              "gte",
+              "lt",
+              "lte"
+            ],
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "maxItems": 200,
+                "type": "array"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "column",
+          "op",
+          "value"
+        ],
+        "title": "SegmentFilter",
+        "type": "object"
+      },
+      "SegmentResultOut": {
+        "properties": {
+          "arms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArmRates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RateDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "p_adjusted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Adjusted"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "relative_lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Lift"
+          },
+          "significant": {
+            "default": false,
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "skipped": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skipped"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "title": "SegmentResultOut",
+        "type": "object"
+      },
       "Segments": {
         "additionalProperties": true,
         "properties": {
@@ -3669,6 +6393,32 @@
           "skipped"
         ],
         "title": "Segments",
+        "type": "object"
+      },
+      "SegmentsOut": {
+        "properties": {
+          "items": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SegmentResultOut"
+            },
+            "title": "Items",
+            "type": "object"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "method",
+          "items"
+        ],
+        "title": "SegmentsOut",
         "type": "object"
       },
       "ShapFeature": {
@@ -3836,6 +6586,59 @@
         "title": "SkippedTest",
         "type": "object"
       },
+      "SrmOut": {
+        "properties": {
+          "chi2": {
+            "title": "Chi2",
+            "type": "number"
+          },
+          "expected": {
+            "$ref": "#/components/schemas/ArmShares"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "boolean"
+          },
+          "observed": {
+            "$ref": "#/components/schemas/ArmCounts"
+          },
+          "observed_control_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Control Share"
+          },
+          "p_value": {
+            "title": "P Value",
+            "type": "number"
+          },
+          "planned_control_share": {
+            "title": "Planned Control Share",
+            "type": "number"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "observed",
+          "expected",
+          "planned_control_share",
+          "observed_control_share",
+          "chi2",
+          "p_value",
+          "threshold",
+          "failed"
+        ],
+        "title": "SrmOut",
+        "type": "object"
+      },
       "StreamEvents": {
         "description": "Documentation only: the payload type of each SSE event name.",
         "properties": {
@@ -3875,6 +6678,29 @@
           "done"
         ],
         "title": "StreamEvents",
+        "type": "object"
+      },
+      "SummaryFigure": {
+        "properties": {
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "source_key": {
+            "title": "Source Key",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "source_key",
+          "value",
+          "display"
+        ],
+        "title": "SummaryFigure",
         "type": "object"
       },
       "SurvivalCurve": {
@@ -4070,6 +6896,42 @@
         "title": "TenureBands",
         "type": "object"
       },
+      "UploadInfo": {
+        "properties": {
+          "early_look": {
+            "title": "Early Look",
+            "type": "boolean"
+          },
+          "file_sha256": {
+            "title": "File Sha256",
+            "type": "string"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "uploaded_by": {
+            "title": "Uploaded By",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "file_sha256",
+          "uploaded_by",
+          "early_look",
+          "warnings"
+        ],
+        "title": "UploadInfo",
+        "type": "object"
+      },
       "UploadResponse": {
         "properties": {
           "columns": {
@@ -4216,6 +7078,64 @@
         ],
         "title": "ValidationReport",
         "type": "object"
+      },
+      "app__api__contract__Assumption": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "result": {
+            "title": "Result",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "result",
+          "detail"
+        ],
+        "title": "Assumption",
+        "type": "object"
+      },
+      "app__experiments__schemas__Assumption": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "default",
+              "user",
+              "data"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "source"
+        ],
+        "title": "Assumption",
+        "type": "object"
       }
     }
   },
@@ -4356,6 +7276,1417 @@
         "summary": "Confirm Schema",
         "tags": [
           "runs"
+        ]
+      }
+    },
+    "/experiments": {
+      "get": {
+        "operationId": "list_experiments_experiments_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExperimentSummary"
+                  },
+                  "title": "Response List Experiments Experiments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Experiments",
+        "tags": [
+          "experiments"
+        ]
+      },
+      "post": {
+        "operationId": "create_experiment_experiments_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Experiment",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/demo": {
+      "post": {
+        "description": "Sample data only: a worked example with a simulated, known-effect results file.",
+        "operationId": "create_demo_experiments_demo_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Demo",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/design": {
+      "post": {
+        "description": "Sample size for a design without saving it (live feedback in the wizard).",
+        "operationId": "preview_design_experiments_design_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignInputs"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Design",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/offer-evidence": {
+      "get": {
+        "description": "Measured offer effects from decided experiments (used by next best offer).",
+        "operationId": "list_offer_evidence_experiments_offer_evidence_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OfferEvidenceOut"
+                  },
+                  "title": "Response List Offer Evidence Experiments Offer Evidence Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Offer Evidence",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/segment-options/{session_id}": {
+      "get": {
+        "operationId": "segment_options_experiments_segment_options__session_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SegmentColumn"
+                  },
+                  "title": "Response Segment Options Experiments Segment Options  Session Id  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Segment Options",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}": {
+      "get": {
+        "operationId": "get_experiment_experiments__experiment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Experiment",
+        "tags": [
+          "experiments"
+        ]
+      },
+      "patch": {
+        "operationId": "update_experiment_experiments__experiment_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Experiment",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/analysis": {
+      "post": {
+        "operationId": "reanalyse_experiments__experiment_id__analysis_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReanalyseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reanalyse",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/approve": {
+      "post": {
+        "operationId": "approve_experiment_experiments__experiment_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Experiment",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/assign": {
+      "post": {
+        "operationId": "assign_experiment_experiments__experiment_id__assign_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assign Experiment",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/assignment.csv": {
+      "get": {
+        "operationId": "export_assignment_experiments__experiment_id__assignment_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/csv": {}
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Assignment",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/decide": {
+      "post": {
+        "operationId": "decide_experiments__experiment_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/results": {
+      "post": {
+        "operationId": "upload_results_experiments__experiment_id__results_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_results_experiments__experiment_id__results_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Results",
+        "tags": [
+          "experiments"
+        ]
+      }
+    },
+    "/experiments/{experiment_id}/summary": {
+      "post": {
+        "operationId": "experiment_summary_experiments__experiment_id__summary_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPErrorOut"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Experiment Summary",
+        "tags": [
+          "experiments"
         ]
       }
     },
@@ -4851,6 +9182,24 @@
     "/sample": {
       "post": {
         "operationId": "load_sample_sample_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5030,6 +9379,24 @@
     "/upload": {
       "post": {
         "operationId": "upload_upload_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Key"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "multipart/form-data": {

@@ -86,7 +86,7 @@ def results(
     band: Annotated[Literal["High", "Medium", "Low"] | None, Query()] = None,
 ) -> ResultsResponse:
     try:
-        sessions.read_meta(session_id)
+        meta = sessions.read_meta(session_id)
     except sessions.SessionNotFound:
         raise HTTPException(410, "Session expired, please re-upload.") from None
     manager = request.app.state.runs
@@ -102,6 +102,7 @@ def results(
     return ResultsResponse(
         session_id=session_id,
         status=status,
+        sample=bool(meta.get("sample")),
         results=validated_payload(payload),
         predictions=PredictionsPage(**predictions_page(values.get("predictions_path"), page,
                                                        band)),

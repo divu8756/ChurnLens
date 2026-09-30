@@ -69,6 +69,8 @@ def main() -> None:
         "RecommendationList": {"recommendations": [RECOMMENDATION]},
         # Offer messages use the fixed template (the fallback path), so the text is known.
         "OfferMessage": TimeoutError("fake: use the template message"),
+        # The experiment summary also uses its template, so the text is known.
+        "ExperimentSummary": TimeoutError("fake: use the template summary"),
     }))
     uvicorn.run(create_app(), host="127.0.0.1", port=args.port, log_level="warning")
 

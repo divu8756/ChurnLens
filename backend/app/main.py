@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__, sessions
+from app.api import experiments as experiments_api
 from app.api import offers as offers_api
 from app.api import predictions as predictions_api
 from app.api import results as results_api
@@ -52,7 +53,7 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.FRONTEND_ORIGIN],
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PATCH"],
         allow_headers=["*"],
     )
 
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
     app.include_router(results_api.router)
     app.include_router(predictions_api.router)
     app.include_router(offers_api.router)
+    app.include_router(experiments_api.router)
     return app
 
 

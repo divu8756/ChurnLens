@@ -53,6 +53,19 @@ class NboConfig:
     bands: tuple[str, ...] = ("High", "Medium")
     sources: dict[str, str] = field(default_factory=lambda: {
         "horizon_months": "default", "max_discount": "default", "decline_days": "default"})
+    # Phase 5c feedback loop: offer name (casefolded) -> measured evidence from a decided
+    # experiment, {"experiment_id", "retention_lift_per_acceptor", ...}.
+    evidence: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+
+EXPERIMENT_PROVEN = "experiment-proven"
+OBSERVATIONAL = "observational"
+
+
+def measured_lift(cfg: NboConfig, offer: str) -> dict[str, Any] | None:
+    """Evidence for an offer when an experiment measured a usable per-acceptor lift."""
+    ev = cfg.evidence.get(offer.casefold())
+    return ev if ev and ev.get("retention_lift_per_acceptor") is not None else None
 
 
 def offer_discount(offer: str) -> float | None:
@@ -203,7 +216,9 @@ def score_next_best_offers(frame: pd.DataFrame, schema: dict[str, Any], long: pd
             pa = (float(accept_pred[offer][i]) if offer in accept_pred
                   else p_rate.get((offer, segment), p_rate[(offer, None)]))
             stay_acc, stay_dec = p_stay.get((offer, segment), p_stay[(offer, None)])
-            lift = max(0.0, stay_acc - stay_dec)
+            measured = measured_lift(cfg, offer)
+            lift = (float(measured["retention_lift_per_acceptor"]) if measured
+                    else max(0.0, stay_acc - stay_dec))
             ev = expected_value(float(p_churn), pa, lift, value, cost[offer])
             options.append((ev, offer, pa, stay_acc, stay_dec, lift))
         options.sort(key=lambda o: (-o[0], o[1]))
@@ -221,6 +236,8 @@ def score_next_best_offers(frame: pd.DataFrame, schema: dict[str, Any], long: pd
             "p_stay_if_accepted": best[3] if best else None,
             "p_stay_if_declined": best[4] if best else None,
             "retention_lift": best[5] if best else None,
+            "evidence": (EXPERIMENT_PROVEN if measured_lift(cfg, best[1]) else OBSERVATIONAL)
+            if best else None,
             "customer_value": round(value, 2),
             "offer_cost": round(cost[best[1]], 2) if best else None,
             "low_data": bool(best and model_info[best[1]]["low_data"]),
@@ -232,7 +249,7 @@ def score_next_best_offers(frame: pd.DataFrame, schema: dict[str, Any], long: pd
     table = pd.DataFrame.from_records(records, columns=[
         "customer_id", "best_offer", "expected_value", "runner_up", "runner_up_value",
         "p_churn", "p_accept", "p_stay_if_accepted", "p_stay_if_declined", "retention_lift",
-        "customer_value", "offer_cost",
+        "evidence", "customer_value", "offer_cost",
         "low_data", "eligible_offers", "no_offer_reason"])
 
     counts = table["best_offer"].value_counts()
@@ -247,6 +264,9 @@ def score_next_best_offers(frame: pd.DataFrame, schema: dict[str, Any], long: pd
                      for o in [*catalog, NO_OFFER] if counts.get(o, 0)],
         "offer_models": model_info,
         "offer_costs": cost,
+        "offer_evidence": {
+            o: {"label": EXPERIMENT_PROVEN, **measured_lift(cfg, o)} if measured_lift(cfg, o)
+            else {"label": OBSERVATIONAL} for o in catalog},
         "excluded_by_discount": [o for o in catalog if o not in eligible_offers],
         "formula": "expected_value = P(churn) * P(accept) * retention_lift * customer_value"
                    " - P(accept) * cost_per_acceptance; retention_lift = max(0, "
@@ -267,7 +287,9 @@ def score_next_best_offers(frame: pd.DataFrame, schema: dict[str, Any], long: pd
              if cost_source == "data" else "No cost column: offers are treated as free."},
             {"name": "retention_lift", "value": None, "source": "data",
              "text": "Only the extra retention of acceptors over decliners counts; acceptors "
-                     "choose to accept, so this is an association, not a proven effect."},
+                     "choose to accept, so this is an association, not a proven effect. "
+                     "Offers tested in a decided experiment use the measured effect instead "
+                     "(churn reduction / acceptance rate) and are labelled experiment-proven."},
             {"name": "p_churn", "value": None, "source": "data",
              "text": "P(churn) is the churn model's score (not yet calibrated; Phase 5d)."},
         ],

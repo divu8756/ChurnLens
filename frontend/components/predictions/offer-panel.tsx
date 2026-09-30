@@ -7,6 +7,7 @@ import { formatPercent, formatStat } from "@/lib/format";
 import { GENERAL_FORMULA, LIFT_FORMULA, formatOfferValue, substitutedFormula } from "@/lib/offers";
 
 import { Tex } from "../hypothesis/tex";
+import { EvidenceBadge } from "../recommendations/offer-performance";
 import { Alert, Button, Spinner } from "../ui";
 
 type Loaded = { customerId: string; offer?: NextBestOffer; error?: string };
@@ -91,7 +92,8 @@ export function OfferPanel({ sessionId, customerId }: { sessionId: string; custo
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <p>
           <span className="text-gray-500">Next best offer: </span>
-          <span className="font-semibold">{o.best_offer}</span>
+          <span className="font-semibold">{o.best_offer}</span>{" "}
+          {o.evidence ? <EvidenceBadge label={o.evidence} /> : null}
         </p>
         <p>
           <span className="text-gray-500">Expected value: </span>
@@ -117,7 +119,11 @@ export function OfferPanel({ sessionId, customerId }: { sessionId: string; custo
         <Input label="P(accept)" value={formatPercent(o.p_accept, 1)} note={o.low_data ? "low data: segment rate" : undefined} />
         <Input label="Stay if accepted" value={formatPercent(o.p_stay_if_accepted, 1)} />
         <Input label="Stay if declined" value={formatPercent(o.p_stay_if_declined, 1)} />
-        <Input label="Retention lift" value={formatStat(o.retention_lift, 3)} />
+        <Input
+          label="Retention lift"
+          value={formatStat(o.retention_lift, 3)}
+          note={o.evidence === "experiment-proven" ? "measured in an A/B test (churn drop ÷ acceptance)" : undefined}
+        />
         <Input label="Customer value" value={unit === "revenue" ? formatOfferValue(o.customer_value, unit) : "1 customer"} />
         <Input label="Cost if accepted" value={formatOfferValue(o.offer_cost ?? 0, "revenue")} />
         <Input label="Offers considered" value={String(o.eligible_offers)} />

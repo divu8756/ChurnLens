@@ -3,11 +3,13 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 5b gate (review, PR)
+T5d.0 (Plan the metrics layer, no code)
 
 ## Next step
-Phase 5b gate: strict review of git diff main...phase-5b, fix High/Medium,
-push, open the PR; the human merges it. Then Phase 5c (A/B testing).
+Phase 5c PR is open (see Done); the human merges it. Then Phase 5d on a
+branch stacked on phase-5c: T5d.0 plan, then T5d.1-T5d.6. The shared A/B
+function already exists (stats/experiment_design.sample_size with
+mde_type="relative").
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -360,6 +362,91 @@ push, open the PR; the human merges it. Then Phase 5c (A/B testing).
   confirmed offer columns with every cell blank (no crash; everyone gets
   "No offer: no eligible offers"). Low items in Known issues. Backend 263,
   frontend 91, E2E 1 (offer flow included).
+- T5c.1: app/stats/experiment_design.py (sample size per arm via statsmodels
+  Cohen's h + NormalIndPower with ratio; absolute or relative MDE; smallest
+  detectable effect for the available customers; duration from monthly
+  volume; plain "Segment too small" warning with the detectable MDE; LaTeX
+  formula). app/experiments/ (SQLAlchemy models Experiment + AuditLog,
+  db.py SQLite/Postgres engine, lifecycle.py transitions that always audit),
+  Alembic migration 0001 packaged under app/experiments/migrations and run by
+  init_db(); the audit log is append-only in the ORM and via DB triggers
+  (SQLite and Postgres). Backend 296 tests (33 new).
+- T5c.2: /experiments API (create draft from a session + optional
+  recommendation, list, get with audit trail, PATCH while draft, approve with
+  approver + cost/eligibility checkbox, assign, assignment.csv).
+  app/experiments/segments.py (flat AND filters, no eval),
+  assignment.py (SHA-256 of "experiment_id:customer_id" -> [0,1) vs
+  control_share; SMD balance check with |SMD| > 0.1 flags, per level for
+  the plan column), data.py (session customers = cleaned data joined to
+  predictions; covariates churn_probability, time_column, revenue_column
+  and a plan/contract column found by name; attaches Phase 5b cached offer
+  messages without generating new ones), service.py, migration 0002
+  (experiment_assignments + design / assignment_summary / source_session_id).
+  CORS now allows PATCH. Backend 317 (21 new), frontend unchanged (types
+  regenerated).
+- T5c.3: app/stats/experiment_analysis.py (SRM chi-square p < 0.001; ITT
+  Wilson CIs, Newcombe hybrid-score CI of the difference, pooled z-test,
+  achieved power for the design MDE at the observed n; business impact with
+  CI and assumptions; per-protocol labelled biased; complaints / ARPU
+  guardrails with Welch z CIs; pre-registered segments BH-corrected and
+  labelled exploratory; decision helper ship / dont_ship / inconclusive
+  (with extra sample) / untrustworthy). app/experiments/results.py validates
+  the CSV against the assignment (unknown IDs, group mismatches, duplicates,
+  0/1 fields, churn_date inside the window; early-look warning).
+  POST /experiments/{id}/results (multipart + assumptions) and
+  /experiments/{id}/analysis (recompute with new assumptions). Migration
+  0003 (experiment_outcomes, preregistered_segments, analysis,
+  segments per assignment). Backend 334 (17 new).
+- T5c.4: prompts/experiment_summary.v1.md + app/experiments/summary.py
+  (5 sentences; every figure checked against the analysis; may not go beyond
+  the verdict; a negative figure may be written as its size; numbers in the
+  offer name and the 95% level are allowed; retry, then template), cached per
+  analysis. POST /experiments/{id}/decide (ship blocked on SRM; extend returns
+  to running; ship / dont_ship write offer_evidence unless SRM failed). NBO
+  uses the experiment's per-acceptor lift (ITT drop / acceptance rate) for
+  proven offers and labels every offer experiment-proven or observational.
+  Stateless POST /experiments/design (live wizard feedback), GET
+  /experiments/segment-options/{session_id}, typed DesignOut / AnalysisOut
+  contract, migration 0004. Frontend Experiments tab: list with status chips,
+  design wizard (recommendation prefill, segment builder, MDE / power /
+  split sliders with live sample size, pre-registered segments), approval,
+  assignment with balance table and CSV link, results upload, results view
+  (trust strip, per-arm bars with Wilson whiskers, forest plot, decision
+  helper, validated summary, impact with editable assumptions recomputed on
+  the server, guardrails, per-protocol caveat, decision form), audit trail;
+  evidence badges on offer cards and the offer panel. AI requests get a
+  150 s client timeout. Checked in a browser against a live backend: full
+  lifecycle on Telco, live Gemini summary validated (source ai), and after
+  "ship" a rerun labelled the offer experiment-proven. Backend 347,
+  frontend 100.
+- T5c.5: app/experiments/simulate.py + scripts/simulate_experiment.py
+  (seed 42; real_effect 26% vs 21% with 45% acceptance, no_effect,
+  broken_delivery 60/40 of a 50/50 plan; reads an assignment CSV or fetches
+  it from the API). Tests: scenario 1 CI contains the true -5 points,
+  scenario 2 is inconclusive or don't ship, scenario 3 is untrustworthy
+  (SRM). POST /experiments/demo (sample data only, marked by meta.sample
+  from POST /sample; ResultsResponse.sample tells the UI) creates a demo
+  experiment with scenario 1 results; demo experiments (migration 0005)
+  never block real ones and never write offer evidence. "Load demo
+  experiment" button on the Experiments tab; the E2E walk-through now loads
+  the demo, writes the (template) summary and records a decision.
+  Backend 353, frontend 101, E2E 1.
+- Phase 5c gate review. Fixed (High): experiments were global, so on a
+  shared deployment anyone could list others' experiments and download their
+  assignment CSVs (customer IDs, messages), and one user's decided experiment
+  changed next best offer for everyone with the same offer name. Now every
+  /experiments call needs an X-Workspace-Key (random per browser, only its
+  SHA-256 is stored, migration 0006); other workspaces get 404, overlap and
+  evidence are per workspace, uploads record the hash so offer_node reads
+  only its own workspace's evidence; the CSV is fetched with the header.
+  Fixed (Medium): the summary endpoint held a DB transaction open across the
+  LLM call (now commits first and skips caching if the analysis changed);
+  the async results upload ran parsing and statistics on the event loop
+  (now a sync handler in the threadpool); a results file with only one arm
+  gave a 500 (now 422). Low fixes: segment filter value lists capped at
+  200; migrations read the dialect from the context so the Postgres SQL can
+  be generated offline (checked: tables, ALTERs, trigger and function).
+  Low, not fixed: see Known issues. Backend 359, frontend 103, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -493,6 +580,38 @@ flowchart TD
    side effects, large state). Mitigation: one key per producer, reducers on
    shared lists, human_review does nothing before interrupt(), files for
    large data, tests for fan-out merge and resume.
+- T5c.1 dependencies: sqlalchemy 2.1.1 + alembic 1.20.0 (the v1.2 spec
+  requires SQLAlchemy + Alembic for experiments) and psycopg[binary] 3.3.2
+  (driver so DATABASE_URL=postgres... works; postgres:// URLs are rewritten
+  to postgresql+psycopg://).
+- T5c.1: MDE accepts mde_type absolute (runbook T5c.1, default) or relative
+  (v1.3 spec for the 5d A/B plan), one shared function. The treatment is
+  expected to lower churn (p2 = p1 - mde); the test is still two-sided.
+  Experiment stores n_required_treatment and n_required_control instead of a
+  single n_required_per_arm (unequal splits need different sizes), plus
+  outcome_window_days for "churn within N days". Power must be in [0.5, 1),
+  control share in [0.05, 0.95].
+- T5c.2: an experiment's baseline is the segment's measured churn rate
+  unless the user enters one (assumption source data | user; alpha, power
+  and control share default | user). Assignment may use a newer analysed
+  session than the design (sessions expire after 2 h); the session used is
+  in the audit row. Customers in experiments with status running or
+  results_uploaded are excluded from new assignments. Assignment keeps
+  under-powered or imbalanced groups but records warnings (the hash is
+  deterministic, so re-randomising is not possible without a new experiment).
+- T5c.3: assigned customers missing from the results file are a warning
+  (with counts per arm), not an error: lost customers are what the SRM
+  check exists to catch, so rejecting them would hide a broken delivery.
+  Unknown IDs, group mismatches and duplicates are rejected (422). ITT then
+  covers the customers with outcomes. Guardrails are breached only when the
+  95% CI shows the bad direction beyond a tolerance (complaints 0, ARPU 5%
+  of the control mean, editable): a discount lowers ARPU by design. Customer
+  value defaults to the assigned customers' mean monthly revenue x
+  NBO_HORIZON_MONTHS (source data); offer cost has no default, and without
+  it the decision helper cannot say "ship". Pre-registered segments are
+  fixed in the draft and membership is stored at assignment, because the
+  session data expires before results arrive. SRM failure gives the verdict
+  "untrustworthy" (blocks ship).
 
 ## Checkpoints for the human
 - S6 (end of Phase 6, MVP): run the app locally and click through all tabs:
@@ -544,6 +663,18 @@ flowchart TD
   not); duplicate customer IDs would share one row's features in next-best-
   offer scoring; offer acceptance models are weak on Telco (CV ROC-AUC
   0.48-0.64), so offer choice leans on the retention lift.
+- Phase 5c (Low, T5c.2): two experiments assigned at the same moment could
+  both claim the same customers (no DB lock across the overlap check);
+  assignment.csv does not neutralise spreadsheet formulas in messages.
+- Phase 5c (Low, gate): Postgres was checked with offline SQL only (no
+  local Postgres; Docker needs the human's OK), and the Docker image was not
+  rebuilt for the new dependencies (sqlalchemy, alembic, psycopg[binary];
+  migrations ship inside the app package). The workspace key is a bearer
+  key in localStorage, not a login: clearing browser storage loses access to
+  that browser's experiments. Restarting the API re-runs an analysis when
+  the dashboard reloads (existing RunManager behaviour, seen during the
+  T5c.4 browser check). OfferEvidence.decided_at comes back without a
+  timezone on SQLite.
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

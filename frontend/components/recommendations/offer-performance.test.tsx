@@ -56,3 +56,35 @@ describe("OfferPerformance", () => {
     expect(screen.getByText("1,793 · 104,179")).toBeTruthy();
   });
 });
+
+describe("Offer evidence labels", () => {
+  it("labels offers observational until an experiment measured them", () => {
+    render(<OfferPerformance effectiveness={effectiveness} />);
+    expect(screen.getAllByText("Observational")).toHaveLength(2);
+    expect(screen.queryByText("Experiment-proven")).toBeNull();
+  });
+
+  it("shows experiment-proven with the measured effect after a decision", () => {
+    const withEvidence = {
+      ...effectiveness,
+      next_best_offer: {
+        ...effectiveness.next_best_offer!,
+        offer_evidence: {
+          "10% loyalty discount (3 mo)": {
+            label: "experiment-proven" as const,
+            experiment_id: 4,
+            retention_lift_per_acceptor: 0.11,
+            itt_difference: -0.05,
+            ci_low: -0.07,
+            ci_high: -0.03,
+            decision: "ship",
+          },
+        },
+      },
+    };
+    render(<OfferPerformance effectiveness={withEvidence} />);
+    expect(screen.getByText("Experiment-proven")).toBeTruthy();
+    expect(screen.getAllByText("Observational")).toHaveLength(1);
+    expect(screen.getByText(/Experiment 4: churn changed by -5.0%/)).toBeTruthy();
+  });
+});
