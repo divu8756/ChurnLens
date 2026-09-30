@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
 from app import sessions
@@ -19,6 +19,7 @@ from app.ingest import (
     list_sheets,
     parse_upload,
 )
+from app.ratelimit import enforce
 
 router = APIRouter(tags=["upload"])
 
@@ -80,10 +81,12 @@ def _finish(session_id: str, path: Path, filename: str, parsed: ParsedUpload,
 
 @router.post("/upload", response_model=UploadResponse, responses=ERRORS)
 async def upload(
+    request: Request,
     file: Annotated[UploadFile, File()],
     workspace: Annotated[str | None, Depends(optional_workspace)],
     sheet_name: Annotated[str | None, Form()] = None,
 ) -> UploadResponse:
+    enforce(request.app.state.upload_limiter, request, "upload")
     settings = get_settings()
     filename = Path(file.filename or "upload").name
     try:
@@ -131,8 +134,10 @@ def choose_sheet(session_id: str, sheet_name: Annotated[str, Form()]) -> UploadR
 
 @router.post("/sample", response_model=UploadResponse, responses=ERRORS)
 def load_sample(
+    request: Request,
     workspace: Annotated[str | None, Depends(optional_workspace)],
 ) -> UploadResponse:
+    enforce(request.app.state.upload_limiter, request, "upload")
     settings = get_settings()
     if not SAMPLE_FILE.exists():
         raise HTTPException(503, "The sample dataset is not available on this server.")

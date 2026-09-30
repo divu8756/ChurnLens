@@ -4,8 +4,9 @@ import asyncio
 import contextlib
 import logging
 from collections.abc import AsyncIterator
+from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__, sessions
@@ -23,6 +24,7 @@ from app.config import get_settings
 from app.graph.builder import build_graph
 from app.graph.checkpointer import create_checkpointer
 from app.graph.nodes import default_nodes
+from app.logging_setup import session_from_path, session_var, setup_logging
 from app.ratelimit import RateLimiter
 from app.runs import RunManager
 
@@ -54,13 +56,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    setup_logging(settings.LOG_LEVEL)
     app = FastAPI(title="ChurnLens API", version=__version__, lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.FRONTEND_ORIGIN],
+        allow_origin_regex=settings.FRONTEND_ORIGIN_REGEX or None,
         allow_methods=["GET", "POST", "PATCH"],
         allow_headers=["*"],
     )
+
+    @app.middleware("http")
+    async def tag_session(request: Request, call_next: Any) -> Any:
+        # Every log line written while handling this request carries its session_id.
+        token = session_var.set(session_from_path(request.url.path))
+        try:
+            return await call_next(request)
+        finally:
+            session_var.reset(token)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -80,6 +93,8 @@ def create_app() -> FastAPI:
     app.include_router(chat_api.router)
     app.include_router(exports_api.router)
     app.state.chat_limiter = RateLimiter(settings.CHAT_PER_MINUTE)
+    app.state.upload_limiter = RateLimiter(settings.UPLOAD_PER_MINUTE)
+    app.state.ai_limiter = RateLimiter(settings.AI_PER_MINUTE)
     return app
 
 

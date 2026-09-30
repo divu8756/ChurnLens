@@ -31,6 +31,7 @@ from app.experiments.schemas import (
     SegmentColumn,
 )
 from app.experiments.workspace import required_workspace
+from app.ratelimit import enforce
 
 router = APIRouter(prefix="/experiments", tags=["experiments"])
 ERRORS: dict[int | str, dict[str, Any]] = {
@@ -181,7 +182,9 @@ def decide(experiment_id: int, body: DecideRequest, db: DB, ws: Workspace) -> Ex
 
 
 @router.post("/{experiment_id}/summary", response_model=ExperimentSummaryOut, responses=ERRORS)
-def experiment_summary(experiment_id: int, db: DB, ws: Workspace) -> ExperimentSummaryOut:
+def experiment_summary(experiment_id: int, request: Request, db: DB, ws: Workspace
+                       ) -> ExperimentSummaryOut:
+    enforce(request.app.state.ai_limiter, request, "AI")
     exp = _call(service.get_experiment, db, experiment_id, ws)
     result = _call(service.summary, db, exp)
     db.commit()

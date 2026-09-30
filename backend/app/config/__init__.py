@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     GEMINI_MODEL_FALLBACK: str | None = None  # used when the main model stays overloaded
     GEMINI_RPM: int = Field(default=10, ge=1)
     FRONTEND_ORIGIN: str = "http://localhost:3000"
+    # Optional regex for extra allowed origins, e.g. Vercel previews:
+    # ^https://churnlens-[a-z0-9-]+-yourteam\.vercel\.app$
+    FRONTEND_ORIGIN_REGEX: str | None = None
+    LOG_LEVEL: str = "INFO"
     DATA_DIR: Path = BACKEND_DIR / "data"
     DATABASE_URL: str | None = None
     MAX_UPLOAD_MB: int = Field(default=10, ge=1)
@@ -36,6 +40,9 @@ class Settings(BaseSettings):
     NBO_DECLINE_DAYS: int = Field(default=30, ge=0)
     # Ask the Data (Phase 7): questions per minute per client IP.
     CHAT_PER_MINUTE: int = Field(default=10, ge=1)
+    # Uploads (incl. the sample) and other AI-backed endpoints, per minute per client IP.
+    UPLOAD_PER_MINUTE: int = Field(default=10, ge=1)
+    AI_PER_MINUTE: int = Field(default=20, ge=1)
     # Use the first X-Forwarded-For address as the client IP (only behind a trusted proxy).
     TRUST_PROXY_HEADERS: bool = False
 

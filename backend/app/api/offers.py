@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Request
 from app import sessions
 from app.agents.offer_message import cached_message
 from app.api.contract import HTTPErrorOut, NextBestOffer, OfferMessageResponse
+from app.ratelimit import enforce
 from app.stats.common import jsonable
 from app.stats.nbo import NO_OFFER
 
@@ -59,6 +60,7 @@ def next_best_offer(session_id: str, customer_id: str, request: Request) -> Next
 @router.post("/predictions/{session_id}/offer/{customer_id}/message",
              response_model=OfferMessageResponse, responses=ERRORS)
 def offer_message(session_id: str, customer_id: str, request: Request) -> OfferMessageResponse:
+    enforce(request.app.state.ai_limiter, request, "AI")
     detail = offer_detail(_state(session_id, request), customer_id)
     if detail["best_offer"] == NO_OFFER:
         raise HTTPException(409, "No offer is recommended for this customer, so there is no "

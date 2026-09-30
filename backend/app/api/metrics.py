@@ -12,6 +12,7 @@ from app.api.contract import HTTPErrorOut
 from app.api.metrics_contract import BusinessExplanation, BusinessMetrics, ModelMetricsV2
 from app.business import BusinessAssumptions, compute
 from app.catalog import CatalogueError
+from app.ratelimit import enforce
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 ERRORS: dict[int | str, dict[str, Any]] = {
@@ -70,6 +71,7 @@ def recompute_business_metrics(session_id: str, body: BusinessAssumptions,
 def explain_business_metrics(session_id: str, body: BusinessAssumptions,
                              request: Request) -> BusinessExplanation:
     """A validated plain-English explanation of the numbers for these assumptions."""
+    enforce(request.app.state.ai_limiter, request, "AI")
     metrics = _business(session_id, request, body)
     if not metrics.get("enabled"):
         raise HTTPException(409, metrics.get("reason") or "Business metrics are disabled.")

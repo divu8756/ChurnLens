@@ -15,6 +15,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 
 from app.graph.state import ErrorEntry, ProgressEntry
+from app.logging_setup import session_var
 from app.run_history import save_run
 
 logger = logging.getLogger("churnlens.runs")
@@ -114,6 +115,7 @@ class RunManager:
         thread.start()
 
     def _drive(self, graph: CompiledStateGraph, run: Run, graph_input: Any) -> None:
+        session_var.set(run.session_id)  # this thread's log lines carry the session_id
         config = self._config(run.session_id)
         try:
             for mode, chunk in graph.stream(graph_input, config,
