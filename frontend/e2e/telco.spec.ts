@@ -91,6 +91,12 @@ test("Telco sample runs end to end and every tab renders", async ({ page }) => {
   await expect(panel.getByRole("button", { name: "Regenerate explanation" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "A/B test plan" })).toBeVisible();
 
+  // Ask the Data: a tool-only answer with the tool shown underneath.
+  await openTab(page, "Ask the Data");
+  await panel.getByRole("button", { name: "What is the overall churn rate?" }).click();
+  await expect(panel.getByText("Overall churn is 25.66% (from get_stat).")).toBeVisible({ timeout: 30_000 });
+  await expect(panel.getByText("Tools used: get_stat")).toBeVisible();
+
   // Agent Health: this run's validator, timing and estimated cost.
   await openTab(page, "Agent Health");
   await expect(panel.getByText("Validator pass rate")).toBeVisible();

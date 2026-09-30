@@ -3,7 +3,7 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T7.1 (Tool-only chat agent, Ask the Data tab)
+T7.2 (Exports)
 
 ## Next step
 Phase 5d PR is open, stacked on phase-5c (#8); the human merges #8 then the
@@ -651,6 +651,19 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   human to confirm the schema (now busy time = union of step intervals);
   numeric offer rules compared as text (YAML 1 never matched 1.0). No High
   issues. Low, not fixed: see Known issues. Backend 427, frontend 113, E2E 1.
+- T7.1: Ask the Data. app/chat/tools.py (get_stat over whitelisted result
+  roots, get_segment, get_test_result, get_customer_risk (score, band and
+  reasons only), filter_and_aggregate with Pydantic-validated args: known
+  non-ID columns, ops == != > >= < <= in, metrics count/mean/median/sum/
+  churn_rate, max 3 filters, 50 rows; plain pandas, no eval/query).
+  app/chat/agent.py: LangGraph loop agent -> tools -> agent; each LLM step
+  is a structured ChatStep (call_tool / answer / refuse) via the wrapper;
+  max 6 tool calls; answer numbers must appear in this question's tool
+  results (one retry, then withheld). prompts/chat_agent.v1.md. History:
+  last 10 messages in the session folder. POST /chat/{id} (per-IP sliding
+  window, CHAT_PER_MINUTE=10; X-Forwarded-For only with TRUST_PROXY_HEADERS)
+  and GET /chat/{id}. Ask the Data tab with example questions, loading
+  state and the tools used under each answer. Backend 451, frontend 117.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -830,6 +843,9 @@ flowchart TD
   directly through a 20-line wrapper instead of react-plotly.js (whose peer
   is the full plotly.js). Explanations of business metrics are written on
   demand (button), not on page load, to save free-tier calls.
+- T7.1: the chat agent is a hand-built LangGraph ReAct loop with structured
+  steps instead of native tool calling, so it keeps CLAUDE.md rules 5 and 19
+  (Pydantic structured output, flat schemas) and the number check of rule 4.
 
 ## Checkpoints for the human
 - S8 (T5d.0): Phase 5d plan written above under "Phase 5d plan" (FULL-AUTO:
