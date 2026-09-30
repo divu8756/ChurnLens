@@ -134,6 +134,21 @@ def estimate_cost(tokens: dict[str, dict[str, int]], pricing: Pricing) -> dict[s
             "total": sum(by_model.values()), "by_model": by_model}
 
 
+def busy_ms(intervals: list[tuple[float, float]]) -> float:
+    """Length of the union of [start, end] intervals (seconds in), in milliseconds."""
+    total, current_start, current_end = 0.0, None, None
+    for start, end in sorted(intervals):
+        if current_end is None or start > current_end:
+            if current_end is not None:
+                total += current_end - current_start
+            current_start, current_end = start, end
+        else:
+            current_end = max(current_end, end)
+    if current_end is not None:
+        total += current_end - current_start
+    return total * 1000
+
+
 def summarise_run(values: dict[str, Any], pricing: Pricing) -> dict[str, Any]:
     events = values.get("telemetry_events") or []
     latency: dict[str, float] = defaultdict(float)
@@ -155,9 +170,9 @@ def summarise_run(values: dict[str, Any], pricing: Pricing) -> dict[str, Any]:
             if model == e["model"].split(", ")[0]:
                 t["input_tokens"] += e.get("input_tokens", 0)
                 t["output_tokens"] += e.get("output_tokens", 0)
-    starts = [datetime.fromisoformat(e["started_at"]) for e in events]
-    ends = [datetime.fromisoformat(e["started_at"]).timestamp() + e["latency_ms"] / 1000
-            for e in events]
+    intervals = sorted((datetime.fromisoformat(e["started_at"]).timestamp(),
+                        datetime.fromisoformat(e["started_at"]).timestamp()
+                        + e["latency_ms"] / 1000) for e in events)
     report = values.get("validation_report") or {}
     details = report.get("details") or []
     return {
@@ -176,7 +191,9 @@ def summarise_run(values: dict[str, Any], pricing: Pricing) -> dict[str, Any]:
             "by_node": [{"node": n, "latency_ms": latency[n], "runs": runs[n],
                          "status": statuses[n]} for n in latency],
             "total_node_time": sum(latency.values()),
-            "wall_clock": (max(ends) - min(starts).timestamp()) * 1000 if events else 0.0,
+            # Busy time: the union of step intervals. Parallel steps are not counted twice
+            # and the wait for the human to confirm the schema is not counted at all.
+            "wall_clock": busy_ms(intervals),
         },
         "tokens": {"by_model": tokens,
                    "input": sum(t["input_tokens"] for t in tokens.values()),

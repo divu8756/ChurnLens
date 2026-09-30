@@ -203,3 +203,12 @@ def test_business_metrics_disabled_without_revenue_column():
     state["confirmed_schema"] = {**state["confirmed_schema"], "revenue_column": None}
     out = compute(state, {})
     assert out["enabled"] is False and "revenue" in out["reason"]
+
+
+
+def test_numeric_in_rule_matches_floats():
+    frame = CUSTOMERS.assign(Senior=[1.0, 0.0, 1.0, 0.0, 0.0])
+    specs = [OfferSpec(name="Senior deal", cost=1, assumed_acceptance_rate=0.5,
+                       eligible_segments=[{"column": "Senior", "in": [1]}])]
+    masks, _ = bm.eligible_offers(frame, bm.offer_terms(specs, {}))
+    assert masks["Senior deal"].tolist() == [True, False, True, False, False]

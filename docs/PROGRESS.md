@@ -3,13 +3,12 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-Phase 5d gate (review, PR)
+T7.1 (Tool-only chat agent, Ask the Data tab)
 
 ## Next step
-Phase 5d gate: strict review of git diff phase-5c...phase-5d (until PR #8
-merges), fix High/Medium, push, PR. Then Phase 7 (chat agent + exports).
-Branch phase-5d is stacked on phase-5c (tip 9af926c); after PR #8 is
-squash-merged: git rebase --onto main 9af926c phase-5d.
+Phase 5d PR is open, stacked on phase-5c (#8); the human merges #8 then the
+5d PR (GitHub retargets it to main when phase-5c is deleted). Then Phase 7
+(T7.1 chat agent, T7.2 exports) on a branch stacked on phase-5d.
 
 ## Phase 5d plan (T5d.0; S8 recorded as a checkpoint, FULL-AUTO)
 
@@ -648,6 +647,10 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   page scroll); fixes from that check: bar labels hover-only, and the plan
   column now prefers Contract over CityTier (hint priority). E2E opens the
   three tabs and edits months remaining. Backend 425, frontend 113, E2E 1.
+- Phase 5d gate review. Fixed (Medium): run time included the wait for the
+  human to confirm the schema (now busy time = union of step intervals);
+  numeric offer rules compared as text (YAML 1 never matched 1.0). No High
+  issues. Low, not fixed: see Known issues. Backend 427, frontend 113, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -893,6 +896,11 @@ flowchart TD
   the dashboard reloads (existing RunManager behaviour, seen during the
   T5c.4 browser check). OfferEvidence.decided_at comes back without a
   timezone on SQLite.
+- Phase 5d (Low, gate): POST /metrics/business/{id}/explain costs one LLM
+  call per new set of assumptions (cached per set; per-IP limits come in
+  Phase 8). Calibration adds 5 cross-validated fits of the chosen model to
+  training time. Calibrated risk bands score fewer customers for next best
+  offer on Telco (2,622 Medium+High vs 4,136 before), as intended.
 
 ## Human actions needed
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

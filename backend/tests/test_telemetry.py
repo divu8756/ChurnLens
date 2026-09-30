@@ -7,7 +7,7 @@ from app import llm, sessions
 from app.catalog import ModelPrice, Pricing
 from app.graph import builder as b
 from app.graph.state import ProgressEntry
-from app.graph.telemetry import estimate_cost, schema_corrections, summarise_run
+from app.graph.telemetry import busy_ms, estimate_cost, schema_corrections, summarise_run
 from app.llm_fake import FakeLLM, FakeResponse
 from app.run_history import list_runs, save_run
 
@@ -127,3 +127,16 @@ def test_summaries_persist_and_list_per_workspace():
     assert "created_at" in runs[0]
     assert len(list_runs("w" * 64, limit=1)) == 1
     assert list_runs(None) == []
+
+
+
+def test_busy_time_skips_idle_gaps_and_overlaps():
+    # Two parallel steps (0-2 s and 1-3 s), then a long wait for the human, then 10-11 s.
+    assert busy_ms([(0, 2), (1, 3), (10, 11)]) == pytest.approx(4000)
+    assert busy_ms([]) == 0
+    values = {"session_id": "s", "telemetry_events": [
+        {"node": "schema_agent", "started_at": "2026-01-01T00:00:00+00:00", "latency_ms": 1000,
+         "status": "done"},
+        {"node": "human_review", "started_at": "2026-01-01T00:10:00+00:00", "latency_ms": 500,
+         "status": "done"}]}
+    assert summarise_run(values, Pricing())["latency_ms"]["wall_clock"] == pytest.approx(1500)

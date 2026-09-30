@@ -14,7 +14,7 @@ const HELP = {
   pass_rate: "Share of AI-written insights and recommendations whose every number matched the computed results.",
   caught: "Numbers the validator rejected because they did not match the data (the agent was asked to fix them).",
   corrections: "Schema fields you changed after the AI's proposal (target, IDs, column types...).",
-  latency: "Wall-clock time from the first to the last step of the run.",
+  latency: "Time the pipeline was busy: parallel steps count once and the wait for you to confirm the columns is left out.",
   tokens: "Tokens sent to and received from Gemini in this run.",
   cost: "ESTIMATE from app/config/pricing.yaml; the free tier costs nothing.",
 };

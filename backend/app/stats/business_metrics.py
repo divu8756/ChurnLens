@@ -81,7 +81,12 @@ def _rule_mask(rule: Any, df: pd.DataFrame) -> np.ndarray:
     if isinstance(rule, RiskBandRule):
         return df["risk_band"].isin(rule.risk_band).to_numpy()
     if isinstance(rule, ColumnInRule):
-        return df[rule.column].astype(str).isin([str(v) for v in rule.in_]).to_numpy()
+        column = df[rule.column]
+        numbers = pd.to_numeric(pd.Series(rule.in_, dtype=object), errors="coerce")
+        if pd.api.types.is_numeric_dtype(column) and numbers.notna().all():
+            # 1 in the YAML must match 1.0 in the data.
+            return column.isin(numbers.astype(float).tolist()).to_numpy()
+        return column.astype(str).isin([str(v) for v in rule.in_]).to_numpy()
     values = pd.to_numeric(df[rule.column], errors="coerce")
     mask = values.notna()
     if rule.min is not None:
