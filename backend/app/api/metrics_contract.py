@@ -198,6 +198,7 @@ class ValidatorCounts(BaseModel):
     failed: int
     dropped: int
     figures_caught: int
+    pass_rate: float | None = None
 
 
 class Retries(BaseModel):

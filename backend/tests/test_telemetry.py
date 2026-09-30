@@ -106,7 +106,7 @@ def test_validator_counts_in_summary():
                                     "details": [{"problems": ["a", "b"]}, {"problems": []}]}}
     summary = summarise_run(values, Pricing())
     assert summary["validator"] == {"checked": 5, "passed": 4, "failed": 1, "dropped": 1,
-                                    "figures_caught": 2}
+                                    "figures_caught": 2, "pass_rate": 0.8}
     assert summary["retries"]["validator"] == {"insight_agent": 1}
 
 

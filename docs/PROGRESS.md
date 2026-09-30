@@ -3,10 +3,11 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5d.6 (Frontend: Model Performance, Business Impact, Agent Health)
+Phase 5d gate (review, PR)
 
 ## Next step
-T5d.6 per the Phase 5d plan below, then the Phase 5d gate.
+Phase 5d gate: strict review of git diff phase-5c...phase-5d (until PR #8
+merges), fix High/Medium, push, PR. Then Phase 7 (chat agent + exports).
 Branch phase-5d is stacked on phase-5c (tip 9af926c); after PR #8 is
 squash-merged: git rebase --onto main 9af926c phase-5d.
 
@@ -631,6 +632,22 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   workspace). Typed contract in app/api/metrics_contract.py. Upload 422s:
   a churn-named column with one value, and no two-value column at all (SPEC
   message); fewer than MIN_ROWS rows already existed. Backend 425.
+- T5d.6: one PlotlyChart wrapper (components/charts; next/dynamic ssr:false,
+  the 1.1 MB plotly.js-basic-dist-min chunk loads only when a chart
+  mounts; theme follows the colour scheme). New tabs: Model Performance
+  (KPI tiles with keyboard/touch help, ROC, PR, lift + cumulative gains,
+  calibration raw vs calibrated, plus the metrics table and confusion
+  matrix moved from Churn Drivers; the Recharts ROC chart was removed),
+  Business Impact (assumptions panel posting to the API debounced 400 ms,
+  KPIs, ROI by segment, top-50 next best offers, A/B plan with KaTeX,
+  every assumption labelled with its source, explanation card with
+  "Based on default assumptions" + "Regenerate explanation" when the
+  numbers changed), Agent Health (validator pass rate from the API,
+  figures caught, schema corrections, run time, tokens, ESTIMATED cost,
+  time per step, retries, trend of recent runs). Checked at 375 px (no
+  page scroll); fixes from that check: bar labels hover-only, and the plan
+  column now prefers Contract over CityTier (hint priority). E2E opens the
+  three tabs and edits months remaining. Backend 425, frontend 113, E2E 1.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -806,6 +823,10 @@ flowchart TD
 - T5d.4: schema corrections are computed from state (schema_proposal vs
   confirmed_schema) in the run summary rather than inside /confirm-schema:
   same inputs, one place, and nothing extra to store.
+- T5d.6 dependency: plotly.js-basic-dist-min 4.1.1 (SPEC v1.3), used
+  directly through a 20-line wrapper instead of react-plotly.js (whose peer
+  is the full plotly.js). Explanations of business metrics are written on
+  demand (button), not on page load, to save free-tier calls.
 
 ## Checkpoints for the human
 - S8 (T5d.0): Phase 5d plan written above under "Phase 5d plan" (FULL-AUTO:

@@ -19,13 +19,16 @@ class NotAnalysed(LookupError):
 
 
 def plan_column(schema: dict[str, Any], frame: pd.DataFrame) -> str | None:
-    """The first categorical column whose name looks like a plan / contract type."""
+    """The categorical column that looks most like a plan / contract type. Hints are tried
+    in priority order (so "Contract" beats "CityTier"); ties go to column order."""
     kinds = {c["name"]: c.get("semantic_type") for c in schema.get("columns", [])}
-    for col in frame.columns:
-        name = str(col).lower()
-        if any(h in name for h in PLAN_HINTS) and kinds.get(col, "categorical") in (
-                "categorical", "binary") and not pd.api.types.is_numeric_dtype(frame[col]):
-            return str(col)
+    candidates = [c for c in frame.columns
+                  if kinds.get(c, "categorical") in ("categorical", "binary")
+                  and not pd.api.types.is_numeric_dtype(frame[c])]
+    for hint in PLAN_HINTS:
+        for col in candidates:
+            if hint in str(col).lower():
+                return str(col)
     return None
 
 

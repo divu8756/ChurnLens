@@ -1,12 +1,9 @@
 import type { ResultsPayload } from "@/lib/results";
 
 import { Alert, Card, EmptyState } from "../ui";
-import { ConfusionMatrix } from "./confusion-matrix";
 import { DriverTable } from "./driver-table";
 import { ImportanceChart } from "./importance-chart";
-import { MetricsTable } from "./metrics-table";
 import { OddsForest } from "./odds-forest";
-import { RocCurve } from "./roc-curve";
 import { ShapSummary } from "./shap-summary";
 
 export function DriversTab({ results }: { results: ResultsPayload }) {
@@ -23,25 +20,9 @@ export function DriversTab({ results }: { results: ResultsPayload }) {
           {metrics.leakage_warnings.map((w) => w.column).join(", ")}.
         </Alert>
       ) : null}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Model performance">
-          <MetricsTable metrics={metrics} />
-        </Card>
-        <Card title="Confusion matrix">
-          {metrics.test.confusion_matrix ? (
-            <ConfusionMatrix matrix={metrics.test.confusion_matrix} />
-          ) : (
-            <EmptyState>Not available.</EmptyState>
-          )}
-        </Card>
-      </div>
-      <Card title="ROC curve">
-        {metrics.test.roc_curve ? (
-          <RocCurve curve={metrics.test.roc_curve} auc={metrics.test.roc_auc} />
-        ) : (
-          <EmptyState>Not available.</EmptyState>
-        )}
-      </Card>
+      <p className="text-sm text-gray-600 dark:text-gray-400">
+        What drives churn, by three methods. How well the model predicts is on the Model Performance tab.
+      </p>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Feature importance">
           <ImportanceChart items={importance?.features ?? []} method={importance?.method} />

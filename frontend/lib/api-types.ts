@@ -3131,6 +3131,8 @@ export interface components {
             failed: number;
             /** Figures Caught */
             figures_caught: number;
+            /** Pass Rate */
+            pass_rate?: number | null;
             /** Passed */
             passed: number;
         };

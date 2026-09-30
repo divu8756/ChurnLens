@@ -114,3 +114,7 @@ def test_plan_column_detection():
     frame = _customers(20)
     assert plan_column({"columns": []}, frame) == "Contract"
     assert plan_column({"columns": []}, frame.drop(columns="Contract")) is None
+    # A location tier listed first must not beat the contract type.
+    tiered = frame.assign(CityTier="Tier 1")[["CityTier", *frame.columns]]
+    assert plan_column({"columns": []}, tiered) == "Contract"
+    assert plan_column({"columns": []}, tiered.drop(columns="Contract")) == "CityTier"

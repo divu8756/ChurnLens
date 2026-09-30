@@ -71,6 +71,7 @@ def main() -> None:
         "OfferMessage": TimeoutError("fake: use the template message"),
         # The experiment summary also uses its template, so the text is known.
         "ExperimentSummary": TimeoutError("fake: use the template summary"),
+        "Explanation": TimeoutError("fake: use the template explanation"),
     }))
     uvicorn.run(create_app(), host="127.0.0.1", port=args.port, log_level="warning")
 

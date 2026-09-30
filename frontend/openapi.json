@@ -8482,6 +8482,17 @@
             "title": "Figures Caught",
             "type": "integer"
           },
+          "pass_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pass Rate"
+          },
           "passed": {
             "title": "Passed",
             "type": "integer"

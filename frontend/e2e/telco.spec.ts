@@ -43,9 +43,15 @@ test("Telco sample runs end to end and every tab renders", async ({ page }) => {
   await expect(panel.getByRole("heading", { name: "Survival curves" })).toBeVisible();
 
   await openTab(page, "Churn Drivers");
-  await expect(panel.getByRole("heading", { name: "Model performance" })).toBeVisible();
-  await expect(panel.getByRole("heading", { name: "ROC curve" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "Odds ratios" })).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "SHAP summary" })).toBeVisible();
+
+  // Model Performance: test-split KPIs and the Plotly charts (loaded in the browser only).
+  await openTab(page, "Model Performance");
+  await expect(panel.getByText("Precision @ top 10%")).toBeVisible();
+  await expect(panel.getByRole("img", { name: /^ROC curve, area/ })).toBeVisible();
+  await expect(panel.getByRole("img", { name: /^Calibration:/ }).locator(".main-svg").first()).toBeVisible({ timeout: 30_000 });
+  await expect(panel.getByRole("heading", { name: "Confusion matrix" })).toBeVisible();
 
   await openTab(page, "Hypothesis Testing");
   await expect(panel.getByText(/of \d+ significant at α = 0.05/)).toBeVisible();
@@ -71,6 +77,26 @@ test("Telco sample runs end to end and every tab renders", async ({ page }) => {
   await expect(panel.getByText("153.7 fewer churners")).toBeVisible();
   await expect(panel.getByRole("heading", { name: /Offer performance/ })).toBeVisible();
   await expect(panel.getByText(/riskier to begin with/)).toBeVisible();
+
+  // Business Impact: edit one assumption; the server recomputes and the KPI changes.
+  await openTab(page, "Business Impact");
+  const risk = panel.getByText("Revenue at risk", { exact: true }).locator("xpath=../..").locator("p.text-2xl");
+  await expect(risk).toBeVisible();
+  const before = await risk.textContent();
+  await panel.getByRole("button", { name: "Explain these numbers" }).click();
+  await expect(panel.getByText(/Standard wording/)).toBeVisible();
+  await panel.getByRole("spinbutton", { name: "Months of revenue per saved customer" }).fill("24");
+  await expect(risk).not.toHaveText(before ?? "", { timeout: 15_000 });
+  await expect(panel.getByText("Based on default assumptions")).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Regenerate explanation" })).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "A/B test plan" })).toBeVisible();
+
+  // Agent Health: this run's validator, timing and estimated cost.
+  await openTab(page, "Agent Health");
+  await expect(panel.getByText("Validator pass rate")).toBeVisible();
+  await expect(panel.getByRole("img", { name: "Latency per pipeline step" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "What is Cost (ESTIMATE)?" })).toBeVisible();
+  await expect(panel.getByRole("columnheader", { name: "Cost (ESTIMATE)" })).toBeVisible();
 
   // Experiments: the demo on the sample data has a simulated results file with a known effect.
   await openTab(page, "Experiments");

@@ -165,7 +165,9 @@ def summarise_run(values: dict[str, Any], pricing: Pricing) -> dict[str, Any]:
         "status": "failed" if values.get("final_error") else "done",
         "validator": {"checked": report.get("checked", 0), "passed": report.get("passed", 0),
                       "failed": report.get("failed", 0), "dropped": report.get("dropped", 0),
-                      "figures_caught": sum(len(d.get("problems") or []) for d in details)},
+                      "figures_caught": sum(len(d.get("problems") or []) for d in details),
+                      "pass_rate": (report.get("passed", 0) / report["checked"]
+                                    if report.get("checked") else None)},
         "retries": {"validator": dict(values.get("retry_counts") or {}),
                     "llm_by_node": {k: v for k, v in llm_retries.items() if v}},
         "schema_corrections": schema_corrections(values.get("schema_proposal"),

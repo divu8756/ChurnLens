@@ -6,7 +6,10 @@ import type { ResultsPayload } from "@/lib/results";
 
 import { DataHealthView } from "../data-health";
 import { DriversTab } from "../drivers/drivers-tab";
+import { AgentHealthTab } from "../agent-health/agent-health-tab";
+import { BusinessImpactTab } from "../business-impact/business-impact-tab";
 import { ExperimentsTab } from "../experiments/experiments-tab";
+import { ModelPerformanceTab } from "../model-performance/model-performance-tab";
 import { HypothesisTab } from "../hypothesis/hypothesis-tab";
 import { InsightsTab } from "../insights/insights-tab";
 import { PredictionsTab } from "../predictions/predictions-tab";
@@ -21,10 +24,13 @@ const TABS: Tab[] = [
   { id: "overview", label: "Executive Overview", render: (r) => <OverviewTab results={r} /> },
   { id: "insights", label: "Customer Insights", render: (r) => <InsightsTab results={r} /> },
   { id: "drivers", label: "Churn Drivers", render: (r) => <DriversTab results={r} /> },
+  { id: "model", label: "Model Performance", render: (r, id) => <ModelPerformanceTab results={r} sessionId={id} /> },
   { id: "hypothesis", label: "Hypothesis Testing", render: (r) => <HypothesisTab results={r} /> },
   { id: "predictions", label: "Risk Predictions", render: (r, id) => <PredictionsTab results={r} sessionId={id} /> },
   { id: "recommendations", label: "Recommendations", render: (r) => <RecommendationsTab results={r} /> },
+  { id: "business", label: "Business Impact", render: (_, id) => <BusinessImpactTab sessionId={id} /> },
   { id: "experiments", label: "Experiments", render: (r, id, sample) => <ExperimentsTab results={r} sessionId={id} sample={sample} /> },
+  { id: "agents", label: "Agent Health", render: (_, id) => <AgentHealthTab sessionId={id} /> },
   {
     id: "health",
     label: "Data Health",
