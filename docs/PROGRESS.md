@@ -3,14 +3,12 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T8.2 (Deploy) - HUMAN STOP S7
+Done. ChurnLens build complete (T8.2 deployed, T8.3 docs done).
 
 ## Next step
-Waiting for the human (S7): merge PRs #8, #9, #10 and the Phase 8 PR in order,
-then do the Render and Vercel steps (listed under "Human actions needed")
-and paste both URLs. Then: verify <render>/health, smoke-test the sample flow
-against the live URLs, put the live link in README.md and PROGRESS.md, run
-the final Phase Gate and report "ChurnLens build complete."
+None required. Optional clean-up for the human: delete the root /vercel.json
+(the frontend uses frontend/vercel.json) and the extra Vercel projects
+(churnlensdivyanshu, churnlensd) that fail on every push.
 
 ## Phase 5d plan (T5d.0; S8 recorded as a checkpoint, FULL-AUTO)
 
@@ -700,6 +698,22 @@ metrics/telemetry APIs, Plotly wrapper and three tabs.
   local setup, env var table, deploy steps, tests, limitations, screenshot
   placeholders; live link filled in after deploy) and docs/DEMO_SCRIPT.md
   (2-minute walkthrough with backup answers).
+- T8.2 (S7, deployed with the human): backend on Render (Blueprint,
+  free 512 MB, https://churnlens-api.onrender.com), frontend on Vercel
+  (https://churnlens-peach.vercel.app, Root Directory frontend, Next.js
+  preset, NEXT_PUBLIC_API_URL = the Render URL). Fixes on the way: Vercel
+  "npm ci exited with 1" (preset was "Services" with no root directory;
+  lockfile completed and Node 24 pinned in PR #13); Render boot failed until
+  the Gemini env vars were set; the first live run ran out of memory (512
+  MB). PR #14: lazy imports of shap / lifelines / exports, silhouette
+  sample 2,000, write-only streaming Excel, gc + malloc_trim after each node,
+  MALLOC_ARENA_MAX=2, OMP_NUM_THREADS=1, GRAPH_MAX_CONCURRENCY=1; peak 382
+  MiB under docker --memory=512m. Live smoke test (2026-10-02) against
+  Render: sample -> schema (Gemini 503, rules fallback) -> confirm -> done in
+  337 s (ROC-AUC 0.829, validator 9/13, insights unavailable after a Gemini
+  503, 5 recommendations), results, model + business metrics, PDF (97 KB),
+  Excel (1.7 MB) and a chat answer (filter_and_aggregate); 451 s in total,
+  no out-of-memory event.
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -968,15 +982,16 @@ flowchart TD
   writer); consider xlsxwriter if that matters. The export build lock is
   global (one export at a time). Docker image not rebuilt for reportlab /
   matplotlib (pure wheels; no system packages needed).
+- Deploy (T8.2): the free Render instance sleeps after ~15 minutes idle; the
+  first request then takes up to a minute (the UI shows "Waking up the
+  server"). Runs on Render are slow (337-446 s) because of
+  GRAPH_MAX_CONCURRENCY=1 and Gemini free-tier throttling. Sessions live on
+  the instance disk and vanish on restart or redeploy (no DATABASE_URL set).
+- Deploy: Gemini free tier often returns 503 during live runs; the
+  fallbacks keep the run going but AI insights can be missing.
+- Deploy: a root /vercel.json (added via GitHub) and two extra Vercel
+  projects exist; harmless for the working project but they fail on push.
 
 ## Human actions needed
-- S7 (now): 1) Merge #8, #9, #10 and the Phase 8 PR in that order (each
-  retargets to main as its base merges). 2) Render: New -> Blueprint -> this
-  repo (main). Set GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_FAST (the values
-  in backend/.env), and FRONTEND_ORIGIN=https://example.com for now. Optional:
-  DATABASE_URL from a free Postgres (Neon / Supabase). 3) Vercel: Add New ->
-  Project -> this repo, Root Directory frontend, env NEXT_PUBLIC_API_URL = the
-  Render URL; deploy. 4) Render: set FRONTEND_ORIGIN to the Vercel production
-  URL (and optionally FRONTEND_ORIGIN_REGEX for previews); redeploy.
-  5) Paste both URLs back.
-- S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).
+- Optional: delete the root /vercel.json and the extra Vercel projects
+  (churnlensdivyanshu, churnlensd).

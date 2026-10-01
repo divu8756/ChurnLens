@@ -10,7 +10,7 @@ designs and analyses A/B tests of those offers, answers questions about the data
 exports an Excel workbook and a PDF report. Python computes every number; the LLM only
 explains numbers that already exist, and a validator checks each one.
 
-**Live demo:** _added after deployment_ · Try it with the built-in sample data.
+**Live demo:** [churnlens-peach.vercel.app](https://churnlens-peach.vercel.app) (API: [churnlens-api.onrender.com](https://churnlens-api.onrender.com/health); the free backend sleeps, so the first request can take up to a minute) · Try it with the built-in sample data.
 
 ## Architecture
 
