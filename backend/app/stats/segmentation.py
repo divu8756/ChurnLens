@@ -20,7 +20,8 @@ from app.stats.common import feature_columns, jsonable
 RANDOM_STATE = 42
 K_RANGE = range(2, 9)
 N_INIT = 10
-SILHOUETTE_SAMPLE = 5000
+# Silhouette needs an n x n distance matrix: 2,000 rows is 32 MB (5,000 was 200 MB).
+SILHOUETTE_SAMPLE = 2000
 MIN_FEATURES = 2
 
 

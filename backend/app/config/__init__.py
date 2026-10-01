@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     # ^https://churnlens-[a-z0-9-]+-yourteam\.vercel\.app$
     FRONTEND_ORIGIN_REGEX: str | None = None
     LOG_LEVEL: str = "INFO"
+    # Analysis branches run in parallel by default; 1 runs them one at a time (small hosts).
+    GRAPH_MAX_CONCURRENCY: int | None = Field(default=None, ge=1)
     DATA_DIR: Path = BACKEND_DIR / "data"
     DATABASE_URL: str | None = None
     MAX_UPLOAD_MB: int = Field(default=10, ge=1)

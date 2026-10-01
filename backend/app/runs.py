@@ -14,6 +14,7 @@ from typing import Any, Literal
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 
+from app.config import get_settings
 from app.graph.state import ErrorEntry, ProgressEntry
 from app.logging_setup import session_var
 from app.run_history import save_run
@@ -118,6 +119,9 @@ class RunManager:
         session_var.set(run.session_id)  # this thread's log lines carry the session_id
         config = self._config(run.session_id)
         try:
+            limit = get_settings().GRAPH_MAX_CONCURRENCY
+            if limit:
+                config = {**config, "max_concurrency": limit}
             for mode, chunk in graph.stream(graph_input, config,
                                             stream_mode=["tasks", "updates"]):
                 if mode == "tasks":

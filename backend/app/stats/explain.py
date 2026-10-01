@@ -18,9 +18,9 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import shap
-import statsmodels.api as sm
 from sklearn.compose import ColumnTransformer
+from statsmodels.discrete.discrete_model import Logit
+from statsmodels.tools.tools import add_constant
 
 from app.stats.common import jsonable
 from app.stats.modelling import ModelArtifacts
@@ -65,6 +65,8 @@ def aggregate_by_feature(values: np.ndarray, owners: list[str],
 def shap_values(artifacts: ModelArtifacts, x: pd.DataFrame,
                 background: pd.DataFrame) -> tuple[np.ndarray, str]:
     """Per-row SHAP values by ORIGINAL feature (log-odds scale) and the method used."""
+    import shap  # imported on use: it adds ~90 MB, too much to hold on a 512 MB host
+
     prep, model = artifacts.pipeline[0], artifacts.pipeline[-1]
     features = artifacts.numeric + artifacts.categorical
     xt = np.asarray(prep.transform(x), dtype=float)
@@ -177,11 +179,11 @@ def odds_ratios(artifacts: ModelArtifacts, frame: pd.DataFrame,
 
     result = None
     for _ in range(MAX_REFITS):
-        x = sm.add_constant(design, has_constant="add")
+        x = add_constant(design, has_constant="add")
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                fitted = sm.Logit(y, x).fit(disp=0, maxiter=200)
+                fitted = Logit(y, x).fit(disp=0, maxiter=200)
         except (np.linalg.LinAlgError, ValueError) as exc:
             worst = design.var().idxmin()
             notes.append({"term": worst, "reason": f"model could not be fitted: {exc}"})

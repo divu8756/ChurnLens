@@ -33,6 +33,9 @@ services:
         sync: false
       - key: LOG_LEVEL
         value: INFO
+      # The free instance has 512 MB: run the analysis branches one at a time.
+      - key: GRAPH_MAX_CONCURRENCY
+        value: "1"
       - key: CHAT_PER_MINUTE
         value: "10"
       - key: UPLOAD_PER_MINUTE

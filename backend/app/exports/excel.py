@@ -2,14 +2,16 @@
 number formats, no merged cells (runbook T7.2)."""
 
 import re
+import warnings
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
-from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.worksheet.table import Table, TableColumn, TableStyleInfo
 
 SHEETS = ("Cleaned_Data", "Predictions", "Hypothesis_Tests", "Drivers", "Recommendations")
 PERCENT_HINT = re.compile(r"(rate|share|pct_of|lift_share|probability)$", re.I)
@@ -45,31 +47,41 @@ def _number_format(column: str, series: pd.Series) -> str | None:
 
 
 def _sheet(wb: Workbook, name: str, frame: pd.DataFrame) -> None:
+    """Stream one sheet (openpyxl write-only mode keeps memory flat for large files)."""
     ws = wb.create_sheet(name)
     frame = frame.reset_index(drop=True)
-    columns = [str(c) for c in frame.columns] or ["note"]
-    if frame.empty:
-        frame = pd.DataFrame({columns[0]: ["No rows for this session."]}) if not len(
-            frame.columns) else frame
-    ws.append(columns)
-    for row in frame.itertuples(index=False, name=None):
-        ws.append([_cell(v) for v in row])
-    for cell in ws[1]:
-        cell.font = Font(bold=True)
+    if not len(frame.columns):
+        frame = pd.DataFrame({"note": ["No rows for this session."]})
+    columns = [str(c) for c in frame.columns]
+    # Write-only sheets need widths and panes before the first row.
     ws.freeze_panes = "A2"
+    formats = []
     for i, col in enumerate(columns, start=1):
-        letter = get_column_letter(i)
-        fmt = _number_format(col, frame[col]) if col in frame.columns else None
-        if fmt:
-            for (cell,) in ws.iter_rows(min_row=2, min_col=i, max_col=i):
-                cell.number_format = fmt
-        sample = frame[col].astype(str).head(200) if col in frame.columns else pd.Series([])
+        formats.append(_number_format(col, frame[col]))
+        sample = frame[col].astype(str).head(200)
         width = max([len(col), *sample.str.len().tolist()]) if len(sample) else len(col)
-        ws.column_dimensions[letter].width = min(MAX_WIDTH, width + 2)
-    last = f"{get_column_letter(len(columns))}{max(2, ws.max_row)}"
+        ws.column_dimensions[get_column_letter(i)].width = min(MAX_WIDTH, width + 2)
+
+    def styled(value: Any, fmt: str | None = None, bold: bool = False) -> WriteOnlyCell:
+        cell = WriteOnlyCell(ws, value=value)
+        if fmt:
+            cell.number_format = fmt
+        if bold:
+            cell.font = Font(bold=True)
+        return cell
+
+    ws.append([styled(c, bold=True) for c in columns])
+    for row in frame.itertuples(index=False, name=None):
+        ws.append([styled(_cell(v), fmt) if fmt else _cell(v)
+                   for v, fmt in zip(row, formats, strict=True)])
+    last = f"{get_column_letter(len(columns))}{max(2, len(frame) + 1)}"
     table = Table(displayName=f"t_{name}", ref=f"A1:{last}")
     table.tableStyleInfo = TableStyleInfo(name="TableStyleMedium2", showRowStripes=True)
-    ws.add_table(table)
+    table.tableColumns = [TableColumn(id=i, name=c) for i, c in enumerate(columns, start=1)]
+    with warnings.catch_warnings():
+        # openpyxl always warns in write-only mode; the columns are set just above.
+        warnings.filterwarnings("ignore", message="In write-only mode you must add table columns")
+        ws.add_table(table)
 
 
 def _unique_headers(frame: pd.DataFrame) -> pd.DataFrame:
@@ -111,8 +123,7 @@ def workbook_frames(values: dict[str, Any]) -> dict[str, pd.DataFrame]:
 
 
 def write_excel(values: dict[str, Any], path: Path) -> Path:
-    wb = Workbook()
-    wb.remove(wb.active)
+    wb = Workbook(write_only=True)
     for name, frame in workbook_frames(values).items():
         _sheet(wb, name, frame)
     wb.save(path)
