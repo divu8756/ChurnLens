@@ -1,6 +1,7 @@
 """GET /export/{id}/excel and /pdf: built on first request, cached in the session folder
 per analysis checkpoint (a re-run produces fresh files)."""
 
+import importlib
 import re
 import threading
 from typing import Any
@@ -10,15 +11,14 @@ from fastapi.responses import FileResponse
 
 from app import sessions
 from app.api.contract import HTTPErrorOut
-from app.exports.excel import write_excel
-from app.exports.pdf import write_pdf
 
 router = APIRouter(prefix="/export", tags=["exports"])
 ERRORS: dict[int | str, dict[str, Any]] = {code: {"model": HTTPErrorOut} for code in (409, 410)}
+# Writers are imported on first use: matplotlib and reportlab cost memory at startup.
 KINDS = {
-    "excel": (write_excel, "xlsx",
+    "excel": ("app.exports.excel:write_excel", "xlsx",
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
-    "pdf": (write_pdf, "pdf", "application/pdf"),
+    "pdf": ("app.exports.pdf:write_pdf", "pdf", "application/pdf"),
 }
 _lock = threading.Lock()
 
@@ -39,7 +39,9 @@ def _finished(session_id: str, request: Request) -> tuple[dict[str, Any], str]:
 
 def _export(kind: str, session_id: str, request: Request) -> FileResponse:
     values, checkpoint = _finished(session_id, request)
-    writer, ext, media = KINDS[kind]
+    target, ext, media = KINDS[kind]
+    module, name = target.split(":")
+    writer = getattr(importlib.import_module(module), name)
     folder = sessions.session_dir(session_id)
     path = folder / f"export_{checkpoint}.{ext}"
     with _lock:  # one build per file, even with double clicks

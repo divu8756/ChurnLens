@@ -10,6 +10,8 @@
   tokens and an ESTIMATED cost from app/config/pricing.yaml.
 """
 
+import ctypes
+import gc
 import time
 from collections import defaultdict
 from contextvars import ContextVar
@@ -52,6 +54,24 @@ def _record(call: llm.CallRecord) -> None:
 llm.add_usage_listener(_record)
 
 
+def _libc_trim() -> Any:
+    try:
+        return ctypes.CDLL("libc.so.6").malloc_trim
+    except (OSError, AttributeError):
+        return None  # not glibc (macOS, musl): nothing to trim
+
+
+_malloc_trim = _libc_trim()
+
+
+def release_memory() -> None:
+    """Collect garbage and hand freed heap pages back to the OS (glibc), so a run's
+    peak does not stay resident on a small host."""
+    gc.collect()
+    if _malloc_trim is not None:
+        _malloc_trim(0)
+
+
 def _status(name: str, update: dict[str, Any]) -> str:
     progress = [p for p in update.get("progress", [])
                 if getattr(p, "node", None) == name or (isinstance(p, dict)
@@ -77,6 +97,7 @@ def traced(name: str, fn: NodeFn) -> NodeFn:
             raise  # an interrupt pauses the node; it is timed when it runs again
         finally:
             _current.reset(token)
+            release_memory()
         event = {
             "node": name,
             "started_at": started.isoformat(),

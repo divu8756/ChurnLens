@@ -9,8 +9,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from lifelines import KaplanMeierFitter
-from lifelines.statistics import multivariate_logrank_test
 from scipy.stats import chi2_contingency
 
 from app.stats.common import feature_columns, jsonable
@@ -32,6 +30,8 @@ def downsample(times: np.ndarray, values: list[np.ndarray],
 
 
 def km_summary(durations: pd.Series, events: pd.Series, label: str) -> dict[str, Any]:
+    from lifelines import KaplanMeierFitter  # imported on use (memory on small hosts)
+
     kmf = KaplanMeierFitter(label=label).fit(durations, events)
     sf = kmf.survival_function_[label].to_numpy()
     ci = kmf.confidence_interval_survival_function_.to_numpy()
@@ -88,6 +88,8 @@ def run_survival(frame: pd.DataFrame, schema: dict[str, Any]) -> dict[str, Any]:
     for col in pick_categoricals(data, feature_columns(frame, schema)["categorical"], target):
         levels = [lvl for lvl, n in data[col].value_counts().items() if n >= MIN_GROUP_SIZE]
         subset = data[data[col].isin(levels)]
+        from lifelines.statistics import multivariate_logrank_test
+
         test = multivariate_logrank_test(subset[time_col], subset[col], subset[target])
         groups.append({
             "column": col,

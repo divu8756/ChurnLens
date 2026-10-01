@@ -5,19 +5,25 @@ ENV PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1
 RUN python -m venv /opt/venv
 ENV PATH=/opt/venv/bin:$PATH
 WORKDIR /build
+# Dependencies only (from pyproject.toml), so a code change does not reinstall them:
+# this layer is rebuilt only when pyproject.toml changes.
 COPY pyproject.toml ./
-COPY app ./app
-# Install the project to resolve its pinned dependencies, then drop the project itself:
-# the runtime image runs the code from /app so paths like sample_data resolve there.
-RUN pip install --upgrade pip && pip install . && pip uninstall -y churnlens-backend
+RUN pip install --upgrade pip && python -c "import tomllib; \
+print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" \
+    > requirements.txt && pip install -r requirements.txt
 
 # ---- runtime: slim, non-root, one process ----
+# Memory (free hosts have 512 MB): few malloc arenas, one OpenMP thread (hosts report
+# many CPUs), and pyarrow on the system allocator so freed memory is returned.
 FROM python:3.14-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/opt/venv/bin:$PATH \
     MPLBACKEND=Agg \
-    MPLCONFIGDIR=/tmp/matplotlib
+    MPLCONFIGDIR=/tmp/matplotlib \
+    MALLOC_ARENA_MAX=2 \
+    OMP_NUM_THREADS=1 \
+    ARROW_DEFAULT_MEMORY_POOL=system
 
 # OpenMP runtime used by scikit-learn.
 RUN apt-get update \
