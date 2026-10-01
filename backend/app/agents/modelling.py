@@ -10,6 +10,7 @@ from app.graph.errors import FatalNodeError
 from app.graph.state import ChurnState, ErrorEntry, ProgressEntry
 from app.schema_validation import offer_column_names
 from app.stats.explain import driver_impact, odds_ratios, shap_summary
+from app.stats.model_metrics import model_metrics_v2
 from app.stats.modelling import LeakageError, save_artifacts, train_and_evaluate
 from app.stats.predictions import score_customers
 
@@ -32,12 +33,21 @@ def modelling_node(state: ChurnState) -> dict[str, Any]:
             frame, schema, exclude=treatment_columns(state))
     except LeakageError as exc:
         raise FatalNodeError(str(exc)) from None
+    # Explanations and calibration are valuable but not essential: failures are logged.
+    errors: list[ErrorEntry] = []
+    metrics_v2: dict[str, Any] | None = None
+    calibrated = None
+    try:
+        x = frame[artifacts.numeric + artifacts.categorical]
+        metrics_v2, calibrated, artifacts.calibrator = model_metrics_v2(
+            artifacts, x, frame[schema["target_column"]].astype(int))
+    except Exception as exc:
+        errors.append(ErrorEntry(node="modelling", message=f"Calibration failed, using raw "
+                                                           f"probabilities: {exc}"))
     path = Path(state.clean_path).with_name(MODEL_FILE)
     save_artifacts(artifacts, path)
     metrics["model_path"] = str(path)
 
-    # Explanations are valuable but not essential: a failure is logged, not fatal.
-    errors: list[ErrorEntry] = []
     shap_result: dict[str, Any] = {"global": [], "beeswarm": [], "error": None}
     odds: dict[str, Any] = {"terms": [], "dropped": [], "error": None}
     try:
@@ -57,7 +67,7 @@ def modelling_node(state: ChurnState) -> dict[str, Any]:
     predictions_path: str | None = None
     try:
         table, summary = score_customers(artifacts, frame, schema,
-                                         settings.RISK_HIGH, settings.RISK_MEDIUM)
+                                         settings.RISK_HIGH, settings.RISK_MEDIUM, calibrated)
         target = Path(state.clean_path).with_name(PREDICTIONS_FILE)
         table.to_parquet(target, index=False)
         predictions_path = str(target)
@@ -68,6 +78,7 @@ def modelling_node(state: ChurnState) -> dict[str, Any]:
     test = metrics["test"]
     return {
         "model_metrics": metrics,
+        "model_metrics_v2": metrics_v2,
         "feature_importance": importance,
         "shap_summary": shap_result,
         "odds_ratios": odds,

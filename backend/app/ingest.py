@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from app.stats import profiling
+
 ALLOWED_EXTENSIONS = (".csv", ".xlsx")
 CSV_ENCODINGS = ("utf-8-sig", "cp1252", "latin-1")
 # Guards against "zip bombs": a small .xlsx that unpacks to gigabytes.
@@ -199,4 +201,7 @@ def parse_upload(
             f"The file has {rows:,} data rows; the limit is {max_rows:,}. Upload a sample."
         )
     frame = frame.reset_index(drop=True)
+    problem = profiling.target_problem(frame)
+    if problem:
+        raise UploadRejected(problem)
     return ParsedUpload(_make_parquet_safe(frame), chosen_sheet, encoding, warnings)

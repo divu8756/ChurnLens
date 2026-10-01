@@ -106,6 +106,10 @@ def test_sqlite_checkpointer_persists_state(tmp_path, monkeypatch):
 
 
 def test_postgres_without_driver_gives_clear_error(monkeypatch):
+    import sys
+
+    # The driver ships with the app now; simulate an install without it.
+    monkeypatch.setitem(sys.modules, "langgraph.checkpoint.postgres", None)
     monkeypatch.setenv("DATABASE_URL", "postgresql://user@localhost/db")
     get_settings.cache_clear()
     with pytest.raises(RuntimeError, match="langgraph-checkpoint-postgres"):

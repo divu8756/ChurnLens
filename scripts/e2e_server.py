@@ -71,6 +71,12 @@ def main() -> None:
         "OfferMessage": TimeoutError("fake: use the template message"),
         # The experiment summary also uses its template, so the text is known.
         "ExperimentSummary": TimeoutError("fake: use the template summary"),
+        "Explanation": TimeoutError("fake: use the template explanation"),
+        # Ask the Data: one lookup, then an answer that cites its real result.
+        "ChatStep": [{"action": "call_tool", "tool": "get_stat",
+                      "key": "impact_estimates.overall.churn_rate"},
+                     {"action": "answer",
+                      "answer": "Overall churn is 25.66% (from get_stat)."}],
     }))
     uvicorn.run(create_app(), host="127.0.0.1", port=args.port, log_level="warning")
 

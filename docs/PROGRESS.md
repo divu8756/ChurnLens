@@ -3,13 +3,154 @@
 Project root: /Users/divyanshusrivastava/ChurnLens
 
 ## Current task
-T5d.0 (Plan the metrics layer, no code)
+T8.2 (Deploy) - HUMAN STOP S7
 
 ## Next step
-Phase 5c PR is open (see Done); the human merges it. Then Phase 5d on a
-branch stacked on phase-5c: T5d.0 plan, then T5d.1-T5d.6. The shared A/B
-function already exists (stats/experiment_design.sample_size with
-mde_type="relative").
+Waiting for the human (S7): merge PRs #8, #9, #10 and the Phase 8 PR in order,
+then do the Render and Vercel steps (listed under "Human actions needed")
+and paste both URLs. Then: verify <render>/health, smoke-test the sample flow
+against the live URLs, put the live link in README.md and PROGRESS.md, run
+the final Phase Gate and report "ChurnLens build complete."
+
+## Phase 5d plan (T5d.0; S8 recorded as a checkpoint, FULL-AUTO)
+
+### 1. Files and functions
+- backend/app/stats/model_metrics.py (new, pure, dict in / dict out):
+  `roc_auc(y, p) -> float`; `pr_auc(y, p) -> float` (average precision);
+  `at_top(y, p, share=0.10) -> {k, precision, recall}` (k = ceil(share*n),
+  stable sort by -p); `deciles(y, p) -> [{decile, n, churners, churn_rate,
+  lift, cumulative_gain}]`; `brier(y, p) -> float`; `calibration(y, p,
+  bins=10) -> [{bin, low, high, n, mean_predicted, observed_rate}]`;
+  `evaluate(y, p) -> dict` (all of the above); `calibrate(pipeline, x_train,
+  y_train) -> (model, method)` (CalibratedClassifierCV(clone, isotonic if
+  n_train >= 1000 else sigmoid, cv=5), fitted on the training split only);
+  `model_metrics_v2(artifacts, frame, schema) -> (metrics, calibrated_all)`.
+- backend/app/stats/modelling.py: ModelArtifacts gains `calibrated` (the
+  fitted calibrator) and `calibration_method`.
+- backend/app/agents/modelling.py: writes `model_metrics_v2`; predictions
+  gain `churn_probability_raw`; `churn_probability` becomes the calibrated
+  value (rule 23: money metrics and NBO use it). SHAP reasons still explain
+  the raw model (ranking). Risk bands move to calibrated probabilities
+  (closes the Phase 4 known issue: 32% High vs ~25% churn).
+- backend/app/config.py -> backend/app/config/__init__.py (package, same
+  imports) + app/config/offers.yaml + app/config/pricing.yaml (package data).
+- backend/app/catalog.py (new): Pydantic `OfferSpec {name, cost,
+  cost_basis: per_accepted|per_targeted, assumed_acceptance_rate,
+  assumed_save_rate=0.5, eligible_segments: [Rule]}`, `Rule =
+  {column, in} | {column, min, max} | {risk_band: [...]}`;
+  `load_catalogue(path) -> list[OfferSpec]` raising `CatalogueError` with
+  the YAML line of the problem; `load_pricing(path) -> Pricing`.
+- backend/app/stats/business_metrics.py (new): `revenue_at_risk(df, p,
+  arpu_col, months_remaining=12) -> dict`; `eligible_offers(customer,
+  catalogue, columns) -> (offers, warnings)`; `expected_saving(p, arpu,
+  months, offer) -> float`; `next_best_offer(df, p, arpu_col, catalogue,
+  months) -> table + summary` (best, runner-up, "No offer" when best <= 0);
+  `offer_roi_by_segment(nbo_table, segment_col) -> [...]`; `ab_plan(segment
+  frame, lift, alpha, power) -> dict`; `business_metrics(state values,
+  assumptions) -> dict` (everything + ASSUMPTIONS, or {enabled: false,
+  reason} without an ARPU column); `data_overrides(offer_effectiveness,
+  evidence) -> {offer: {acceptance, save_rate, source="data"}}` from Phase
+  5b rates and Phase 5c evidence.
+- backend/app/stats/experiment_design.py: `sample_size_two_proportions(p1,
+  relative_lift, alpha=0.05, power=0.8, ratio=1.0) -> dict` (shares the
+  maths of `sample_size`).
+- backend/app/graph/telemetry.py (new): `traced(name, fn) -> fn` wrapping
+  every node inside safe_node (one event per run incl. failed/skipped);
+  per-node token capture through a contextvar + llm usage listener;
+  `schema_corrections(proposal, confirmed) -> {count, fields}`;
+  `summarise_run(values, pricing) -> dict`; `save_run(summary)`,
+  `list_runs(workspace, limit)`.
+- backend/app/experiments/models.py + migration 0007: `RunSummary` table
+  (session_id, workspace_hash, created_at, summary JSON).
+- backend/app/api/metrics.py (new) and app/api/telemetry.py (new).
+- backend/app/api/upload.py + app/ingest.py: 422s for no binary target
+  candidate and one class only (MIN_ROWS exists already).
+- backend/app/prompts/business_explanation.v1.md + app/agents/
+  business_explanation.py: 3 validated sentences on the business metrics
+  (the "Regenerate explanation" button; cached per assumptions hash).
+- frontend: components/charts/plotly-chart.tsx; components/model-performance/
+  *, components/business-impact/*, components/agent-health/*; lib/metrics.ts
+  (display helpers only); dashboard tabs; Churn Drivers loses its metrics
+  cards; e2e opens the three tabs and edits one assumption.
+
+### 2. State, API, config
+- State: `model_metrics_v2: JsonDict | None` (modelling_node);
+  `business_metrics: JsonDict | None` (impact_node, default assumptions);
+  `telemetry_events` already exists (operator.add, parallel-safe).
+- GET /metrics/model/{id} -> ModelMetricsV2; GET /metrics/business/{id} ->
+  BusinessMetrics (defaults); POST /metrics/business/{id} body
+  BusinessAssumptions {months_remaining 1..60, offers: {name: {acceptance,
+  save_rate, cost}}, relative_lift 0.01..0.9, alpha, power} -> recomputed
+  BusinessMetrics (no LLM); POST /metrics/business/{id}/explain ->
+  validated explanation; GET /telemetry/{id} -> RunSummary; GET
+  /telemetry/runs?limit=50 -> [RunSummary] (workspace-scoped).
+- offers.yaml example:
+  ```yaml
+  - name: 10% loyalty discount (3 mo)
+    cost: 15
+    assumed_acceptance_rate: 0.35
+    assumed_save_rate: 0.5
+    eligible_segments: [{risk_band: [High, Medium]}]
+  - name: Annual contract switch bonus
+    cost: 40
+    assumed_acceptance_rate: 0.2
+    eligible_segments: [{column: Contract, in: [Month-to-month]}]
+  ```
+- pricing.yaml: `note: free tier; prices: {<model>: {input_per_1m: 0,
+  output_per_1m: 0}}`, default 0, labelled ESTIMATE.
+
+### 3. Reuse vs new
+Reused: the Phase 4 stratified split (ModelArtifacts.train_index /
+test_index, seed 42), predictions parquet, stats/experiment_design.py
+(Phase 5c), Phase 5b offer_effectiveness rates and Phase 5c offer_evidence
+(workspace-scoped) as "data" overrides, llm usage listeners (Phase 1),
+the experiments database for the runs table. New: model_metrics.py,
+calibration, catalogue/pricing YAML, business_metrics.py, telemetry.py,
+metrics/telemetry APIs, Plotly wrapper and three tabs.
+
+### 4. Risks
+- Calibrating class-weighted models: calibrate a clone of the chosen
+  pipeline with CalibratedClassifierCV on the training split only; the
+  test split is only used to report raw vs calibrated Brier (asserted
+  index-disjoint).
+- No ARPU column: business metrics return {enabled: false, reason}; model
+  metrics, A/B plan (churn only) and telemetry still work.
+- offers.yaml rules on absent columns: skip that offer with a warning.
+- Parallel telemetry writes: events go through the operator.add reducer;
+  token attribution uses a contextvar per node run, not globals.
+- Stale LLM explanations after assumption edits: explanation cached by an
+  assumptions hash; the UI shows "Based on default assumptions" + a
+  Regenerate button whenever the shown numbers differ from the explained
+  ones.
+- Plotly bundle / SSR: plotly.js-basic-dist-min imported only in the
+  browser inside one wrapper. Deviation: no react-plotly.js (it requires
+  the full plotly.js as a peer, which npm would install); the wrapper calls
+  Plotly.react / purge itself.
+- Calibrated probabilities change risk bands and NBO values: fixtures that
+  cite them (E2E cites impact_estimates only) are re-checked.
+
+### 5. Tests and reference values
+- T5d.1: ROC-AUC, PR-AUC, Brier, calibration_curve(n_bins=10) equal sklearn
+  at 1e-9; precision/recall@10% and decile lift on a hand-worked 20-row
+  fixture with ties (k = 2); calibrator fitted on train indices only
+  (disjoint from test); calibrated Brier <= raw Brier on Telco.
+- T5d.2: 5-row fixture with hand-computed revenue_at_risk and every
+  customer x offer expected_saving; "No offer" when all <= 0; ineligible
+  offers excluded; missing-column rule -> warning; save_rate 1 +
+  per_targeted reproduces p*acc*ARPU*12 - cost; months linear; invalid
+  YAML -> CatalogueError with line number; no ARPU -> disabled.
+- T5d.3: p1 0.20, lift 0.25 -> 903 per arm (statsmodels 902.34); p1
+  0.26, lift 0.20 -> 1038; bad lift / p1 / power -> ValueError; ratio
+  matches solve_power(ratio=...).
+- T5d.4: parallel nodes append events (no InvalidUpdateError); every node
+  incl. skipped has latency; token sums match a mocked wrapper; cost by
+  hand; schema corrections on a fixture; summaries persist and list.
+- T5d.5: each endpoint happy path, 410 unknown session, 422 invalid
+  assumptions; uploads with no churn column, one class, 49 rows and
+  MIN_ROWS - 1 rows -> 422 with the SPEC messages.
+- T5d.6: component tests (KPI tooltips, ASSUMPTION labels, banner +
+  Regenerate), PlotlyChart loads client-side only; E2E opens the three
+  tabs and edits months remaining.
 
 ## Done
 - Bootstrap: plan, spec, rules, settings, data generators and backend/.env unpacked.
@@ -447,6 +588,118 @@ mde_type="relative").
   200; migrations read the dialect from the context so the Postgres SQL can
   be generated offline (checked: tables, ALTERs, trigger and function).
   Low, not fixed: see Known issues. Backend 359, frontend 103, E2E 1.
+- T5d.1: app/stats/model_metrics.py (ROC-AUC, PR-AUC, precision/recall at
+  top 10% with a stable tie order, decile lift and cumulative gains, Brier,
+  10-bin calibration with counts, ROC and PR curves) on the Phase 4 test
+  split; CalibratedClassifierCV fitted on the training split only (isotonic
+  from 1,000 training rows). State key model_metrics_v2 (raw and
+  calibrated). Predictions: churn_probability is now calibrated (risk bands,
+  NBO and money metrics use it), churn_probability_raw keeps the model
+  score, SHAP reasons still explain the raw model. Telco: Brier 0.168 ->
+  0.140, ROC-AUC 0.829 unchanged, top-10% precision 70.7%; High band 2,239
+  -> 667 customers. Backend 369 (10 new).
+- T5d.2: app/config.py became the package app/config/ (same imports) holding
+  offers.yaml (5 offers named like the sample data's offers) and pricing.yaml
+  (free tier, 0); app/catalog.py validates both (errors name the YAML
+  line). app/stats/business_metrics.py: revenue at risk, expected saving
+  (per_accepted / per_targeted), eligibility rules (missing column -> offer
+  skipped with a warning), next best offer ("No offer" when <= 0), ROI by
+  segment, data overrides (Phase 5b rates, Phase 5c evidence preferred) and
+  an ASSUMPTIONS block with sources. app/business.py computes it per session
+  (disabled with a reason without an ARPU column; user edits > data >
+  YAML). Backend 388 (19 new).
+- T5d.3: experiment_design.sample_size_two_proportions (relative lift,
+  two-sided, ratio; returns p1, p2, Cohen's h, z values, n per arm, total,
+  LaTeX); references 903 (p1 0.20, lift 0.25; statsmodels 902.34) and 1038
+  (p1 0.26, lift 0.20) per arm. business_metrics.ab_plan sizes a test for
+  the customers who get an offer (p1 = their observed churn), warns when
+  they are too few, with an ASSUMPTIONS block. Backend 397 (9 new).
+- T5d.4: app/graph/telemetry.py: traced() wraps every node (outside
+  safe_node, so failed runs are timed) and appends {node, started_at,
+  latency_ms, status, retries, llm_calls, input/output tokens, model} to
+  telemetry_events; tokens are tied to the node run through a context
+  variable fed by the llm usage listener (correct under the parallel
+  fan-out; no prompt text). summarise_run: validator counts and figures
+  caught, retries, schema corrections, latency per node / total / wall
+  clock, tokens per model, ESTIMATED cost from pricing.yaml. Summaries are
+  saved to the runs table (migration 0007) when a run finishes, scoped by
+  the session's workspace. Backend 406 (6 new).
+- T5d.5: GET /metrics/model/{id}, GET and POST /metrics/business/{id}
+  (validated assumptions: months 1-60, per-offer acceptance / save rate /
+  cost, relative lift 0.01-0.9, alpha, power; recompute 0.02 s on Telco),
+  POST /metrics/business/{id}/explain (prompts/business_explanation.v1.md,
+  3 validated sentences, cached per assumptions hash, template fallback),
+  GET /telemetry/{id} (live summary) and GET /telemetry/runs (per
+  workspace). Typed contract in app/api/metrics_contract.py. Upload 422s:
+  a churn-named column with one value, and no two-value column at all (SPEC
+  message); fewer than MIN_ROWS rows already existed. Backend 425.
+- T5d.6: one PlotlyChart wrapper (components/charts; next/dynamic ssr:false,
+  the 1.1 MB plotly.js-basic-dist-min chunk loads only when a chart
+  mounts; theme follows the colour scheme). New tabs: Model Performance
+  (KPI tiles with keyboard/touch help, ROC, PR, lift + cumulative gains,
+  calibration raw vs calibrated, plus the metrics table and confusion
+  matrix moved from Churn Drivers; the Recharts ROC chart was removed),
+  Business Impact (assumptions panel posting to the API debounced 400 ms,
+  KPIs, ROI by segment, top-50 next best offers, A/B plan with KaTeX,
+  every assumption labelled with its source, explanation card with
+  "Based on default assumptions" + "Regenerate explanation" when the
+  numbers changed), Agent Health (validator pass rate from the API,
+  figures caught, schema corrections, run time, tokens, ESTIMATED cost,
+  time per step, retries, trend of recent runs). Checked at 375 px (no
+  page scroll); fixes from that check: bar labels hover-only, and the plan
+  column now prefers Contract over CityTier (hint priority). E2E opens the
+  three tabs and edits months remaining. Backend 425, frontend 113, E2E 1.
+- Phase 5d gate review. Fixed (Medium): run time included the wait for the
+  human to confirm the schema (now busy time = union of step intervals);
+  numeric offer rules compared as text (YAML 1 never matched 1.0). No High
+  issues. Low, not fixed: see Known issues. Backend 427, frontend 113, E2E 1.
+- T7.1: Ask the Data. app/chat/tools.py (get_stat over whitelisted result
+  roots, get_segment, get_test_result, get_customer_risk (score, band and
+  reasons only), filter_and_aggregate with Pydantic-validated args: known
+  non-ID columns, ops == != > >= < <= in, metrics count/mean/median/sum/
+  churn_rate, max 3 filters, 50 rows; plain pandas, no eval/query).
+  app/chat/agent.py: LangGraph loop agent -> tools -> agent; each LLM step
+  is a structured ChatStep (call_tool / answer / refuse) via the wrapper;
+  max 6 tool calls; answer numbers must appear in this question's tool
+  results (one retry, then withheld). prompts/chat_agent.v1.md. History:
+  last 10 messages in the session folder. POST /chat/{id} (per-IP sliding
+  window, CHAT_PER_MINUTE=10; X-Forwarded-For only with TRUST_PROXY_HEADERS)
+  and GET /chat/{id}. Ask the Data tab with example questions, loading
+  state and the tools used under each answer. Backend 451, frontend 117.
+- T7.2: exports on demand. app/exports/excel.py (openpyxl: Cleaned_Data,
+  Predictions, Hypothesis_Tests, Drivers, Recommendations; bold header,
+  frozen panes, one Excel table per sheet, number formats, no merged cells,
+  formula-looking text written as text), app/exports/pdf.py (reportlab:
+  cover, executive summary, 3 matplotlib charts, insights,
+  recommendations, methodology, limitations, validator summary; 5 pages on
+  Telco), report_node marks exports ready, GET /export/{id}/excel and /pdf
+  build once per analysis checkpoint and cache in the session folder.
+  Telco: Excel 2.4 s / 1.7 MB, PDF 0.4 s. Download links in the dashboard
+  header; E2E fetches both. Backend 457, frontend 115, E2E 1.
+- Phase 7 gate review. Fixed (Medium): a chat question had no overall time
+  limit (8 LLM steps x 45 s timeouts x retries); now 120 s per question,
+  status "timeout". Fixed (Low): the rate limiter pruned no idle IPs. Low,
+  not fixed: see Known issues. Backend 459, frontend 115, E2E 1.
+- T8.1: render.yaml (one Docker web service, healthCheckPath /health,
+  secrets sync: false), multi-stage Dockerfile (deps in a venv, slim
+  runtime, non-root uid 1000, uvicorn --workers 1 --proxy-headers, PORT
+  from env), CORS FRONTEND_ORIGIN + FRONTEND_ORIGIN_REGEX (Vercel
+  previews), JSON logs with session_id (request middleware + run threads;
+  root logger and warnings too), per-IP limits on /upload and /sample
+  (UPLOAD_PER_MINUTE) and every AI endpoint (AI_PER_MINUTE; chat has
+  CHAT_PER_MINUTE), frontend "Waking up the server (up to a minute)..."
+  with retries for 90 s. Added langgraph-checkpoint-postgres 3.1.2 so
+  DATABASE_URL works for the checkpointer too. Docker checked (approved by
+  the human): image builds (1.74 GB), runs as uid 1000; the full Telco flow
+  against it with real Gemini finished in 132 s (6 insights and 5
+  recommendations; validator 11/15, 4 dropped), plus model and business
+  metrics, telemetry, both exports and a chat answer; logs were JSON with
+  session_id and no key. Backend 465, frontend 117, E2E 1.
+- T8.3 (done before S7 because it does not need the URLs): README.md (pitch,
+  CI badge, Mermaid architecture, how the agents stay honest, stack table,
+  local setup, env var table, deploy steps, tests, limitations, screenshot
+  placeholders; live link filled in after deploy) and docs/DEMO_SCRIPT.md
+  (2-minute walkthrough with backup answers).
 
 ## Decisions
 - Mode: FULL-AUTO (see CLAUDE.md AUTOPILOT).
@@ -612,8 +865,38 @@ flowchart TD
   fixed in the draft and membership is stored at assignment, because the
   session data expires before results arrive. SRM failure gives the verdict
   "untrustworthy" (blocks ship).
+- T5d.2: PyYAML pinned (6.0.3, already installed via langchain-core; now
+  imported directly for offers.yaml / pricing.yaml). Business metrics are
+  computed on request (not stored in graph state): data overrides need
+  offer_node's output and assumption edits recompute anyway. Data save
+  rates: experiment = retention lift per acceptor / control churn;
+  observational = (churn if declined - churn if accepted) / churn if
+  declined. ROI = net expected saving / expected offer cost.
+- T5d.4: schema corrections are computed from state (schema_proposal vs
+  confirmed_schema) in the run summary rather than inside /confirm-schema:
+  same inputs, one place, and nothing extra to store.
+- T5d.6 dependency: plotly.js-basic-dist-min 4.1.1 (SPEC v1.3), used
+  directly through a 20-line wrapper instead of react-plotly.js (whose peer
+  is the full plotly.js). Explanations of business metrics are written on
+  demand (button), not on page load, to save free-tier calls.
+- T7.1: the chat agent is a hand-built LangGraph ReAct loop with structured
+  steps instead of native tool calling, so it keeps CLAUDE.md rules 5 and 19
+  (Pydantic structured output, flat schemas) and the number check of rule 4.
+- T7.2 dependencies: reportlab 5.0.1 (PDF; chosen over WeasyPrint because it
+  needs no Pango/Cairo system packages in Docker) and matplotlib 3.11.2
+  (already installed via SHAP; pinned because the PDF charts import it).
+- T7.1 live check (real Gemini, 5 calls, 4,105 in / 288 out tokens): the
+  agent answered "month-to-month, tenure <= 12" churn (44.33%, from
+  filter_and_aggregate) and the PaymentMethod test (from get_test_result)
+  correctly with the tool cited, and refused a prompt-injection attempt
+  without calling any tool.
 
 ## Checkpoints for the human
+- S8 (T5d.0): Phase 5d plan written above under "Phase 5d plan" (FULL-AUTO:
+  recorded as a checkpoint, work continued). Deviations to note: app/config.py
+  becomes a package so offers.yaml / pricing.yaml can live in app/config/;
+  no react-plotly.js (full plotly.js peer); calibrated probabilities replace
+  raw ones for risk bands, NBO and money metrics.
 - S6 (end of Phase 6, MVP): run the app locally and click through all tabs:
   backend `cd backend && .venv/bin/uvicorn app.main:app --port 8010`,
   frontend `cd frontend && NEXT_PUBLIC_API_URL=http://localhost:8010 npm run dev`,
@@ -637,10 +920,8 @@ flowchart TD
   are correct on Telco. Consider billing / another model if this persists.
 - (Resolved in T5b.1) Campaign/offer columns are now excluded from
   segmentation, hypothesis tests and the model once confirmed.
-- Risk bands use the chosen model's raw probabilities. With class_weight=
-  "balanced" these run high (Telco: 32% High vs ~25% churn). Phase 5d adds
-  calibration (CalibratedClassifierCV on train); switch bands and money
-  metrics to calibrated probabilities there.
+- (Resolved in T5d.1) Risk bands, NBO and money metrics now use calibrated
+  probabilities (Telco High band: 2,239 -> 667 customers).
 - Hypothesis test cap (40) keeps columns in data order; with more candidates
   the last ones are skipped (Telco no longer hits it: 35 tests after T5b.1).
 - Prompt injection: column names and category values from the uploaded file
@@ -675,6 +956,27 @@ flowchart TD
   the dashboard reloads (existing RunManager behaviour, seen during the
   T5c.4 browser check). OfferEvidence.decided_at comes back without a
   timezone on SQLite.
+- Phase 5d (Low, gate): POST /metrics/business/{id}/explain costs one LLM
+  call per new set of assumptions (cached per set; per-IP limits come in
+  Phase 8). Calibration adds 5 cross-validated fits of the chosen model to
+  training time. Calibrated risk bands score fewer customers for next best
+  offer on Telco (2,622 Medium+High vs 4,136 before), as intended.
+- Phase 7 (Low, gate): get_customer_risk passes one customer's SHAP reason
+  strings (feature: value) to the LLM when the user asks about that customer
+  (the spec requires the tool; no other row data reaches the model). Excel
+  export of a 100k-row file will be slow (openpyxl, tables need the normal
+  writer); consider xlsxwriter if that matters. The export build lock is
+  global (one export at a time). Docker image not rebuilt for reportlab /
+  matplotlib (pure wheels; no system packages needed).
 
 ## Human actions needed
+- S7 (now): 1) Merge #8, #9, #10 and the Phase 8 PR in that order (each
+  retargets to main as its base merges). 2) Render: New -> Blueprint -> this
+  repo (main). Set GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_FAST (the values
+  in backend/.env), and FRONTEND_ORIGIN=https://example.com for now. Optional:
+  DATABASE_URL from a free Postgres (Neon / Supabase). 3) Vercel: Add New ->
+  Project -> this repo, Root Directory frontend, env NEXT_PUBLIC_API_URL = the
+  Render URL; deploy. 4) Render: set FRONTEND_ORIGIN to the Vercel production
+  URL (and optionally FRONTEND_ORIGIN_REGEX for previews); redeploy.
+  5) Paste both URLs back.
 - S7 at the end: Render + Vercel dashboard steps (paste GEMINI_API_KEY into Render yourself).

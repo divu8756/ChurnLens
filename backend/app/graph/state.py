@@ -56,6 +56,7 @@ class ChurnState(BaseModel):
 
     # modelling_node
     model_metrics: JsonDict | None = None
+    model_metrics_v2: JsonDict | None = None  # Phase 5d: test-split metrics, raw + calibrated
     feature_importance: JsonDict | None = None
     shap_summary: JsonDict | None = None
     odds_ratios: JsonDict | None = None

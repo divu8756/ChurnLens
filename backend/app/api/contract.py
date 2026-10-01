@@ -607,7 +607,8 @@ class ResultsPayload(BaseModel):
 
 class PredictionRow(BaseModel):
     customer_id: str
-    churn_probability: float
+    churn_probability: float  # calibrated (Phase 5d); raw model score below
+    churn_probability_raw: float | None = None
     risk_band: RiskBand
     actual_churn: int
     reason_1: str | None = None

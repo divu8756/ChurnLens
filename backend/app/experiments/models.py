@@ -153,6 +153,18 @@ class Outcome(Base):
     complaints: Mapped[float | None] = mapped_column(Float)
 
 
+class RunSummary(Base):
+    """One analysis run's telemetry summary (Agent Health trends, runbook T5d.4)."""
+
+    __tablename__ = "runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(32), index=True)
+    workspace_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    status: Mapped[str] = mapped_column(String(20))
+    summary: Mapped[dict[str, Any]] = mapped_column(JSON)
+
 class OfferEvidence(Base):
     """Measured effect of an offer from a decided experiment (feeds next best offer)."""
 

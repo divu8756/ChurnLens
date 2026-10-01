@@ -96,6 +96,28 @@ def likely_targets(frame: pd.DataFrame) -> list[str]:
     return sorted(named, key=lambda c: (c.lower() not in ("churn", "exited"), len(c)))
 
 
+NO_TARGET = ("No churn/target column found. Add a column with two values, e.g. Yes/No, "
+             "and re-upload.")
+
+
+def target_problem(frame: pd.DataFrame) -> str | None:
+    """Why no churn model can be trained on this file (SPEC v1.3 upload errors), or None.
+    A churn-named column with a single value is reported first; otherwise any column with
+    exactly two values is a candidate the user can confirm as the target."""
+    named = [c for c in frame.columns if TARGET_NAME.search(str(c))]
+    if not any(binary_values(frame[c]) is not None for c in named):
+        for col in named:
+            values = frame[col].dropna().astype(str).str.strip()
+            values = values[values != ""].unique()
+            if len(values) == 1:
+                return (f"Column '{col}' has only one value ('{values[0]}'), so there is "
+                        "nothing to learn from. The file needs customers who churned and "
+                        "customers who stayed; upload data that includes both.")
+    if not any(binary_values(frame[c]) is not None for c in frame.columns):
+        return NO_TARGET
+    return None
+
+
 def likely_time_column(frame: pd.DataFrame) -> str | None:
     for col in frame.columns:
         if TIME_NAME.search(str(col)) and _numeric_share(frame[col]) > 0.95:

@@ -1,0 +1,41 @@
+# Render Blueprint: one Docker web service for the ChurnLens API (runbook T8.1).
+# Secrets use sync: false, so Render asks for them in the dashboard; never commit values.
+services:
+  - type: web
+    name: churnlens-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false
+      - key: GEMINI_MODEL_FAST
+        sync: false
+      - key: GEMINI_MODEL_FALLBACK
+        sync: false
+      - key: GEMINI_RPM
+        value: "5"
+      # The Vercel production URL, e.g. https://churnlens.vercel.app
+      - key: FRONTEND_ORIGIN
+        sync: false
+      # Optional: allow Vercel preview URLs, e.g. ^https://churnlens-[a-z0-9-]+\.vercel\.app$
+      - key: FRONTEND_ORIGIN_REGEX
+        sync: false
+      # Optional: Postgres (e.g. Neon or Supabase) so experiments, run history and paused
+      # analyses survive restarts; without it SQLite on the ephemeral disk is used.
+      - key: DATABASE_URL
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CHAT_PER_MINUTE
+        value: "10"
+      - key: UPLOAD_PER_MINUTE
+        value: "10"
+      - key: AI_PER_MINUTE
+        value: "20"

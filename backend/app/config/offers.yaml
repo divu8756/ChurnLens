@@ -1,0 +1,45 @@
+# Retention offer catalogue (SPEC v1.3 "Business metrics"). Validated by app/catalog.py.
+# Costs are per accepted offer unless cost_basis is per_targeted, in the data's own currency.
+# Acceptance and save rates are ASSUMPTIONS: measured Phase 5b / 5c values replace them when
+# the uploaded data has offer columns or a decided experiment tested the offer.
+#   assumed_acceptance_rate: share of targeted customers who accept (0..1)
+#   assumed_save_rate: P(stays | accepted) among customers who would otherwise churn (0..1)
+#   eligible_segments: rules, all must match; empty list = everyone. Rule forms:
+#     {column: Contract, in: [Month-to-month]}   {column: tenure, min: 0, max: 12}
+#     {risk_band: [High, Medium]}
+- name: 10% loyalty discount (3 mo)
+  cost: 20
+  assumed_acceptance_rate: 0.35
+  assumed_save_rate: 0.5
+  eligible_segments:
+    - risk_band: [High, Medium]
+
+- name: 1 month free on annual plan
+  cost: 60
+  assumed_acceptance_rate: 0.25
+  assumed_save_rate: 0.6
+  eligible_segments:
+    - column: Contract
+      in: [Month-to-month]
+
+- name: Free 10GB data booster
+  cost: 5
+  assumed_acceptance_rate: 0.45
+  assumed_save_rate: 0.3
+  eligible_segments: []
+
+- name: Priority tech support (6 mo)
+  cost: 12
+  assumed_acceptance_rate: 0.3
+  assumed_save_rate: 0.4
+  eligible_segments:
+    - column: TechSupport
+      in: ["No"]
+
+- name: Win-back call from retention team
+  cost: 8
+  cost_basis: per_targeted
+  assumed_acceptance_rate: 0.6
+  assumed_save_rate: 0.25
+  eligible_segments:
+    - risk_band: [High]

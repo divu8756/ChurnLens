@@ -37,6 +37,14 @@ export type SegmentColumn = Schemas["SegmentColumn"];
 export type SegmentFilter = Schemas["SegmentFilter"];
 export type DecideRequest = Schemas["DecideRequest"];
 export type OfferEvidence = Schemas["OfferEvidenceOut"];
+export type ModelMetricsV2 = Schemas["ModelMetricsV2"];
+export type ScoreSet = Schemas["ScoreSet"];
+export type BusinessMetrics = Schemas["BusinessMetrics"];
+export type BusinessAssumptions = Schemas["BusinessAssumptions"];
+export type BusinessExplanation = Schemas["BusinessExplanation"];
+export type RunSummary = Schemas["RunSummaryOut"];
+export type ChatMessage = Schemas["ChatMessage"];
+export type ChatResponse = Schemas["ChatResponse"];
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 export const REQUEST_TIMEOUT_MS = 30_000;
@@ -231,6 +239,11 @@ export function predictionsCsvUrl(sessionId: string, options: Omit<PredictionsQu
   return `${API_URL}/predictions/${enc(sessionId)}/csv${query ? `?${query}` : ""}`;
 }
 
+/** Report downloads (built on the server the first time, then cached). */
+export function exportUrl(sessionId: string, kind: "excel" | "pdf"): string {
+  return `${API_URL}/export/${enc(sessionId)}/${kind}`;
+}
+
 /** URL for the SSE progress stream; `after` resumes after that event id. */
 export function streamUrl(sessionId: string, after = 0): string {
   const query = after > 0 ? `?after=${after}` : "";
@@ -339,4 +352,60 @@ export function decideExperiment(id: number, body: DecideRequest, signal?: Abort
 
 export function listOfferEvidence(signal?: AbortSignal): Promise<OfferEvidence[]> {
   return request<OfferEvidence[]>("/experiments/offer-evidence", { signal });
+}
+
+// ---------------------------------------------------------------- metrics and telemetry (Phase 5d)
+
+export function getModelMetrics(sessionId: string, signal?: AbortSignal): Promise<ModelMetricsV2> {
+  return request<ModelMetricsV2>(`/metrics/model/${enc(sessionId)}`, { signal });
+}
+
+export function getBusinessMetrics(sessionId: string, signal?: AbortSignal): Promise<BusinessMetrics> {
+  return request<BusinessMetrics>(`/metrics/business/${enc(sessionId)}`, { signal });
+}
+
+/** Recomputed on the server with edited assumptions (the browser does no metric maths). */
+export function recomputeBusinessMetrics(
+  sessionId: string,
+  assumptions: BusinessAssumptions,
+  signal?: AbortSignal,
+): Promise<BusinessMetrics> {
+  return request<BusinessMetrics>(`/metrics/business/${enc(sessionId)}`, { method: "POST", json: assumptions, signal });
+}
+
+export function explainBusinessMetrics(
+  sessionId: string,
+  assumptions: BusinessAssumptions,
+  signal?: AbortSignal,
+): Promise<BusinessExplanation> {
+  return request<BusinessExplanation>(`/metrics/business/${enc(sessionId)}/explain`, {
+    method: "POST",
+    json: assumptions,
+    signal,
+    timeoutMs: AI_TIMEOUT_MS,
+  });
+}
+
+export function getRunSummary(sessionId: string, signal?: AbortSignal): Promise<RunSummary> {
+  return request<RunSummary>(`/telemetry/${enc(sessionId)}`, { signal });
+}
+
+export function listRunSummaries(limit = 50, signal?: AbortSignal): Promise<RunSummary[]> {
+  return request<RunSummary[]>(`/telemetry/runs?limit=${limit}`, { signal });
+}
+
+// ---------------------------------------------------------------- Ask the Data (Phase 7)
+
+export function getChatHistory(sessionId: string, signal?: AbortSignal): Promise<ChatMessage[]> {
+  return request<ChatMessage[]>(`/chat/${enc(sessionId)}`, { signal });
+}
+
+/** One question to the tool-only agent (several model calls, so the AI timeout applies). */
+export function askData(sessionId: string, message: string, signal?: AbortSignal): Promise<ChatResponse> {
+  return request<ChatResponse>(`/chat/${enc(sessionId)}`, {
+    method: "POST",
+    json: { message },
+    signal,
+    timeoutMs: AI_TIMEOUT_MS,
+  });
 }

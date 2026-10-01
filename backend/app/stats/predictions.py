@@ -32,11 +32,17 @@ def describe(feature: str, value: Any, contribution: float, numeric: bool) -> st
 
 
 def score_customers(artifacts: ModelArtifacts, frame: pd.DataFrame, schema: dict[str, Any],
-                    high: float, medium: float) -> tuple[pd.DataFrame, dict[str, Any]]:
-    """Returns (predictions table, summary with band counts and thresholds)."""
+                    high: float, medium: float, calibrated: np.ndarray | None = None
+                    ) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Returns (predictions table, summary with band counts and thresholds).
+
+    With `calibrated` (Phase 5d), churn_probability and the risk bands use the calibrated
+    probabilities and churn_probability_raw keeps the model's own score; the SHAP reasons
+    always explain the raw model."""
     features = artifacts.numeric + artifacts.categorical
     x = frame[features]
-    probability = artifacts.pipeline.predict_proba(x)[:, 1]
+    raw = artifacts.pipeline.predict_proba(x)[:, 1]
+    probability = raw if calibrated is None else np.asarray(calibrated, dtype=float)
     bands = risk_band(probability, high, medium)
 
     rng = np.random.default_rng(RANDOM_STATE)
@@ -58,6 +64,7 @@ def score_customers(artifacts: ModelArtifacts, frame: pd.DataFrame, schema: dict
         "customer_id": frame[ids[0]].astype(str).to_numpy() if ids
         else np.arange(len(frame)).astype(str),
         "churn_probability": np.round(probability, 3),
+        "churn_probability_raw": np.round(raw, 3),
         "risk_band": bands,
         "actual_churn": frame[schema["target_column"]].astype(int).to_numpy(),
     })
@@ -72,6 +79,7 @@ def score_customers(artifacts: ModelArtifacts, frame: pd.DataFrame, schema: dict
         "band_counts": counts,
         "total": int(len(table)),
         "explainer": method,
+        "probability": "raw" if calibrated is None else "calibrated",
         "reason_format": "feature value (SHAP contribution in log-odds; + raises churn risk)",
     }
     return table, summary

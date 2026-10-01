@@ -38,7 +38,8 @@ def offer_evidence(session_id: str | None) -> dict[str, dict[str, Any]]:
                 "experiment_id": row.experiment_id,
                 "retention_lift_per_acceptor": row.retention_lift_per_acceptor,
                 "itt_difference": row.itt_difference, "ci_low": row.ci_low,
-                "ci_high": row.ci_high, "decision": row.decision})
+                "ci_high": row.ci_high, "decision": row.decision,
+                "control_churn": row.control_churn, "acceptance_rate": row.acceptance_rate})
     return evidence
 
 

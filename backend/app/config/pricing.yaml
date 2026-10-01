@@ -1,0 +1,9 @@
+# Gemini prices per 1 million tokens, used for the ESTIMATED run cost on the Agent Health
+# tab. The free tier costs nothing, so the defaults are 0. Put your paid-tier prices here
+# (from Google's pricing page) if you enable billing. Unknown models use `default`.
+note: free tier
+currency: USD
+default:
+  input_per_1m: 0
+  output_per_1m: 0
+models: {}

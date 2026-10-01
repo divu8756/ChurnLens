@@ -64,6 +64,8 @@ class ModelArtifacts:
     categorical: list[str]
     train_index: np.ndarray
     test_index: np.ndarray
+    # Phase 5d: calibrated copy of the pipeline (fitted on the training split only).
+    calibrator: Any = None
 
 
 def model_features(frame: pd.DataFrame, schema: dict[str, Any],

@@ -15,6 +15,8 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 
 from app.graph.state import ErrorEntry, ProgressEntry
+from app.logging_setup import session_var
+from app.run_history import save_run
 
 logger = logging.getLogger("churnlens.runs")
 
@@ -113,6 +115,7 @@ class RunManager:
         thread.start()
 
     def _drive(self, graph: CompiledStateGraph, run: Run, graph_input: Any) -> None:
+        session_var.set(run.session_id)  # this thread's log lines carry the session_id
         config = self._config(run.session_id)
         try:
             for mode, chunk in graph.stream(graph_input, config,
@@ -126,6 +129,7 @@ class RunManager:
                 run.emit("awaiting_confirmation", value if isinstance(value, dict) else {})
                 return
             final_error = snapshot.values.get("final_error")
+            save_run(run.session_id, snapshot.values)
             run.status = "failed" if final_error else "done"
             run.emit("done", {"ok": not final_error, "final_error": final_error})
         except Exception as exc:  # the graph itself broke; tell the client and stop

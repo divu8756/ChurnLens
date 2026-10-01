@@ -291,7 +291,8 @@ def score_next_best_offers(frame: pd.DataFrame, schema: dict[str, Any], long: pd
                      "Offers tested in a decided experiment use the measured effect instead "
                      "(churn reduction / acceptance rate) and are labelled experiment-proven."},
             {"name": "p_churn", "value": None, "source": "data",
-             "text": "P(churn) is the churn model's score (not yet calibrated; Phase 5d)."},
+             "text": "P(churn) is the churn model's calibrated probability (fitted on the "
+                     "training split only)."},
         ],
     })
     return table, summary

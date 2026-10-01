@@ -15,6 +15,7 @@ dependencies = [
     "langgraph==1.2.12",
     "langgraph-checkpoint==4.2.0",
     "langgraph-checkpoint-sqlite==3.1.1",
+    "langgraph-checkpoint-postgres==3.1.2",
     "python-multipart==0.0.32",
     "openpyxl==3.1.5",
     "pyarrow==25.0.1",
@@ -26,6 +27,9 @@ dependencies = [
     "sqlalchemy==2.1.1",
     "alembic==1.20.0",
     "psycopg[binary]==3.3.2",
+    "pyyaml==6.0.3",
+    "reportlab==5.0.1",
+    "matplotlib==3.11.2",
 ]
 
 [project.optional-dependencies]
@@ -42,6 +46,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["app*"]
+
+[tool.setuptools.package-data]
+"app.config" = ["*.yaml"]
 
 [tool.ruff]
 line-length = 100
